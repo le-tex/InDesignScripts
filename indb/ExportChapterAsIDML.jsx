@@ -63,13 +63,13 @@ function chapters_to_idml (thisbook, chapters) {
 		p_list[0].parent.parent.close ();
 		
 		myDocList += "</collection>";
-		myTargetFile = new File(myFolderName + "\\" + thisbook.name.replace(/\.indb$/, '') + "_chapterlist.xml");
+		myTargetFile = new File(myFolderName + "\\" + thisbook.name.replace(/\.indb$/, '') + ".indb.xml");
 		myTargetFile.encoding = "UTF-8";
 		myTargetFile.open('w');
 		myTargetFile.write(myDocList);
 		myTargetFile.close();
 		
-		alert("FERTIG! ;-)");
+		alert("FERTIG!");
 	}
 }
 
