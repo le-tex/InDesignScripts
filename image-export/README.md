@@ -11,7 +11,7 @@ A script for Adobe InDesign to export images to web-friendly formats.
 ## Requirements
 
 * image-export.jsx needs at least Adobe InDesign Version 8.0 (CS6)
-* image-export_cs5.jsx works with Adobe InDesign Version 7.0 (CS5) but supports only JPG output. I've tested it on CS5 but it may work on CS4 as well.
+* image-export_pre-cs6.jsx works with Adobe InDesign Version 7.0 (CS5) but supports only JPG output. I've tested it on CS5 but it may work on CS4 as well.
 
 ## Features
 
