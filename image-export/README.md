@@ -23,3 +23,18 @@ at least Adobe InDesign Version 8.0 (CS6)
 * Embedded images are not exported. Consider to convert embedded images to linked images instead.
 
 
+## IDML
+
+* for multiple instances of one image, each instance is exported with a unique filename
+* the new filename is stored in the IDML as ``Label`` of the ``Rectangle`` element
+
+```
+<Rectangle>
+  <Properties>
+    <Label>
+      <KeyValuePair Key="letex:fileName" Value="new-filename-a3.jpg" />
+    </Label>
+  </Properties>
+  <!-- (...) -->
+</Rectangle>
+```
