@@ -2,11 +2,12 @@
 
 //
 // PageNamesToStoryALL.jsx
-// Version 1.1
+// Version 1.2
 //
 // created by: maqui  |  10:18 28.02.2013
 // modified by: maqui |  16:59 28.02.2013 (Löschen der Bedingungstexte ohne Einblenden --> Formatierung bleibt 1:1 erhalten)
 // modified by: maqui |  16:40 16.06.2014 Alle Textabschnitte erhalten die Seitenzahl-Infos
+// modified by: maqui |  11:00 21.05.2015 Debug (bedingten Text "PageStart" und "PageEnd" löschen, auch wenn er sichtbar ist)
 // 
 // Trägt in jedem Textrahmen (bei jedem Seitenwechsel) den Seitenbeginn bzw. das Seitenende als bedingten Text mit der jeweiligen Seitenzahl ein.
 //
@@ -145,6 +146,7 @@ alert("Rahmen auf Montagefläche!"); */
 function newCondition(myDoc, myCondName) {
 	if(checkCondition(myDoc, myCondName)) {
 		var myCond = myDoc.conditions.item(myCondName)
+		myCond.visible = false;
 		// Text mit dieser Bedingung löschen ...
 		try {
 			var myHiddenText = myDoc.stories.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
