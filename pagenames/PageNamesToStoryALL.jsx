@@ -2,12 +2,13 @@
 
 //
 // PageNamesToStoryALL.jsx
-// Version 1.2
+// Version 1.3
 //
 // created by: maqui  |  10:18 28.02.2013
 // modified by: maqui |  16:59 28.02.2013 (Löschen der Bedingungstexte ohne Einblenden --> Formatierung bleibt 1:1 erhalten)
 // modified by: maqui |  16:40 16.06.2014 Alle Textabschnitte erhalten die Seitenzahl-Infos
 // modified by: maqui |  11:00 21.05.2015 Debug (bedingten Text "PageStart" und "PageEnd" löschen, auch wenn er sichtbar ist)
+// modified by: gimsieke |  2015-06-07 Add 'CellPage_XY' to table cells 
 // 
 // Trägt in jedem Textrahmen (bei jedem Seitenwechsel) den Seitenbeginn bzw. das Seitenende als bedingten Text mit der jeweiligen Seitenzahl ein.
 //
@@ -114,6 +115,26 @@ function main(){
 					var myFrame = myFrame.previousTextFrame;
 				}
 			}
+			
+      // Process all table cells in the story since they won't be included in the frame iteration: 
+      if(!myMasterSpreadFlag && myStory.tables.length > 0) {
+        for (var t = 0; t < myStory.tables.length; t++) {
+          for (var c = 0; c < myStory.tables[t].cells.length; c++) {
+            var myCell = myStory.tables[t].cells[c];
+            var firstCellChar = myCell.characters[0];
+            if (firstCellChar != null) {
+              var myFrame = firstCellChar.parentTextFrames[0];
+              if (myFrame != null) {
+     					  var myPage = myFrame.parentPage;
+					      var myIP = myCell.insertionPoints.firstItem();
+					      myIP.contents = "CellPage_" + myPage.name;
+					      myIP.fillColor = myStartSwatch;
+					      myIP.applyConditions(myStartCond, true);
+              }
+            }
+          }
+        }
+			}
 		}
 		myDoc.select(NothingEnum.NOTHING);
 		//alert("FERTIG! ;-) \r\rVergebene Startseiten-Label: " + myStartCounter + "\rVergebene Endseiten-Label:   " + myEndCounter);
@@ -160,6 +181,23 @@ function newCondition(myDoc, myCondName) {
 						// Prüfung der dem versteckten zugewiesenen Bedingung 
 						if (myHiddenText[i].appliedConditions[x].name == myCondName) {
 	//alert(myHiddenText[i].texts[0].contents);
+							myHiddenText[i].remove(); 
+						}
+					}
+				}
+			}
+	  }
+	      // How do I treat story hiddentext and cell hiddentext in a single pass? I.e., how can 
+    // I merge the two lists? concat() did not work.
+    try {
+			var myHiddenText = myDoc.stories.everyItem().tables.everyItem().cells.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
+		}
+		catch(e) {}
+		if(myHiddenText){
+			for (var i = myHiddenText.length-1; i >= 0; i--) { 
+				if (myHiddenText[i].appliedConditions.length > 0) { 
+					for (var x = myHiddenText[i].appliedConditions.length-1; x >= 0; x--) { 
+						if (myHiddenText[i].appliedConditions[x].name == myCondName) {
 							myHiddenText[i].remove(); 
 						}
 					}
