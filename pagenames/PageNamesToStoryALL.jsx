@@ -173,7 +173,7 @@ function newCondition(myDoc, myCondName) {
 			var myHiddenText = myDoc.stories.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
 		}
 		catch(e) {}
-		if(myHiddenText){
+		if(myHiddenText && myHiddenText.contents){
 			for (var i = myHiddenText.length-1; i >= 0; i--) { 
 				// Prüfung: versteckter Text hat mindestens eine Bedingung zugewiesen 
 				if (myHiddenText[i].appliedConditions.length > 0) { 
@@ -187,13 +187,13 @@ function newCondition(myDoc, myCondName) {
 				}
 			}
 	  }
-	      // How do I treat story hiddentext and cell hiddentext in a single pass? I.e., how can 
+	  // How do I treat story hiddentext and cell hiddentext in a single pass? I.e., how can 
     // I merge the two lists? concat() did not work.
     try {
 			var myHiddenText = myDoc.stories.everyItem().tables.everyItem().cells.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
 		}
 		catch(e) {}
-		if(myHiddenText){
+		if(myHiddenText && myHiddenText.contents){
 			for (var i = myHiddenText.length-1; i >= 0; i--) { 
 				if (myHiddenText[i].appliedConditions.length > 0) { 
 					for (var x = myHiddenText[i].appliedConditions.length-1; x >= 0; x--) { 
