@@ -124,25 +124,16 @@ function drawWindow (doc) {
     myWindow.orientation = "row";
     myWindow.alignChildren = "fill";
     // select styles panel
-    var stylesGroup = myWindow.add ("group {alignChildren: ['', 'fill']}");
+    var stylesGroup = myWindow.add ("group {alignChildren: ['left', 'fill']}");
     var stylesGroupPanel = stylesGroup.add ("panel", undefined, panel.stylesTitle);
-    var stylesGroupScrollbar = stylesGroup.add ("scrollbar", undefined, 0, 0, paraStyles.length-rows);
-    stylesGroupScrollbar.preferredSize.width = 10;
-    var stylesGroupCheckboxes = stylesGroupPanel.add ("group {orientation: 'column', alignChildren: ['fill', 'top']}");
-    for (var i = 0; i < rows; i++){
+    var stylesGroupList = stylesGroupPanel.add ("listbox", undefined, undefined, {multiselect: true});
+    stylesGroupList.alignment = "fill";
+    stylesGroupList.preferredSize = [200, 325];
+    
+    for (i = 0; i < rows; i++){
         if(i < paraStyles.length && paraStyles[i].name != options.lineNumberParaStyleName){
-            var checkbox = stylesGroupCheckboxes.add ("checkbox", undefined, paraStyles[i].name);
-            checkbox.value = false;
-        }
-    }
-    stylesGroupScrollbar.onChanging = function(){
-        var start = Math.round (this.value);
-        var stop = start+rows;
-        var r = 0;
-        for (var i = start; i < stop; i++){
-            if(i < paraStyles.length){
-                stylesGroupCheckboxes.children[r++].text = paraStyles[i].name;
-            }
+            var listitem = stylesGroupList.add ("item");
+            listitem.text = paraStyles[i].name;
         }
     }
     // options panel
@@ -204,22 +195,22 @@ function drawWindow (doc) {
     buttonCancel.alignment = ["fill","bottom"];
     buttonAddNumbers.onClick = function(){
 
-        options.styles = selectedInput(stylesGroupCheckboxes);
+        options.styles = stylesGroupList.selection;
         options.restartNumPage = optionsGroupPanelRestartNumPage.value;
         options.restartNumFrame = optionsGroupPanelRestartNumFrame.value;
         options.ignoreEmptyLines = optionsGroupPanelIgnoreEmptyLines.value;
         options.startFrom = parseInt(optionsGroupPanelInputStart.text);
         options.interval = parseInt(optionsGroupPanelInputInterval.text);
-        options.applyTo = selectedInput(optionsGroupApplyToGroup);
+        options.applyTo = selectedRadio(optionsGroupApplyToGroup);
         options.lineNumberObjStyleName = lineNumberObjStyleInput.text;
         options.lineNumberParaStyleName = lineNumberParaStyleInput.text;
         // intialize line numbering
-        if(options.styles.length == 0){
+        if(options.styles == null){
             alert("Please select one or more paragraph styles.")
         } else {
             try{
                 addNumbers(options);
-                alert(options.counter + " line numbers inserted");
+                alert(options.counter + panel.successMessage);
             } catch(e){
                 alert(e);
             }
@@ -261,11 +252,11 @@ function addNumbers(options) {
     options.startFromTemp = options.startFrom;
 
     // create styles, later they are applied
-    if(!doc.objectStyles.item(options.lineNumberObjStyleName)){
+    if(!doc.objectStyles.itemByName(options.lineNumberObjStyleName).isValid){
         var lineNumberObjStyle = doc.objectStyles.add();
         lineNumberObjStyle.name = options.lineNumberObjStyleName;
     }
-    if(!doc.paragraphStyles.item(options.lineNumberParaStyleName)){
+    if(!doc.paragraphStyles.itemByName(options.lineNumberParaStyleName).isValid){
         var lineNumberParaStyle = doc.paragraphStyles.add();
         lineNumberParaStyle.name = options.lineNumberParaStyleName;
     }
@@ -296,7 +287,6 @@ function addNumbersToStory(doc, story, options){
     var textContainers = story.textContainers;
     for (j = 0; j < textContainers.length; j++){
         currentTextFrame = textContainers[j];
-
         // exclude all frames with a line number object style
         if(currentTextFrame.appliedObjectStyle.name != options.lineNumberObjStyleName){
             addNumbersToTextFrame(doc, currentTextFrame, options);
@@ -313,6 +303,7 @@ function addNumbersToTextFrame(doc, textFrame, options){
     var penalty = 0;
     // discontinue line numbering at page breaks when corresponding option is set
     var start = (pageBreakBoolean && options.restartNumPage == 1) ? options.startFrom : options.startFromTemp;
+
     for (k = 0; k < lines.length; k++){
         var currentLine = lines[k];
         // penalty for empty lines
@@ -325,18 +316,17 @@ function addNumbersToTextFrame(doc, textFrame, options){
         options.startFromTemp = (options.restartNumFrame == 1) ? options.startFromTemp : lineNumber + 1;
         var lineNumberStr = lineNumber.toString();
         var lineParaStyle = currentLine.appliedParagraphStyle.name;
+
         if(!Boolean(isLineEmpty(currentLine.contents) && options.ignoreEmptyLines == 1) 
-          && inArray(lineParaStyle,options.styles)
+          && inArray(lineParaStyle, options.styles)
           && lineNumber % options.interval == 0 ){
+
             options.counter = options.counter += 1
 
             var anchoredFrame = currentLine.insertionPoints[0].textFrames.add();
 
             anchoredFrame.contents = lineNumberStr;
             anchoredFrame.paragraphs[0].appliedParagraphStyle = doc.paragraphStyles.itemByName(options.lineNumberParaStyleName);
-
-            fitTextFrameProportionally(anchoredFrame, 0.01);
-            anchoredFrame.fit(FitOptions.FRAME_TO_CONTENT);
 
             // apply object style
             anchoredFrame.appliedObjectStyle = doc.objectStyles.itemByName(options.lineNumberObjStyleName);
@@ -353,34 +343,33 @@ function addNumbersToTextFrame(doc, textFrame, options){
             anchoredFrameObjSettings.anchorXoffset = 5;
             anchoredFrameObjSettings.anchorYoffset = 0;
 
-            // apply para style
             anchoredFrame.strokeWeight = 0;
 
+            fitTextFrameProportionally(anchoredFrame, 0.01);
+            anchoredFrame.fit(FitOptions.FRAME_TO_CONTENT);
+
         }
+        
     }
-    return;
+    //return;
 }
 
 // return array from groups with children input elements
-function selectedInput (inputGroup) {
+function selectedRadio (inputGroup) {
     var arr = []
     for(var i = 0; i < inputGroup.children.length; i++) {
         if(inputGroup.children[i].value == true){
-            if(inputGroup.children[i].type == "radiobutton"){
-               arr.push(i);
-            } else {
-               arr.push(inputGroup.children[i].text);
-            }
+            arr.push(i);
         }
     }
     return arr;
 }
 
 function inArray(item,array){
-    var count=array.length;
-    for(var i=0;i<count;i++)
-    {
-        if(array[i]===item){return true;}
+    for(l=0; l < array.length; l++){
+        if( array[l].toString() === item){
+            return true;
+        }
     }
     return false;
 }
@@ -393,10 +382,10 @@ function isLineEmpty(line){
     }
 }
 
-
 function resize(textFrame, by) {  
     textFrame.resize(CoordinateSpaces.INNER_COORDINATES, AnchorPoint.TOP_LEFT_ANCHOR, ResizeMethods.MULTIPLYING_CURRENT_DIMENSIONS_BY, [by, by]);  
-}  
+}
+
 function fitTextFrameProportionally(textFrame, factor) {  
     if (textFrame.overflows) {  
        while (textFrame.overflows) {  
