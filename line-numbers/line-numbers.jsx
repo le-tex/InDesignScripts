@@ -73,7 +73,7 @@ panel = {
     buttonCancelTitle:"Cancel",
     successMessage:" line numbers inserted.",
     removeMessage:" line numbers removed.",
-    styleListLength:10
+    styleListLength:12
 }
 
 main();
@@ -118,7 +118,7 @@ function main(){
 function drawWindow (doc) {
 
     var paraStyles = app.documents[0].allParagraphStyles.sort();                
-    var rows = 10;
+    var rows = panel.styleListLength;
 
     var myWindow = new Window ("palette", panel.title, undefined);
     myWindow.orientation = "row";
@@ -128,7 +128,7 @@ function drawWindow (doc) {
     var stylesGroupPanel = stylesGroup.add ("panel", undefined, panel.stylesTitle);
     var stylesGroupScrollbar = stylesGroup.add ("scrollbar", undefined, 0, 0, paraStyles.length-rows);
     stylesGroupScrollbar.preferredSize.width = 10;
-    var stylesGroupCheckboxes = stylesGroupPanel.add ("group {orientation: 'column', alignChildren: ['left', 'top']}");
+    var stylesGroupCheckboxes = stylesGroupPanel.add ("group {orientation: 'column', alignChildren: ['fill', 'top']}");
     for (var i = 0; i < rows; i++){
         if(i < paraStyles.length && paraStyles[i].name != options.lineNumberParaStyleName){
             var checkbox = stylesGroupCheckboxes.add ("checkbox", undefined, paraStyles[i].name);
@@ -149,7 +149,7 @@ function drawWindow (doc) {
     var optionsGroup = myWindow.add ("group {orientation: 'column'}");
     var optionsGroupPanel = optionsGroup.add ("panel", undefined, panel.optionsTitle);
     optionsGroupPanel.alignment = "fill";
-    optionsGroupPanel.alignChildren = "left";
+    optionsGroupPanel.alignChildren = "fill";
     var optionsGroupPanelStartGroup = optionsGroupPanel.add ("group {orientation: 'row'}");
     var optionsGroupPanelInputStart = optionsGroupPanelStartGroup.add ("edittext", undefined, options.startFrom);
     optionsGroupPanelInputStart.characters = 3;
@@ -184,6 +184,7 @@ function drawWindow (doc) {
     // panel style names
     var optionsGroupPanelLineNumberStyles = optionsGroup.add ("panel", undefined, panel.lineNumberStylesTitle);
     optionsGroupPanelLineNumberStyles.orientation = "column";
+    optionsGroupPanelLineNumberStyles.alignment = "fill";
     optionsGroupPanelLineNumberStyles.alignChildren = "fill";
     var optionsGroupPanelLineObjStyleGroup = optionsGroupPanelLineNumberStyles.add("group");    
     var lineNumberObjStyleInput = optionsGroupPanelLineObjStyleGroup.add ("edittext", undefined, options.lineNumberObjStyleName);
