@@ -328,6 +328,9 @@ function addNumbersToTextFrame(doc, textFrame, options){
             anchoredFrame.contents = lineNumberStr;
             anchoredFrame.paragraphs[0].appliedParagraphStyle = doc.paragraphStyles.itemByName(options.lineNumberParaStyleName);
 
+            fitTextFrameProportionally(anchoredFrame, 0.01);
+            anchoredFrame.fit(FitOptions.FRAME_TO_CONTENT);
+
             // apply object style
             anchoredFrame.appliedObjectStyle = doc.objectStyles.itemByName(options.lineNumberObjStyleName);
 
@@ -344,9 +347,6 @@ function addNumbersToTextFrame(doc, textFrame, options){
             anchoredFrameObjSettings.anchorYoffset = 0;
 
             anchoredFrame.strokeWeight = 0;
-
-            fitTextFrameProportionally(anchoredFrame, 0.01);
-            anchoredFrame.fit(FitOptions.FRAME_TO_CONTENT);
 
         }
         
