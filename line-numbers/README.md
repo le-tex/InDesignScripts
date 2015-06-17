@@ -10,7 +10,7 @@ A script for Adobe InDesign to automatically insert line numbers.
 
 ## Requirements
 
-* developed with Adobe InDesign Version 8.0 (CS6)
+* works with Adobe InDesign Version 8.0 (CS6) and later
 * not yet tested with earlier versions
 
 ## Features
