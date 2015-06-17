@@ -306,16 +306,19 @@ function addNumbersToTextFrame(doc, textFrame, options){
 
     for (k = 0; k < lines.length; k++){
         var currentLine = lines[k];
+        var lineParaStyle = currentLine.appliedParagraphStyle.name;
+
         // penalty for empty lines
-        penalty = (isLineEmpty(lines[k-1].contents) && options.ignoreEmptyLines == 1) ? penalty +=1 : penalty;
-        
+        penalty = ((!inArray(lineParaStyle, options.styles) &&  ( !(isLineEmpty(currentLine.contents) && options.ignoreEmptyLines == 1)))  
+            || (isLineEmpty(lines[k-1].contents) && options.ignoreEmptyLines == 1) 
+            ) ? penalty +=1 : penalty;
+
         // calculate line number
         var lineNumber = k + start - penalty;
         
         // remember last line if numbering should be contiuned for next frame
         options.startFromTemp = (options.restartNumFrame == 1) ? options.startFromTemp : lineNumber + 1;
         var lineNumberStr = lineNumber.toString();
-        var lineParaStyle = currentLine.appliedParagraphStyle.name;
 
         if(!Boolean(isLineEmpty(currentLine.contents) && options.ignoreEmptyLines == 1) 
           && inArray(lineParaStyle, options.styles)
