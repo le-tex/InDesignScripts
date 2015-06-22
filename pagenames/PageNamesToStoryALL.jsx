@@ -17,8 +17,8 @@
 var myPageStartTag = "PageStart";
 var myPageEndTag = "PageEnd";
 
-var myStartSwatchName = "PageStart";
-var myEndSwatchName = "PageEnd";
+//var myStartSwatchName = "PageStart";
+//var myEndSwatchName = "PageEnd";
 
 var myCondSetOnName = "PageNumber_On";
 var myCondSetOffName = "PageNumber_Off";
@@ -31,8 +31,12 @@ function main(){
 		var myPage;
 
 		// Bedingungen definieren
-		var myStartCond = newCondition(myDoc, myPageStartTag); // ==>
-		var myEndCond = newCondition(myDoc, myPageEndTag); // ==>
+		var myStartCond = newCondition(myDoc, myPageStartTag);
+    myStartCond.indicatorMethod = ConditionIndicatorMethod.USE_HIGHLIGHT; 
+    myStartCond.indicatorColor = UIColors.GOLD;
+    var myEndCond = newCondition(myDoc, myPageEndTag); // ==>
+    myEndCond.indicatorMethod = ConditionIndicatorMethod.USE_HIGHLIGHT;
+    myEndCond.indicatorColor = UIColors.LAVENDER;
 		
 		// Sets definieren
 		if(checkConditionSet(myDoc, myCondSetOnName)) myDoc.conditionSets.item(myCondSetOnName).remove();
@@ -47,10 +51,10 @@ function main(){
 		myCondSetOff.redefine();
 		
 		// Farben für bedingten Text (als Orientierungshilfe)
-		if (checkSwatch(myDoc, myStartSwatchName) == false) myDoc.colors.add({name:myStartSwatchName, colorValue:[0,0,255], model:ColorModel.PROCESS, space:ColorSpace.RGB});
+		/*if (checkSwatch(myDoc, myStartSwatchName) == false) myDoc.colors.add({name:myStartSwatchName, colorValue:[0,0,255], model:ColorModel.PROCESS, space:ColorSpace.RGB});
 		if (checkSwatch(myDoc, myEndSwatchName) == false) myDoc.colors.add({name:myEndSwatchName, colorValue:[255,0,0], model:ColorModel.PROCESS, space:ColorSpace.RGB});
 		var myStartSwatch = myDoc.swatches.itemByName(myStartSwatchName);
-		var myEndSwatch = myDoc.swatches.itemByName(myEndSwatchName);
+		var myEndSwatch = myDoc.swatches.itemByName(myEndSwatchName);*/
 		var myStartCounter = 0;
 		var myEndCounter = 0;
 		for (var i = 0; i < myDoc.stories.length; i++) {
@@ -94,7 +98,7 @@ function main(){
 //alert(myLastContent + " :: " + myOldPage.constructor.name);
 							}
 							myLastIP.contents = myLastContent;
-							myLastIP.fillColor = myEndSwatch;
+							//myLastIP.fillColor = myEndSwatch;
 							myLastIP.applyConditions(myEndCond, true);
 							myEndCounter++;
 						}
@@ -106,7 +110,7 @@ function main(){
 							var myOldFirstIP = myFirstIP; // IP merken, da er sich bei evtl. Umbruchveränderungen verschiebt
 							var myOldID = myOldFirstIP.parentStory.insertionPoints.itemByRange(0, myOldFirstIP.index).insertionPoints.length;
 							myFirstIP.contents = myFirstContent;
-							myFirstIP.fillColor = myStartSwatch;
+							//myFirstIP.fillColor = myStartSwatch;
 							myFirstIP.applyConditions(myStartCond, true);
 							myStartCounter++;
 						}
@@ -128,7 +132,7 @@ function main(){
      					  var myPage = myFrame.parentPage;
 					      var myIP = myCell.insertionPoints.firstItem();
 					      myIP.contents = "CellPage_" + myPage.name;
-					      myIP.fillColor = myStartSwatch;
+					      //myIP.fillColor = myStartSwatch;
 					      myIP.applyConditions(myStartCond, true);
               }
             }
@@ -170,18 +174,18 @@ function newCondition(myDoc, myCondName) {
 		myCond.visible = false;
 		// Text mit dieser Bedingung löschen ...
 		try {
-			var myHiddenText = myDoc.stories.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
+			var myHiddenText1 = myDoc.stories.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
 		}
 		catch(e) {}
-		if(myHiddenText && myHiddenText.contents){
-			for (var i = myHiddenText.length-1; i >= 0; i--) { 
+		if(myHiddenText1 != null){
+			for (var i = myHiddenText1.length-1; i >= 0; i--) { 
 				// Prüfung: versteckter Text hat mindestens eine Bedingung zugewiesen 
-				if (myHiddenText[i].appliedConditions.length > 0) { 
-					for (var x = myHiddenText[i].appliedConditions.length-1; x >= 0; x--) { 
+				if (myHiddenText1[i].appliedConditions.length > 0) { 
+					for (var x = myHiddenText1[i].appliedConditions.length-1; x >= 0; x--) { 
 						// Prüfung der dem versteckten zugewiesenen Bedingung 
-						if (myHiddenText[i].appliedConditions[x].name == myCondName) {
-	//alert(myHiddenText[i].texts[0].contents);
-							myHiddenText[i].remove(); 
+						if (myHiddenText1[i].appliedConditions[x].name == myCondName) {
+	//alert(myHiddenText1[i].texts[0].contents);
+							myHiddenText1[i].remove(); 
 						}
 					}
 				}
@@ -193,7 +197,7 @@ function newCondition(myDoc, myCondName) {
 			var myHiddenText = myDoc.stories.everyItem().tables.everyItem().cells.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
 		}
 		catch(e) {}
-		if(myHiddenText && myHiddenText.contents){
+		if(myHiddenText != null){
 			for (var i = myHiddenText.length-1; i >= 0; i--) { 
 				if (myHiddenText[i].appliedConditions.length > 0) { 
 					for (var x = myHiddenText[i].appliedConditions.length-1; x >= 0; x--) { 
