@@ -325,9 +325,9 @@ function addNumbersToTextFrame(doc, textFrame, options){
           && lineNumber % options.interval == 0 ){
 
             options.counter = options.counter += 1
-
-	    // place insertion point after first word to retain hyphenation
-	    var anchoredFrame = currentLine.words[0].insertionPoints[-1].textFrames.add();
+	    
+	    // place insertion point depending on blank lines
+	    var anchoredFrame = (currentLine.contents.match(/^\s*$/) == null) ? currentLine.insertionPoints[1].textFrames.add() : currentLine.insertionPoints[0].textFrames.add();
 
             anchoredFrame.contents = lineNumberStr;
             anchoredFrame.paragraphs[0].appliedParagraphStyle = doc.paragraphStyles.itemByName(options.lineNumberParaStyleName);
