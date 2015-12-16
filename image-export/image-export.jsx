@@ -1,43 +1,66 @@
 ﻿/*
  * image-export.jsx
- * 
- * 
+ *
+ *
  * Export images from an InDesign document to web-friendly formats.
  *
- * 
+ *
  * Note: this script requires at least InDesign Version 8.0 (CS6).
- * 
- * 
+ *
+ *
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
- * 
+ *
  * LICENSE
- * 
+ *
  * Copyright (c) 2015, Gregor Fellenz and le-tex publishing services GmbH
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
- * 1. Redistributions of source code must retain the above copyright notice, 
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- * 
- * 2. Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
  * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
+ if (!Array.prototype.indexOf)
+ {
+    Array.prototype.indexOf = function(elt /*, from*/)
+    {
+       var len = this.length;
+
+       var from = Number(arguments[1]) || 0;
+       from = (from < 0)
+       ? Math.ceil(from)
+       : Math.floor(from);
+
+       if (from < 0)
+       from += len;
+
+       for (; from < len; from++)
+       {
+          if (from in this &&
+          this[from] === elt)
+          return from;
+       }
+       return -1;
+    };
+ }
 
 /*
  * set image export preferences
@@ -46,13 +69,16 @@ image = {
     minExportDPI:1,
     maxExportDPI:2400,
     exportDPI:144,
+    maxExportResolution:4000000,
+    pngTransparency:true,
+    objectExportOptions:true,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
     pageItemLabel:"letex:fileName"
 }
 /*
- * set panel preferences 
+ * set panel preferences
  */
 panel = {
     title:"export images",
@@ -62,6 +88,10 @@ panel = {
     qualityValues:["max", "high", "medium", "low"],
     formatTitle:"Format",
     formatValues:["JPG", "PNG"],
+    optionsTitle:"Options",
+    objectExportOptionsTitle:"Object export options",
+    pngTransparencyTitle:"PNG Transparency",
+    maxExportResolutionTitle:"Max Resolution (px)",
     selectDirButtonTitle:"Choose",
     selectDirMenuTitle:"Choose a directory",
     progressBarTitle:"export Images",
@@ -124,7 +154,7 @@ function drawWindow(){
     var myWindow = new Window("dialog", panel.title, undefined, {resizable:true});
         with (myWindow) {
             myWindow.orientation = "column";
-            myWindow.alignChildren ="left";
+            myWindow.alignChildren ="fill";
             myWindow.formPath = add("panel", undefined, panel.exportPathTitle);
             with(myWindow.formPath){
                 myWindow.formPath.alignChildren = "left";
@@ -135,32 +165,56 @@ function drawWindow(){
             }
             myWindow.qualityGroup = add("panel", undefined, panel.qualityTitle);
             with(myWindow.qualityGroup){
-                myWindow.qualityGroup.orientation = "column";
-                myWindow.qualityGroup.alignChildren = "left";
-                myWindow.qualityGroup.formQuality = add("group");
+                qualityGroup.orientation = "column";
+                qualityGroup.alignChildren = "left";
+                qualityGroup.formQuality = add("group");
                 with(myWindow.qualityGroup.formQuality){
-                    myWindow.qualityGroup.formQuality.orientation = "row";
+                    formQuality.orientation = "row";
                     for (i = 0; i < panel.qualityValues.length; i++) {
-                        myWindow.qualityGroup.formQuality.add ("radiobutton", undefined, (panel.qualityValues[i]));
+                        formQuality.add ("radiobutton", undefined, (panel.qualityValues[i]));
                     }
-                    myWindow.qualityGroup.formQuality.children[image.exportQuality].value =true;
+                    formQuality.children[image.exportQuality].value =true;
                 }
                 myWindow.qualityGroup.formDensity = add( "group");
                 with(myWindow.qualityGroup.formDensity){
-                    myWindow.qualityGroup.formDensity.add ("statictext", undefined, panel.densityTitle);
-                    myWindow.qualityGroup.formDensity.inputDPI = add ("edittext", undefined, image.exportDPI);
-                    myWindow.qualityGroup.formDensity.inputDPI.characters = 4;
-                    myWindow.qualityGroup.formDensity.sliderDPI = add("slider", undefined, image.exportDPI, image.minExportDPI, image.maxExportDPI);
+                    formDensity.inputDPI = add ("edittext", undefined, image.exportDPI);
+                    formDensity.inputDPI.characters = 4;
+                    formDensity.sliderDPI = add("slider", undefined, image.exportDPI, image.minExportDPI, image.maxExportDPI);
+                    formDensity.add ("statictext", undefined, panel.densityTitle);
                     // synchronize slider and input field
-                    myWindow.qualityGroup.formDensity.sliderDPI.onChanging = function () {myWindow.qualityGroup.formDensity.inputDPI.text = myWindow.qualityGroup.formDensity.sliderDPI.value};
-                    myWindow.qualityGroup.formDensity.inputDPI.onChanging = function () {myWindow.qualityGroup.formDensity.sliderDPI.value = myWindow.qualityGroup.formDensity.inputDPI.text};
+                    formDensity.sliderDPI.onChanging = function () {myWindow.qualityGroup.formDensity.inputDPI.text = myWindow.qualityGroup.formDensity.sliderDPI.value};
+                    formDensity.inputDPI.onChanging = function () {myWindow.qualityGroup.formDensity.sliderDPI.value = myWindow.qualityGroup.formDensity.inputDPI.text};
                 }
             }
-            myWindow.formatGroup = add("panel", undefined, panel.formatTitle);
-            with(myWindow.formatGroup){
-                myWindow.formatGroup.orientation="row";
-                myWindow.formatGroup.dropdown = add("dropdownlist", undefined, panel.formatValues );
-                myWindow.formatGroup.dropdown.selection = image.exportFormat;
+            myWindow.optionsGroup = add("panel", undefined, panel.optionsTitle);
+            with(myWindow.optionsGroup){
+              optionsGroup.formatGroup = add("group");
+              optionsGroup.alignChildren = "left";
+              with(myWindow.optionsGroup.formatGroup){
+                formatGroup.dropdown = add("dropdownlist", undefined, panel.formatValues );
+                formatGroup.add ("statictext", undefined, panel.formatTitle);
+                formatGroup.dropdown.selection = image.exportFormat;
+              }
+              /*myWindow.optionsGroup.maxExportResolutionGroup = add("group");
+              with(myWindow.optionsGroup.maxExportResolutionGroup){
+                maxExportResolutionGroup.add("edittext", undefined, image.maxExportResolution);
+                maxExportResolutionGroup.add("statictext", undefined, panel.maxExportResolutionTitle);
+              }*/
+              myWindow.optionsGroup.objectExportOptions = add("group");
+              with(myWindow.optionsGroup.objectExportOptions){
+                myWindow.optionsGroup.objectExportOptions.checkbox = objectExportOptions.add ("checkbox", undefined, panel.objectExportOptionsTitle);
+                myWindow.optionsGroup.objectExportOptions.checkbox.value = image.objectExportOptions;
+              }
+              myWindow.optionsGroup.pngTransparencyGroup = add("group");
+              with(myWindow.optionsGroup.pngTransparencyGroup){
+                myWindow.optionsGroup.pngTransparencyGroup.checkbox = pngTransparencyGroup.add ("checkbox", undefined, panel.pngTransparencyTitle);
+                myWindow.optionsGroup.pngTransparencyGroup.checkbox.value = image.pngTransparency;
+                myWindow.optionsGroup.pngTransparencyGroup.checkbox.enabled = myWindow.optionsGroup.formatGroup.dropdown.selection.text == "PNG" ? true : false;
+                // disable checkbox if selected format is not PNG
+                myWindow.optionsGroup.formatGroup.dropdown.onChange = function(){
+                  myWindow.optionsGroup.pngTransparencyGroup.checkbox.enabled = myWindow.optionsGroup.formatGroup.dropdown.selection.text == "PNG" ? true : false;
+                };
+              }
             }
             myWindow.buttonGroup = add( "group");
             with(myWindow.buttonGroup){
@@ -180,13 +234,14 @@ function drawWindow(){
         image.exportDir = Folder(myWindow.formPath.inputPath.text);
         image.exportDPI = Number(myWindow.qualityGroup.formDensity.inputDPI.text);
         image.exportQuality = selectedRadiobutton(myWindow.qualityGroup.formQuality);
-        image.exportFormat = myWindow.formatGroup.dropdown.selection.text;
+        image.exportFormat = myWindow.optionsGroup.formatGroup.dropdown.selection.text;
+        image.pngTransparency = myWindow.optionsGroup.pngTransparencyGroup.checkbox.value;
         myWindow.close(1);
 
         function selectedRadiobutton (rbuttons){
             for(var i = 0; i < rbuttons.children.length; i++) {
                 if(rbuttons.children[i].value == true) {
-                    return i;                    
+                    return i;
                 }
             }
         }
@@ -199,31 +254,51 @@ function drawWindow(){
 
 
 function getFilelinks(doc){
+    // overwrite internal Measurement Units
+    app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
+
     var docLinks = doc.links;
     var uniqueBasenames = [];
-    var exportLinks = []    
+    var exportLinks = []
     /*
      * rename files if a basename exists twice
      */
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
+        var rectangle = link.parent.parent;
+        var objectExportOptions = rectangle.objectExportOptions;
+        // use format override in objectExportOptions if active
+        var overrideBool = objectExportOptions.customImageConversion == true && image.objectExportOptions == true;
+        var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
+        var localResolution = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
+        var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
+        var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
+
         if(isValidLink(link)){
             var basename = getBasename(link.name);
             if(inArray(basename, uniqueBasenames)) {
-                var newFilename = renameFile(basename, image.exportFormat, true);
+                var newFilename = renameFile(basename, localFormat, true);
             } else {
                 uniqueBasenames.push(basename);
-                var newFilename = renameFile(basename, image.exportFormat, false);
+                var newFilename = renameFile(basename, localFormat, false);
             }
             /*
              * construct link object
              */
             linkObject = {
                 link:link,
-                pageItem:link.parent.parent,
+                pageItem:rectangle,
+                format:localFormat,
+                quality:localQuality,
+                resolution:localResolution,
                 newFilename:newFilename,
-                newFilepath:File(image.exportDir + "/" + newFilename)
+                newFilepath:File(image.exportDir + "/" + newFilename),
+                customImageConversion:objectExportOptions.customImageConversion,
+                objectExportOptions:objectExportOptions
             }
+            /*
+             * check for custom object export options
+             */
 
             exportLinks.push(linkObject);
 
@@ -236,46 +311,44 @@ function getFilelinks(doc){
         if (!result) return;
     }
     // create directory
-    createDir(image.exportDir);    
+    createDir(image.exportDir);
 
     if (exportLinks.length  > 0) {
-        with (app.jpegExportPreferences) {
-            antiAlias = false;
-            embedColorProfile = false;
-            exportResolution= image.exportDPI;
-            jpegColorSpace = JpegColorSpaceEnum.RGB;
-            jpegExportQualityValues = [JPEGOptionsQuality.MAXIMUM ,JPEGOptionsQuality.HIGH, JPEGOptionsQuality.MEDIUM, JPEGOptionsQuality.LOW];
-            jpegQuality = jpegExportQualityValues[image.exportQuality];
-            jpegRenderingStyle = JPEGOptionsFormat.BASELINE_ENCODING  
-            simulateOverprint = true; 
-            useDocumentBleeds = true;
-        }        
-        with (app.pngExportPreferences) {
-            antiAlias = false;
-            exportResolution = image.exportDPI;     
-            pngColorSpace = PNGColorSpaceEnum.RGB;
-            pngExportQualityValues = [PNGQualityEnum.MAXIMUM, PNGQualityEnum.HIGH, PNGQualityEnum.MEDIUM, PNGQualityEnum.LOW];
-            pngQuality = pngExportQualityValues[image.exportQuality]
-            simulateOverprint = true;
-            transparentBackground = true;
-            useDocumentBleeds = true;
-        }
-
         //var progressBar = getProgressBar(exportLinks.length);
         var progressBar = getProgressBar("export " + exportLinks.length + " images");
         progressBar.reset(exportLinks.length);
 
-        // select export format
-        var exportFormat = image.exportFormat == "PNG" ? ExportFormat.PNG_FORMAT : ExportFormat.JPG
-        
+
         // iterate over files and store to specific location
         for (i = 0; i  < exportLinks.length; i++) {
-            
-            progressBar.hit("export " + exportLinks[i].newFilename, i);
+          var exportFormat = exportLinks[i].format == "PNG" ? ExportFormat.PNG_FORMAT : ExportFormat.JPG;
+          var exportResolution = exportLinks[i].resolution;
+          var exportQuality = exportLinks[i].quality;
+          // JPEG export options
+          app.jpegExportPreferences.antiAlias = false;
+          app.jpegExportPreferences.embedColorProfile = false;
+          app.jpegExportPreferences.exportResolution = exportResolution;
+          app.jpegExportPreferences.jpegColorSpace = JpegColorSpaceEnum.RGB;
+          jpegExportQualityValues = [JPEGOptionsQuality.MAXIMUM ,JPEGOptionsQuality.HIGH, JPEGOptionsQuality.MEDIUM, JPEGOptionsQuality.LOW];
+          app.jpegExportPreferences.jpegQuality = jpegExportQualityValues[exportQuality];
+          app.jpegExportPreferences.jpegRenderingStyle = JPEGOptionsFormat.BASELINE_ENCODING;
+          app.jpegExportPreferences.simulateOverprint = true;
+          app.jpegExportPreferences.useDocumentBleeds = true;
+          // PNG export options
+          app.pngExportPreferences.antiAlias = false;
+          app.pngExportPreferences.exportResolution = exportResolution;
+          app.pngExportPreferences.pngColorSpace = PNGColorSpaceEnum.RGB;
+          pngExportQualityValues = [PNGQualityEnum.MAXIMUM, PNGQualityEnum.HIGH, PNGQualityEnum.MEDIUM, PNGQualityEnum.LOW];
+          app.pngExportPreferences.pngQuality = pngExportQualityValues[exportQuality];
+          app.pngExportPreferences.transparentBackground = image.pngTransparency;
+          app.pngExportPreferences.simulateOverprint = true;
+          app.pngExportPreferences.useDocumentBleeds = true;
 
-            exportLinks[i].pageItem.exportFile(exportFormat, exportLinks[i].newFilepath);
-            // insert label with new file link for postprocessing
-            exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
+          progressBar.hit("export " + exportLinks[i].newFilename, i);
+
+          exportLinks[i].pageItem.exportFile(exportFormat, exportLinks[i].newFilepath);
+          // insert label with new file link for postprocessing
+          exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
         }
         progressBar.close();
 
@@ -283,7 +356,7 @@ function getFilelinks(doc){
         doc.save();
     }
     else {
-        alert (panel.noValidLinks);     
+        alert (panel.noValidLinks);
     }
 }
 // draw simple progress bar
@@ -324,7 +397,7 @@ function isValidLink (link) {
         default:
             if(link != null) return true else return false;
     }
-} 
+}
 // return filename with new extension and conditionally attach random string
 function renameFile(basename, extension, rename) {
     if(rename) {
@@ -350,6 +423,10 @@ function inArray(string, array) {
     }
     return false;
 }
+
+
+
+
 // get path relative to indesign file location
 function getDefaultExportPath() {
     var exportPath = String(app.activeDocument.fullName);
