@@ -18,6 +18,24 @@ A script for Adobe InDesign to export images to web-friendly formats.
 * adjusted size, bleed, transparency and orientation settings are applied and automatically exported
 * for multiple linked images, every instance is stored as separate image with a unique name and its settings
 * select output directory, compression ratio, density and choose between JPG and PNG format
+* support InDesign object export options
+* set resolution limit
+
+### Localization
+
+
+Set interface language by changing `lang.pre` to one of the following values
+
+* `0` English
+* `1` German
+
+For example, changing `lang.pre` to `1` will change the interface language to german.
+
+```
+lang = {
+  pre: 0
+}
+```
 
 ## Limitations
 
