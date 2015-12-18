@@ -44,7 +44,7 @@
  */
 
 lang = {
-  pre: 0 // en = 0, de = 1
+  pre: 1 // en = 0, de = 1
 }
 
 image = {
@@ -57,7 +57,7 @@ image = {
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
-    pageItemLabel:"letex:fileName",
+    pageItemLabel:"letex:fileName"
 }
 /*
  * set panel preferences
@@ -229,8 +229,8 @@ function drawWindow(){
             myWindow.buttonGroup = add( "group");
             with(myWindow.buttonGroup){
                 myWindow.buttonGroup.orientation = "row";
-                myWindow.buttonGroup.buttonOK = add ("button", undefined, panel.buttonOK);
-                myWindow.buttonGroup.buttonCancel = add ("button", undefined, panel.buttonCancel );
+                myWindow.buttonGroup.buttonOK = add ("button", undefined, panel.buttonOK, {name: "ok"});
+                myWindow.buttonGroup.buttonCancel = add ("button", undefined, panel.buttonCancel, {name: "cancel"} );
             }
         }
     myWindow.formPath.buttonChoosePath.onClick  = function () {
