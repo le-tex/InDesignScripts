@@ -38,29 +38,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
- if (!Array.prototype.indexOf)
- {
-    Array.prototype.indexOf = function(elt /*, from*/)
-    {
-       var len = this.length;
-
-       var from = Number(arguments[1]) || 0;
-       from = (from < 0)
-       ? Math.ceil(from)
-       : Math.floor(from);
-
-       if (from < 0)
-       from += len;
-
-       for (; from < len; from++)
-       {
-          if (from in this &&
-          this[from] === elt)
-          return from;
-       }
-       return -1;
-    };
- }
 
 /*
  * set image export preferences
@@ -69,7 +46,7 @@ image = {
     minExportDPI:1,
     maxExportDPI:2400,
     exportDPI:144,
-    maxExportResolution:4000000,
+    maxResolution:4000000,
     pngTransparency:true,
     objectExportOptions:true,
     exportDir:"export",
@@ -91,7 +68,7 @@ panel = {
     optionsTitle:"Options",
     objectExportOptionsTitle:"Object export options",
     pngTransparencyTitle:"PNG Transparency",
-    maxExportResolutionTitle:"Max Resolution (px)",
+    maxResolutionTitle:"Max Resolution (px)",
     selectDirButtonTitle:"Choose",
     selectDirMenuTitle:"Choose a directory",
     progressBarTitle:"export Images",
@@ -136,11 +113,41 @@ function main(){
     }
     // show window
     try {
+        jsExtensions();
         exportImages(doc);
     } catch (e) {
         alert ("Error:\n" + e);
     }
 }
+
+function jsExtensions(){
+  // indexOf
+  if (!Array.prototype.indexOf)
+  {
+     Array.prototype.indexOf = function(elt /*, from*/)
+     {
+        var len = this.length;
+
+        var from = Number(arguments[1]) || 0;
+        from = (from < 0)
+        ? Math.ceil(from)
+        : Math.floor(from);
+
+        if (from < 0)
+        from += len;
+
+        for (; from < len; from++)
+        {
+           if (from in this &&
+           this[from] === elt)
+           return from;
+        }
+        return -1;
+     };
+  }
+}
+
+
 
 function exportImages(doc){
     if(drawWindow()){
@@ -195,11 +202,11 @@ function drawWindow(){
                 formatGroup.add ("statictext", undefined, panel.formatTitle);
                 formatGroup.dropdown.selection = image.exportFormat;
               }
-              /*myWindow.optionsGroup.maxExportResolutionGroup = add("group");
-              with(myWindow.optionsGroup.maxExportResolutionGroup){
-                maxExportResolutionGroup.add("edittext", undefined, image.maxExportResolution);
-                maxExportResolutionGroup.add("statictext", undefined, panel.maxExportResolutionTitle);
-              }*/
+              myWindow.optionsGroup.maxResolutionGroup = add("group");
+              with(myWindow.optionsGroup.maxResolutionGroup){
+                maxResolutionGroup.inputMaxRes = maxResolutionGroup.add("edittext", undefined, image.maxResolution);
+                maxResolutionGroup.add("statictext", undefined, panel.maxResolutionTitle);
+              }
               myWindow.optionsGroup.objectExportOptions = add("group");
               with(myWindow.optionsGroup.objectExportOptions){
                 myWindow.optionsGroup.objectExportOptions.checkbox = objectExportOptions.add ("checkbox", undefined, panel.objectExportOptionsTitle);
@@ -227,6 +234,7 @@ function drawWindow(){
         var result = Folder.selectDialog ();
         if (result) {
             myWindow.formPath.inputPath.text = result;
+
         }
     }
     myWindow.buttonGroup.buttonOK.onClick = function(){
@@ -235,6 +243,7 @@ function drawWindow(){
         image.exportDPI = Number(myWindow.qualityGroup.formDensity.inputDPI.text);
         image.exportQuality = selectedRadiobutton(myWindow.qualityGroup.formQuality);
         image.exportFormat = myWindow.optionsGroup.formatGroup.dropdown.selection.text;
+        image.maxResolution = Number(myWindow.optionsGroup.maxResolutionGroup.inputMaxRes.text);
         image.pngTransparency = myWindow.optionsGroup.pngTransparencyGroup.checkbox.value;
         myWindow.close(1);
 
@@ -270,7 +279,8 @@ function getFilelinks(doc){
         // use format override in objectExportOptions if active
         var overrideBool = objectExportOptions.customImageConversion == true && image.objectExportOptions == true;
         var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
-        var localResolution = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
+        var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
+        var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
         var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
         var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
 
@@ -290,7 +300,7 @@ function getFilelinks(doc){
                 pageItem:rectangle,
                 format:localFormat,
                 quality:localQuality,
-                resolution:localResolution,
+                density:normalizedDensity,
                 newFilename:newFilename,
                 newFilepath:File(image.exportDir + "/" + newFilename),
                 customImageConversion:objectExportOptions.customImageConversion,
@@ -322,7 +332,7 @@ function getFilelinks(doc){
         // iterate over files and store to specific location
         for (i = 0; i  < exportLinks.length; i++) {
           var exportFormat = exportLinks[i].format == "PNG" ? ExportFormat.PNG_FORMAT : ExportFormat.JPG;
-          var exportResolution = exportLinks[i].resolution;
+          var exportResolution = exportLinks[i].density;
           var exportQuality = exportLinks[i].quality;
           // JPEG export options
           app.jpegExportPreferences.antiAlias = false;
@@ -424,8 +434,21 @@ function inArray(string, array) {
     return false;
 }
 
-
-
+// get density limit according to maximal resolution value
+function getMaxDensity(density, rectangle, maxResolution) {
+  var bounds = rectangle.geometricBounds;
+  var baseMultiplier = 72;
+  var densityFactor = density / baseMultiplier;
+  var width =  (bounds[3] - bounds[1]);
+  var height = (bounds[2] - bounds[0]);
+  var resolution = width * height * Math.pow(densityFactor, 2);
+  if(resolution > maxResolution) {
+    var maxDensity =  Math.floor(Math.sqrt(maxResolution * Math.pow(densityFactor, 2) / resolution) * baseMultiplier);
+    return maxDensity;
+  } else {
+    return density;
+  }
+}
 
 // get path relative to indesign file location
 function getDefaultExportPath() {
