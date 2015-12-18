@@ -42,6 +42,11 @@
 /*
  * set image export preferences
  */
+
+lang = {
+  pre: 0 // en = 0, de = 1
+}
+
 image = {
     minExportDPI:1,
     maxExportDPI:2400,
@@ -52,29 +57,29 @@ image = {
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
-    pageItemLabel:"letex:fileName"
+    pageItemLabel:"letex:fileName",
 }
 /*
  * set panel preferences
  */
 panel = {
-    title:"export images",
-    exportPathTitle:"Store images to",
-    densityTitle:"Density (ppi)",
-    qualityTitle:"Quality",
-    qualityValues:["max", "high", "medium", "low"],
+    title:["Export Images", "Bilder exportieren"][lang.pre],
+    densityTitle:["Density (ppi)", "Auflösung (ppi)"][lang.pre],
+    qualityTitle:["Quality", "Qualität"][lang.pre],
+    qualityValues:[["max", "high", "medium", "low"], ["Maximum", "Hoch", "Mittel", "Niedrig"]][lang.pre],
     formatTitle:"Format",
     formatValues:["JPG", "PNG"],
-    optionsTitle:"Options",
-    objectExportOptionsTitle:"Object export options",
-    pngTransparencyTitle:"PNG Transparency",
-    maxResolutionTitle:"Max Resolution (px)",
-    selectDirButtonTitle:"Choose",
-    selectDirMenuTitle:"Choose a directory",
-    progressBarTitle:"export Images",
-    noValidLinks:"No valid links found.",
+    optionsTitle:["Options", "Optionen"][lang.pre],
+    objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
+    pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
+    maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
+    selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
+    selectDirMenuTitle:["Choose a directory", "Verzeichnis auswählen"][lang.pre],
+    progressBarTitle:["export Images", "Bilder exportieren"][lang.pre],
+    noValidLinks:["No valid links found.", "Keine Bild-Verknüpfungen gefunden"][lang.pre],
+    finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
     buttonOK:"OK",
-    buttonCancel:"Cancel"
+    buttonCancel:["Cancel", "Abbrechen"][lang.pre]
 }
 
 /*
@@ -147,8 +152,6 @@ function jsExtensions(){
   }
 }
 
-
-
 function exportImages(doc){
     if(drawWindow()){
         getFilelinks(doc);
@@ -162,7 +165,7 @@ function drawWindow(){
         with (myWindow) {
             myWindow.orientation = "column";
             myWindow.alignChildren ="fill";
-            myWindow.formPath = add("panel", undefined, panel.exportPathTitle);
+            myWindow.formPath = add("panel", undefined, panel.selectDirMenuTitle);
             with(myWindow.formPath){
                 myWindow.formPath.alignChildren = "left";
                 myWindow.formPath.inputPath = add("edittext");
@@ -226,8 +229,8 @@ function drawWindow(){
             myWindow.buttonGroup = add( "group");
             with(myWindow.buttonGroup){
                 myWindow.buttonGroup.orientation = "row";
-                myWindow.buttonGroup.buttonOK = add ("button", undefined, "OK");
-                myWindow.buttonGroup.buttonCancel = add ("button", undefined, "Cancel");
+                myWindow.buttonGroup.buttonOK = add ("button", undefined, panel.buttonOK);
+                myWindow.buttonGroup.buttonCancel = add ("button", undefined, panel.buttonCancel );
             }
         }
     myWindow.formPath.buttonChoosePath.onClick  = function () {
@@ -362,7 +365,7 @@ function getFilelinks(doc){
         }
         progressBar.close();
 
-        alert (exportLinks.length  + " images exported.");
+        alert (exportLinks.length  + " " + panel.finishedMessage);
         doc.save();
     }
     else {
