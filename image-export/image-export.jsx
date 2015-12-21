@@ -467,13 +467,18 @@ function getMaxDensity(density, rectangle, maxResolution) {
 function cropRectangleToBleeds (rectangle){
   bounds = rectangle.geometricBounds;
   var page = rectangle.parentPage;
-  // wraps over left page corner
-  if(bounds[1] < page.bounds[1]){
-    rectangle.geometricBounds = [bounds[0], page.bounds[1], bounds[2], bounds[3]];
-  // wraps over right page corner
-  } else if(bounds[3] > page.bounds[3]){
-    rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], page.bounds[3]];
+  // iterate over corners and fit them into page
+  var newBounds = [];
+  for(var i = 0; i <= 3; i++) {
+    if((i == 0 || i == 1 ) && bounds[i] < page.bounds[i]){
+      newBounds[i] = page.bounds[i];
+    } else if((i == 2  || i == 3 ) && bounds[i] > page.bounds[i]){
+      newBounds[i] = page.bounds[i];
+    } else {
+      newBounds[i] = rectangle.geometricBounds[i];
+    }
   }
+  rectangle.geometricBounds = newBounds;
   return rectangle;
 }
 
