@@ -45,7 +45,7 @@
  */
 
 lang = {
-  pre: 1 // en = 0, de = 1
+  pre: 0 // en = 0, de = 1
 }
 
 image = {
