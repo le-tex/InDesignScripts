@@ -29,9 +29,9 @@ Set interface language by changing `lang.pre` to one of the following values
 * `0` English
 * `1` German
 
-For example, changing `lang.pre` to `1` will change the interface language to german.
+For example, setting `lang.pre` to `1` will change the interface language to german.
 
-```
+```javascript
 lang = {
   pre: 0
 }
@@ -47,7 +47,7 @@ lang = {
 * for multiple instances of one image, each instance is exported with a unique filename
 * the new filename is stored in the IDML as ``Label`` of the ``Rectangle`` element
 
-```
+```xml
 <Rectangle>
   <Properties>
     <Label>
