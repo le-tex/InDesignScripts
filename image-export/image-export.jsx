@@ -294,7 +294,8 @@ function getFilelinks(doc){
             var basename = getBasename(link.name);
             // use existing filename label
             if(rectangle.extractLabel(image.pageItemLabel).length > 0){
-              var newFilename = rectangle.extractLabel(image.pageItemLabel);
+              // object export options overwrite previous file extensions
+              var newFilename = getBasename(rectangle.extractLabel(image.pageItemLabel)) + "." + localFormat.toString().toLowerCase();
             // generate new filename if basename exists twice
             }else if(inArray(basename, uniqueBasenames)) {
                 var newFilename = renameFile(basename, localFormat, true);
