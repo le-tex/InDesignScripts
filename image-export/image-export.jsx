@@ -250,6 +250,7 @@ function drawWindow(){
         image.exportQuality = selectedRadiobutton(myWindow.qualityGroup.formQuality);
         image.exportFormat = myWindow.optionsGroup.formatGroup.dropdown.selection.text;
         image.maxResolution = Number(myWindow.optionsGroup.maxResolutionGroup.inputMaxRes.text);
+        image.objectExportOptions = myWindow.optionsGroup.objectExportOptions.checkbox.value;
         image.pngTransparency = myWindow.optionsGroup.pngTransparencyGroup.checkbox.value;
         myWindow.close(1);
 
