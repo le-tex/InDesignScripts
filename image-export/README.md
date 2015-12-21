@@ -29,7 +29,7 @@ Set interface language by changing `lang.pre` to one of the following values
 * `0` English
 * `1` German
 
-For example, `lang.pre` to `1` will change the interface language to german.
+For example, setting `lang.pre` to `1` will change the interface language to german.
 
 ```
 lang = {
