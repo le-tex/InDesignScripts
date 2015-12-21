@@ -79,7 +79,11 @@ panel = {
     noValidLinks:["No valid links found.", "Keine Bild-Verknüpfungen gefunden"][lang.pre],
     finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
     buttonOK:"OK",
-    buttonCancel:["Cancel", "Abbrechen"][lang.pre]
+    buttonCancel:["Cancel", "Abbrechen"][lang.pre],
+    errorPasteboardImage:["Warning! Images on pasteboard will not be exported: ", "Warnung! Bild auf Montagefläche wird nicht exportiert: "][lang.pre],
+    errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
+    errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
+    promptMissingImages:["Some images cannot be exported. Proceed?","Einige Bilder können nicht exportiert werden. Fortfahren?"][lang.pre]
 }
 
 /*
@@ -280,8 +284,7 @@ function getFilelinks(doc){
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
-        var rectangle =  cropRectangleToBleeds(link.parent.parent);
-        //var label = rectangle.label;
+        var rectangle = cropRectangleToBleeds(link.parent.parent);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
         var overrideBool = objectExportOptions.customImageConversion == true && image.objectExportOptions == true;
@@ -329,7 +332,7 @@ function getFilelinks(doc){
         }
     }
     if (missingLinks) {
-        var result = confirm ("Missing Image Links found. Proceed?");
+        var result = confirm (panel.promptMissingImages);
         if (!result) return;
     }
     // create directory
@@ -413,13 +416,17 @@ function createDir (folder) {
 }
 // check if image is missing or embedded
 function isValidLink (link) {
-    switch (link.status) {
-        case LinkStatus.LINK_MISSING:
-            alert('Error: missing image: ' + link.name); return false; break;
-        case LinkStatus.LINK_EMBEDDED:
-            alert('Error: embedded image: ' + link.name); return false; break;
-        default:
-            if(link != null) return true else return false;
+    if(link.parent.parent.parentPage == null) {
+      alert(panel.errorPasteboardImage + link.name); return false;
+    } else {
+      switch (link.status) {
+          case LinkStatus.LINK_MISSING:
+              alert(panel.errorMissingImage + link.name); return false; break;
+          case LinkStatus.LINK_EMBEDDED:
+              alert(panel.errorEmbeddedImage + link.name); return false; break;
+          default:
+              if(link != null) return true else return false;
+      }
     }
 }
 // return filename with new extension and conditionally attach random string
@@ -465,21 +472,25 @@ function getMaxDensity(density, rectangle, maxResolution) {
 }
 
 function cropRectangleToBleeds (rectangle){
-  bounds = rectangle.geometricBounds;
-  var page = rectangle.parentPage;
-  // iterate over corners and fit them into page
-  var newBounds = [];
-  for(var i = 0; i <= 3; i++) {
-    if((i == 0 || i == 1 ) && bounds[i] < page.bounds[i]){
-      newBounds[i] = page.bounds[i];
-    } else if((i == 2  || i == 3 ) && bounds[i] > page.bounds[i]){
-      newBounds[i] = page.bounds[i];
-    } else {
-      newBounds[i] = rectangle.geometricBounds[i];
+  var rect = rectangle;
+  var bounds = rect.geometricBounds;
+  var page = rect.parentPage;
+  // page is null if the object is on the pasteboard
+  if(page != null){
+    // iterate over corners and fit them into page
+    var newBounds = [];
+    for(var i = 0; i <= 3; i++) {
+      if((i == 0 || i == 1 ) && bounds[i] < page.bounds[i]){
+        newBounds[i] = page.bounds[i];
+      } else if((i == 2  || i == 3 ) && bounds[i] > page.bounds[i]){
+        newBounds[i] = page.bounds[i];
+      } else {
+        newBounds[i] = rect.geometricBounds[i];
+      }
     }
+    rect.geometricBounds = newBounds;
   }
-  rectangle.geometricBounds = newBounds;
-  return rectangle;
+  return rect;
 }
 
 // get path relative to indesign file location
