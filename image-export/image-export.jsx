@@ -154,7 +154,10 @@ function jsExtensions(){
 
 function exportImages(doc){
     if(drawWindow()){
-        getFilelinks(doc);
+      // overwrite internal Measurement Units to pixels
+      app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
+      // grab file links and export
+      getFilelinks(doc);
     } else {
         return;
     }
@@ -266,8 +269,6 @@ function drawWindow(){
 
 
 function getFilelinks(doc){
-    // overwrite internal Measurement Units
-    app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
 
     var docLinks = doc.links;
     var uniqueBasenames = [];
@@ -277,7 +278,9 @@ function getFilelinks(doc){
      */
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
-        var rectangle = link.parent.parent;
+        var originalBounds = link.parent.parent.geometricBounds;
+        var rectangle =  cropRectangleToBleeds(link.parent.parent);
+        //var label = rectangle.label;
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
         var overrideBool = objectExportOptions.customImageConversion == true && image.objectExportOptions == true;
@@ -289,7 +292,11 @@ function getFilelinks(doc){
 
         if(isValidLink(link)){
             var basename = getBasename(link.name);
-            if(inArray(basename, uniqueBasenames)) {
+            // use existing filename label
+            if(rectangle.extractLabel(image.pageItemLabel).length > 0){
+              var newFilename = rectangle.extractLabel(image.pageItemLabel);
+            // generate new filename if basename exists twice
+            }else if(inArray(basename, uniqueBasenames)) {
                 var newFilename = renameFile(basename, localFormat, true);
             } else {
                 uniqueBasenames.push(basename);
@@ -307,12 +314,12 @@ function getFilelinks(doc){
                 newFilename:newFilename,
                 newFilepath:File(image.exportDir + "/" + newFilename),
                 customImageConversion:objectExportOptions.customImageConversion,
-                objectExportOptions:objectExportOptions
+                objectExportOptions:objectExportOptions,
+                originalBounds:originalBounds
             }
             /*
              * check for custom object export options
              */
-
             exportLinks.push(linkObject);
 
         } else {
@@ -362,6 +369,8 @@ function getFilelinks(doc){
           exportLinks[i].pageItem.exportFile(exportFormat, exportLinks[i].newFilepath);
           // insert label with new file link for postprocessing
           exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
+          // restore original bounds
+          exportLinks[i].pageItem.geometricBounds = exportLinks[i].originalBounds;
         }
         progressBar.close();
 
@@ -451,6 +460,19 @@ function getMaxDensity(density, rectangle, maxResolution) {
   } else {
     return density;
   }
+}
+
+function cropRectangleToBleeds (rectangle){
+  bounds = rectangle.geometricBounds;
+  var page = rectangle.parentPage;
+  // wraps over left page corner
+  if(bounds[1] < page.bounds[1]){
+    rectangle.geometricBounds = [bounds[0], page.bounds[1], bounds[2], bounds[3]];
+  // wraps over right page corner
+  } else if(bounds[3] > page.bounds[3]){
+    rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], page.bounds[3]];
+  }
+  return rectangle;
 }
 
 // get path relative to indesign file location
