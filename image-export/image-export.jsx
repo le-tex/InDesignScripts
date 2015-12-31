@@ -83,7 +83,8 @@ panel = {
     errorPasteboardImage:["Warning! Images on pasteboard will not be exported: ", "Warnung! Bild auf Montagefläche wird nicht exportiert: "][lang.pre],
     errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
     errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
-    promptMissingImages:["images cannot be exported. Proceed?","Bilder können nicht exportiert werden. Fortfahren?"][lang.pre]
+    promptMissingImages:["images cannot be exported. Proceed?","Bilder können nicht exportiert werden. Fortfahren?"][lang.pre],
+    lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre]
 }
 
 /*
@@ -286,6 +287,7 @@ function getFilelinks(doc){
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
+	if(link.parent.parent.itemLayer.locked == true) alert(panel.lockedLayerWarning);
         var rectangle = cropRectangleToBleeds(link.parent.parent);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active

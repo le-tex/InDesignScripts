@@ -15,7 +15,7 @@ A script for Adobe InDesign to export images to web-friendly formats.
 
 ## Features
 
-* adjusted size, bleed, transparency and orientation settings are applied and automatically exported
+* adjusted size, bleed, transparency and orientation settings are applied and automatically exported (please note that this works not with locked layers)
 * for multiple linked images, every instance is stored as separate image with a unique name and its settings
 * select output directory, compression ratio, density and choose between JPG and PNG format
 * support InDesign object export options
