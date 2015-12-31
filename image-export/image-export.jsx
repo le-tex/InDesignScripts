@@ -83,7 +83,7 @@ panel = {
     errorPasteboardImage:["Warning! Images on pasteboard will not be exported: ", "Warnung! Bild auf Montagefläche wird nicht exportiert: "][lang.pre],
     errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
     errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
-    promptMissingImages:["Some images cannot be exported. Proceed?","Einige Bilder können nicht exportiert werden. Fortfahren?"][lang.pre]
+    promptMissingImages:["images cannot be exported. Proceed?","Bilder können nicht exportiert werden. Fortfahren?"][lang.pre]
 }
 
 /*
@@ -277,7 +277,9 @@ function getFilelinks(doc){
 
     var docLinks = doc.links;
     var uniqueBasenames = [];
-    var exportLinks = []
+    var exportLinks = [];
+    var missingLinks = [];
+    
     /*
      * rename files if a basename exists twice
      */
@@ -328,11 +330,11 @@ function getFilelinks(doc){
             exportLinks.push(linkObject);
 
         } else {
-            var missingLinks = true;
+	  missingLinks.push(link.name);
         }
     }
-    if (missingLinks) {
-        var result = confirm (panel.promptMissingImages);
+    if (missingLinks.length > 0) {
+        var result = confirm (missingLinks.length + " " + panel.promptMissingImages);
         if (!result) return;
     }
     // create directory
@@ -417,13 +419,13 @@ function createDir (folder) {
 // check if image is missing or embedded
 function isValidLink (link) {
     if(link.parent.parent.parentPage == null) {
-      alert(panel.errorPasteboardImage + link.name); return false;
+      return false;
     } else {
       switch (link.status) {
           case LinkStatus.LINK_MISSING:
-              alert(panel.errorMissingImage + link.name); return false; break;
+              return false; break;
           case LinkStatus.LINK_EMBEDDED:
-              alert(panel.errorEmbeddedImage + link.name); return false; break;
+              return false; break;
           default:
               if(link != null) return true else return false;
       }
