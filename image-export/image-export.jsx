@@ -280,7 +280,7 @@ function getFilelinks(doc){
     var uniqueBasenames = [];
     var exportLinks = [];
     var missingLinks = [];
-    
+
     /*
      * rename files if a basename exists twice
      */
@@ -480,6 +480,8 @@ function cropRectangleToBleeds (rectangle){
   var bounds = rect.geometricBounds;
   var page = rect.parentPage;
   // page is null if the object is on the pasteboard
+  var rulerOrigin = document.viewPreferences.rulerOrigin;
+  document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
   if(page != null){
     // iterate over corners and fit them into page
     var newBounds = [];
@@ -494,6 +496,7 @@ function cropRectangleToBleeds (rectangle){
     }
     rect.geometricBounds = newBounds;
   }
+  document.viewPreferences.rulerOrigin =  rulerOrigin;
   return rect;
 }
 
