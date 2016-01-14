@@ -476,12 +476,13 @@ function getMaxDensity(density, rectangle, maxResolution) {
 }
 
 function cropRectangleToBleeds (rectangle){
+  document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
   var rect = rectangle;
   var bounds = rect.geometricBounds;
   var page = rect.parentPage;
   // page is null if the object is on the pasteboard
   var rulerOrigin = document.viewPreferences.rulerOrigin;
-  document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
+
   if(page != null){
     // iterate over corners and fit them into page
     var newBounds = [];
