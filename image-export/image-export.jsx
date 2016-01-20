@@ -54,6 +54,7 @@ image = {
     maxResolution:4000000,
     pngTransparency:true,
     objectExportOptions:true,
+    overrideExportFilenames:false,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
@@ -71,6 +72,7 @@ panel = {
     formatValues:["JPG", "PNG"],
     optionsTitle:["Options", "Optionen"][lang.pre],
     objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
+    overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
     maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
     selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
@@ -223,6 +225,11 @@ function drawWindow(){
                 myWindow.optionsGroup.objectExportOptions.checkbox = objectExportOptions.add ("checkbox", undefined, panel.objectExportOptionsTitle);
                 myWindow.optionsGroup.objectExportOptions.checkbox.value = image.objectExportOptions;
               }
+              myWindow.optionsGroup.overrideExportFilenames = add("group");
+              with(myWindow.optionsGroup.overrideExportFilenames){
+                myWindow.optionsGroup.overrideExportFilenames.checkbox = overrideExportFilenames.add ("checkbox", undefined, panel.overrideExportFilenamesTitle);
+                myWindow.optionsGroup.overrideExportFilenames.checkbox.value = image.overrideExportFilenames;
+              }
               myWindow.optionsGroup.pngTransparencyGroup = add("group");
               with(myWindow.optionsGroup.pngTransparencyGroup){
                 myWindow.optionsGroup.pngTransparencyGroup.checkbox = pngTransparencyGroup.add ("checkbox", undefined, panel.pngTransparencyTitle);
@@ -256,6 +263,7 @@ function drawWindow(){
         image.exportFormat = myWindow.optionsGroup.formatGroup.dropdown.selection.text;
         image.maxResolution = Number(myWindow.optionsGroup.maxResolutionGroup.inputMaxRes.text);
         image.objectExportOptions = myWindow.optionsGroup.objectExportOptions.checkbox.value;
+        image.overrideExportFilenames = myWindow.optionsGroup.overrideExportFilenames.checkbox.value;
         image.pngTransparency = myWindow.optionsGroup.pngTransparencyGroup.checkbox.value;
         myWindow.close(1);
 
@@ -284,10 +292,10 @@ function getFilelinks(doc){
     /*
      * rename files if a basename exists twice
      */
-    for (var i = 0; i < docLinks.length; i++) {
+        for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
-	if(link.parent.parent.itemLayer.locked == true) alert(panel.lockedLayerWarning);
+	      if(link.parent.parent.itemLayer.locked == true) alert(panel.lockedLayerWarning);
         var rectangle = cropRectangleToBleeds(link.parent.parent);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
@@ -297,20 +305,31 @@ function getFilelinks(doc){
         var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
         var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
         var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
+        var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
+        var filenameLabelExists = filenameLabel.length > 0;
 
+        alert(image.overrideExportFilenames);
         if(isValidLink(link)){
             var basename = getBasename(link.name);
-            // use existing filename label
-            if(rectangle.extractLabel(image.pageItemLabel).length > 0){
-              // object export options overwrite previous file extensions
-              var newFilename = getBasename(rectangle.extractLabel(image.pageItemLabel)) + "." + localFormat.toString().toLowerCase();
             // generate new filename if basename exists twice
-            }else if(inArray(basename, uniqueBasenames)) {
-                var newFilename = renameFile(basename, localFormat, true);
-            } else {
-                uniqueBasenames.push(basename);
-                var newFilename = renameFile(basename, localFormat, false);
-            }
+              if(filenameLabelExists && image.overrideExportFilenames == false){
+                // object export options overwrite previous file extensions
+                if(inArray(getBasename(filenameLabel), uniqueBasenames)){
+                  var newFilename = renameFile(getBasename(filenameLabel), localFormat, true);
+                } else {
+                  var newFilename = renameFile(getBasename(filenameLabel), localFormat, false);
+                  //var newFilename = getBasename(filenameLabel) + "." + localFormat.toString().toLowerCase();
+                }
+              } else {
+                // generate new export filename
+                if(inArray(basename, uniqueBasenames)){
+                  var newFilename = renameFile(basename, localFormat, true);
+                } else {
+                  var newFilename = renameFile(basename, localFormat, false);
+                }
+              }
+              uniqueBasenames.push(getBasename(newFilename));
+
             /*
              * construct link object
              */
