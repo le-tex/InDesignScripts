@@ -308,7 +308,6 @@ function getFilelinks(doc){
         var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
         var filenameLabelExists = filenameLabel.length > 0;
 
-        alert(image.overrideExportFilenames);
         if(isValidLink(link)){
             var basename = getBasename(link.name);
             // generate new filename if basename exists twice
