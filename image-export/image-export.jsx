@@ -299,8 +299,9 @@ function getFilelinks(doc){
         var rectangle = cropRectangleToBleeds(link.parent.parent);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
-        var overrideBool = objectExportOptions.customImageConversion == true && image.objectExportOptions == true;
+        var overrideBool = image.objectExportOptions == true;
         var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
+        var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
         var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
         var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
         var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
@@ -340,7 +341,6 @@ function getFilelinks(doc){
                 density:normalizedDensity,
                 newFilename:newFilename,
                 newFilepath:File(image.exportDir + "/" + newFilename),
-                customImageConversion:objectExportOptions.customImageConversion,
                 objectExportOptions:objectExportOptions,
                 originalBounds:originalBounds
             }
