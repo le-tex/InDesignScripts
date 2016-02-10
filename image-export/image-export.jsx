@@ -496,21 +496,25 @@ function getMaxDensity(density, rectangle, maxResolution) {
 function cropRectangleToBleeds (rectangle){
   document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
   var rect = rectangle;
-  var bounds = rect.geometricBounds;
+  var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rect.parentPage;
   // page is null if the object is on the pasteboard
   var rulerOrigin = document.viewPreferences.rulerOrigin;
-
   if(page != null){
     // iterate over corners and fit them into page
     var newBounds = [];
     for(var i = 0; i <= 3; i++) {
-      if((i == 0 || i == 1 ) && bounds[i] < page.bounds[i]){
+      // fit top and bottom edge to page
+      if((i == 0 && bounds[i] < page.bounds[i]) || (i == 2 && bounds[i] > page.bounds[i])){
         newBounds[i] = page.bounds[i];
-      } else if((i == 2  || i == 3 ) && bounds[i] > page.bounds[i]){
+      // left edge, do not crop images which touch the spine
+      } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
+        newBounds[i] = page.bounds[i];
+      // right edge
+      } else if(i == 3 && bounds[i] > page.bounds[i] && page.side.toString() != "LEFT_HAND"){
         newBounds[i] = page.bounds[i];
       } else {
-        newBounds[i] = rect.geometricBounds[i];
+        newBounds[i] = bounds[i];
       }
     }
     rect.geometricBounds = newBounds;
