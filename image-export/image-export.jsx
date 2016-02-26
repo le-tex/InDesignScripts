@@ -294,11 +294,13 @@ function getFilelinks(doc){
      */
         for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
-	      if(link.parent.parent.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-        var originalBounds = link.parent.parent.geometricBounds;
+        var rectangle = link.parent.parent;
+	      if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
+        var originalBounds = rectangle.geometricBounds;
         // this is necessary to avoid moving of anchored objects with Y-Offset
-        originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(link.parent.parent)[0];
-        var rectangle = cropRectangleToBleeds(link.parent.parent);
+        originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0];
+        originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0];
+        rectangle = cropRectangleToBleeds(rectangle);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
         var overrideBool = image.objectExportOptions == true;
@@ -500,7 +502,6 @@ function cropRectangleToBleeds (rectangle){
   var rect = rectangle;
   var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rect.parentPage;
-  var anchorYoffset = getAnchoredObjectOffset(rect)[0];
   // page is null if the object is on the pasteboard
   var rulerOrigin = document.viewPreferences.rulerOrigin;
   if(page != null){
@@ -509,7 +510,7 @@ function cropRectangleToBleeds (rectangle){
     for(var i = 0; i <= 3; i++) {
       // y1
       if(i == 0 && bounds[i] < page.bounds[i]){
-        newBounds[i] = page.bounds[i] - anchorYoffset;
+        newBounds[i] = page.bounds[i];
       // x1
       } else if(i == 2 && bounds[i] > page.bounds[i]){
         newBounds[i] = page.bounds[i];
