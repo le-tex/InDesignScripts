@@ -294,8 +294,10 @@ function getFilelinks(doc){
      */
         for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
-        var originalBounds = link.parent.parent.geometricBounds;
 	      if(link.parent.parent.itemLayer.locked == true) alert(panel.lockedLayerWarning);
+        var originalBounds = link.parent.parent.geometricBounds;
+        // this is necessary to avoid moving of anchored objects with Y-Offset
+        originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(link.parent.parent)[0];
         var rectangle = cropRectangleToBleeds(link.parent.parent);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
@@ -498,14 +500,18 @@ function cropRectangleToBleeds (rectangle){
   var rect = rectangle;
   var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rect.parentPage;
+  var anchorYoffset = getAnchoredObjectOffset(rect)[0];
   // page is null if the object is on the pasteboard
   var rulerOrigin = document.viewPreferences.rulerOrigin;
   if(page != null){
     // iterate over corners and fit them into page
     var newBounds = [];
     for(var i = 0; i <= 3; i++) {
-      // fit top and bottom edge to page
-      if((i == 0 && bounds[i] < page.bounds[i]) || (i == 2 && bounds[i] > page.bounds[i])){
+      // y1
+      if(i == 0 && bounds[i] < page.bounds[i]){
+        newBounds[i] = page.bounds[i] - anchorYoffset;
+      // x1
+      } else if(i == 2 && bounds[i] > page.bounds[i]){
         newBounds[i] = page.bounds[i];
       // left edge, do not crop images which touch the spine
       } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
@@ -517,10 +523,21 @@ function cropRectangleToBleeds (rectangle){
         newBounds[i] = bounds[i];
       }
     }
+    // restore old bounds
     rect.geometricBounds = newBounds;
   }
   document.viewPreferences.rulerOrigin =  rulerOrigin;
   return rect;
+}
+
+function getAnchoredObjectOffset (obj){
+  if(obj.parent.constructor === Character){
+    anchorYoffset = obj.anchoredObjectSettings.anchorYoffset;
+    anchorXoffset = obj.anchoredObjectSettings.anchorXoffset;
+    return [anchorYoffset, anchorXoffset];
+  }else{
+    return [0, 0];
+  }
 }
 
 // get path relative to indesign file location
