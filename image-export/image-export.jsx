@@ -298,8 +298,11 @@ function getFilelinks(doc){
 	      if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
         var originalBounds = rectangle.geometricBounds;
         // this is necessary to avoid moving of anchored objects with Y-Offset
-        originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0];
-        originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0];
+        var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
+        if(imageExceedsPageY){
+          originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0]; //y1
+          originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0]; //y2
+        }
         rectangle = cropRectangleToBleeds(rectangle);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
