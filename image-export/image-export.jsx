@@ -306,7 +306,7 @@ function getFilelinks(doc){
         rectangle = cropRectangleToBleeds(rectangle);
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active
-        var overrideBool = image.objectExportOptions == true;
+        var overrideBool = image.objectExportOptions == true && objectExportOptions.customImageConversion == true;
         var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
         var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
         var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
