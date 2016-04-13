@@ -8,8 +8,8 @@
 // modified by: maqui |  16:59 28.02.2013 (Löschen der Bedingungstexte ohne Einblenden --> Formatierung bleibt 1:1 erhalten)
 // modified by: maqui |  16:40 16.06.2014 Alle Textabschnitte erhalten die Seitenzahl-Infos
 // modified by: maqui |  11:00 21.05.2015 Debug (bedingten Text "PageStart" und "PageEnd" löschen, auch wenn er sichtbar ist)
-// modified by: gimsieke |  2015-06-07 Add 'CellPage_XY' to table cells 
-// 
+// modified by: gimsieke |  2015-06-07 Add 'CellPage_XY' to table cells
+//
 // Trägt in jedem Textrahmen (bei jedem Seitenwechsel) den Seitenbeginn bzw. das Seitenende als bedingten Text mit der jeweiligen Seitenzahl ein.
 //
 //
@@ -32,12 +32,12 @@ function main(){
 
 		// Bedingungen definieren
 		var myStartCond = newCondition(myDoc, myPageStartTag);
-    myStartCond.indicatorMethod = ConditionIndicatorMethod.USE_HIGHLIGHT; 
+    myStartCond.indicatorMethod = ConditionIndicatorMethod.USE_HIGHLIGHT;
     myStartCond.indicatorColor = UIColors.GOLD;
     var myEndCond = newCondition(myDoc, myPageEndTag); // ==>
     myEndCond.indicatorMethod = ConditionIndicatorMethod.USE_HIGHLIGHT;
     myEndCond.indicatorColor = UIColors.LAVENDER;
-		
+
 		// Sets definieren
 		if(checkConditionSet(myDoc, myCondSetOnName)) myDoc.conditionSets.item(myCondSetOnName).remove();
 		if(checkConditionSet(myDoc, myCondSetOffName)) myDoc.conditionSets.item(myCondSetOffName).remove();
@@ -49,7 +49,7 @@ function main(){
 		myCondSetOn.redefine();
 		myDoc.conditionalTextPreferences.properties = {activeConditionSet:myCondSetOff};
 		myCondSetOff.redefine();
-		
+
 		// Farben für bedingten Text (als Orientierungshilfe)
 		/*if (checkSwatch(myDoc, myStartSwatchName) == false) myDoc.colors.add({name:myStartSwatchName, colorValue:[0,0,255], model:ColorModel.PROCESS, space:ColorSpace.RGB});
 		if (checkSwatch(myDoc, myEndSwatchName) == false) myDoc.colors.add({name:myEndSwatchName, colorValue:[255,0,0], model:ColorModel.PROCESS, space:ColorSpace.RGB});
@@ -60,21 +60,22 @@ function main(){
 		for (var i = 0; i < myDoc.stories.length; i++) {
 			var myStory = myDoc.stories[i];
 			var myMasterSpreadFlag = true;
-			for (var j = 0; j < myStory.textContainers.length; j++) {
-				var myTestFrame = myStory.textContainers[j];
-				// Wenn ein Textrahmen nicht auf der Montagefläche ...
+			for (var j = 0; j < myStory.textFrames.length; j++) {
+				var myTestFrame = myStory.textFrames[j];
+
+        // Wenn ein Textrahmen nicht auf der Montagefläche ...
 				if(myTestFrame.parentPage != null) {
 					// ... überprüfen, ob auf Musterseite
-					if(myTestFrame.parentPage.parent.constructor.name != "MasterSpread" && myStory.textContainers.length > 0) {
+					if(myTestFrame.parentPage.parent.constructor.name != "MasterSpread" && myStory.textFrames.length > 0) {
 						myMasterSpreadFlag = false;
 						break;
 					}
 				}
 			}
 			// Wenn Textabschnitt sich nicht auf einer Musterseite befindet, ...
-			if(!myMasterSpreadFlag && myStory.textContainers.length > 0) {
+			if(!myMasterSpreadFlag && myStory.textFrames.length > 0) {
 				// Alle Textrahmen vom Textabschnitt durchlaufen ...
-				var myFrame = myStory.textContainers[myStory.textContainers.length - 1];
+				var myFrame = myStory.textFrames[myStory.textFrames.length - 1];
 				var myOldPage = false; // wenn nicht als "false" definiert, ist myOldPage letzter "Page"-Wert???????????????????????
 				var myOldFirstIP = false;
 				while (myFrame != null) {
@@ -86,7 +87,7 @@ function main(){
 						if(myPage != myOldPage) {
 							var myLastContent = myPageEndTag + "_" + myPage.name;
 							if(myOldFirstIP) {
-								//var myLastIP = myOldFirstIP.parentStory.insertionPoints.previousItem(myOldFirstIP); 
+								//var myLastIP = myOldFirstIP.parentStory.insertionPoints.previousItem(myOldFirstIP);
 								var myLastIP = myOldFirstIP.parentStory.insertionPoints[myOldID - 1];
 								//var myLastID = myLastIP.parentStory.insertionPoints.itemByRange(0, myLastIP.index).insertionPoints.length;
 								//alert(myOldID + "\n" + myLastID);
@@ -119,8 +120,8 @@ function main(){
 					var myFrame = myFrame.previousTextFrame;
 				}
 			}
-			
-      // Process all table cells in the story since they won't be included in the frame iteration: 
+
+      // Process all table cells in the story since they won't be included in the frame iteration:
       if(!myMasterSpreadFlag && myStory.tables.length > 0) {
         for (var t = 0; t < myStory.tables.length; t++) {
           for (var c = 0; c < myStory.tables[t].cells.length; c++) {
@@ -174,35 +175,35 @@ function newCondition(myDoc, myCondName) {
 		myCond.visible = false;
 		// Text mit dieser Bedingung löschen ...
 		try {
-			var myHiddenText1 = myDoc.stories.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
+			var myHiddenText1 = myDoc.stories.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements();
 		}
 		catch(e) {}
 		if(myHiddenText1 != null){
-			for (var i = myHiddenText1.length-1; i >= 0; i--) { 
-				// Prüfung: versteckter Text hat mindestens eine Bedingung zugewiesen 
-				if (myHiddenText1[i].appliedConditions.length > 0) { 
-					for (var x = myHiddenText1[i].appliedConditions.length-1; x >= 0; x--) { 
-						// Prüfung der dem versteckten zugewiesenen Bedingung 
+			for (var i = myHiddenText1.length-1; i >= 0; i--) {
+				// Prüfung: versteckter Text hat mindestens eine Bedingung zugewiesen
+				if (myHiddenText1[i].appliedConditions.length > 0) {
+					for (var x = myHiddenText1[i].appliedConditions.length-1; x >= 0; x--) {
+						// Prüfung der dem versteckten zugewiesenen Bedingung
 						if (myHiddenText1[i].appliedConditions[x].name == myCondName) {
 	//alert(myHiddenText1[i].texts[0].contents);
-							myHiddenText1[i].remove(); 
+							myHiddenText1[i].remove();
 						}
 					}
 				}
 			}
 	  }
-	  // How do I treat story hiddentext and cell hiddentext in a single pass? I.e., how can 
+	  // How do I treat story hiddentext and cell hiddentext in a single pass? I.e., how can
     // I merge the two lists? concat() did not work.
     try {
-			var myHiddenText = myDoc.stories.everyItem().tables.everyItem().cells.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements(); 
+			var myHiddenText = myDoc.stories.everyItem().tables.everyItem().cells.everyItem().hiddenTexts.everyItem().texts.everyItem().getElements();
 		}
 		catch(e) {}
 		if(myHiddenText != null){
-			for (var i = myHiddenText.length-1; i >= 0; i--) { 
-				if (myHiddenText[i].appliedConditions.length > 0) { 
-					for (var x = myHiddenText[i].appliedConditions.length-1; x >= 0; x--) { 
+			for (var i = myHiddenText.length-1; i >= 0; i--) {
+				if (myHiddenText[i].appliedConditions.length > 0) {
+					for (var x = myHiddenText[i].appliedConditions.length-1; x >= 0; x--) {
 						if (myHiddenText[i].appliedConditions[x].name == myCondName) {
-							myHiddenText[i].remove(); 
+							myHiddenText[i].remove();
 						}
 					}
 				}
@@ -221,8 +222,8 @@ function checkCondition(myDoc, myConditionName) {
 		myCond.name;
 		return true;
 	}
-	catch(e) { 
-		return false; 
+	catch(e) {
+		return false;
 	}
 }
 
@@ -233,8 +234,8 @@ function checkConditionSet(myDoc, myConditionSetName) {
 		//alert(myConditionSetName + " gibt's schon!");
 		return true;
 	}
-	catch(e) { 
-		return false; 
+	catch(e) {
+		return false;
 	}
 }
 
@@ -245,6 +246,6 @@ function checkSwatch(myDoc, mySwatchName) {
 		return true;
 	}
 	catch(e) {
-		return false; 
+		return false;
 	}
 }
