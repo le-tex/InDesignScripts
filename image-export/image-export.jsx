@@ -223,7 +223,17 @@ function drawWindow(){
               myWindow.optionsGroup.objectExportOptions = add("group");
               with(myWindow.optionsGroup.objectExportOptions){
                 myWindow.optionsGroup.objectExportOptions.checkbox = objectExportOptions.add ("checkbox", undefined, panel.objectExportOptionsTitle);
-                myWindow.optionsGroup.objectExportOptions.checkbox.value = image.objectExportOptions;
+                /* with InDesign ExtendScript API 11.0, there is no property customImageConversiona anymore
+                   so it's not possible to check whether exportOptions are set or not */
+                if(parseFloat(app.version) < 11){
+                  myWindow.optionsGroup.objectExportOptions.checkbox.value = image.objectExportOptions;
+                }else{
+                  myWindow.optionsGroup.objectExportOptions.checkbox.value = false;
+                  myWindow.optionsGroup.objectExportOptions.checkbox.enabled = false;
+                }
+
+				
+				
               }
               myWindow.optionsGroup.overrideExportFilenames = add("group");
               with(myWindow.optionsGroup.overrideExportFilenames){
