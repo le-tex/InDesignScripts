@@ -62,9 +62,8 @@ function main(){
 			var myMasterSpreadFlag = true;
 			for (var j = 0; j < myStory.textContainers.length; j++) {
 				var myTestFrame = myStory.textContainers[j];
-
-        // Wenn ein Textrahmen nicht auf der Montagefläche ...
-				if(myTestFrame.parentPage != null) {
+				// Wenn ein Textrahmen nicht auf der Montagefläche ...
+				if(myTestFrame.hasOwnProperty("parentPage") && myTestFrame.parentPage != null) {
 					// ... überprüfen, ob auf Musterseite
 					if(myTestFrame.parentPage.parent.constructor.name != "MasterSpread" && myStory.textContainers.length > 0) {
 						myMasterSpreadFlag = false;
@@ -75,7 +74,7 @@ function main(){
 			// Wenn Textabschnitt sich nicht auf einer Musterseite befindet, ...
 			if(!myMasterSpreadFlag && myStory.textContainers.length > 0) {
 				// Alle Textrahmen vom Textabschnitt durchlaufen ...
-				var myFrame = myStory.textFrames[myStory.textContainers.length - 1];
+				var myFrame = myStory.textContainers[myStory.textContainers.length - 1];
 				var myOldPage = false; // wenn nicht als "false" definiert, ist myOldPage letzter "Page"-Wert???????????????????????
 				var myOldFirstIP = false;
 				while (myFrame != null) {
