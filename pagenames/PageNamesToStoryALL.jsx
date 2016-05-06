@@ -60,22 +60,22 @@ function main(){
 		for (var i = 0; i < myDoc.stories.length; i++) {
 			var myStory = myDoc.stories[i];
 			var myMasterSpreadFlag = true;
-			for (var j = 0; j < myStory.textFrames.length; j++) {
-				var myTestFrame = myStory.textFrames[j];
+			for (var j = 0; j < myStory.textContainers.length; j++) {
+				var myTestFrame = myStory.textContainers[j];
 
         // Wenn ein Textrahmen nicht auf der Montagefläche ...
 				if(myTestFrame.parentPage != null) {
 					// ... überprüfen, ob auf Musterseite
-					if(myTestFrame.parentPage.parent.constructor.name != "MasterSpread" && myStory.textFrames.length > 0) {
+					if(myTestFrame.parentPage.parent.constructor.name != "MasterSpread" && myStory.textContainers.length > 0) {
 						myMasterSpreadFlag = false;
 						break;
 					}
 				}
 			}
 			// Wenn Textabschnitt sich nicht auf einer Musterseite befindet, ...
-			if(!myMasterSpreadFlag && myStory.textFrames.length > 0) {
+			if(!myMasterSpreadFlag && myStory.textContainers.length > 0) {
 				// Alle Textrahmen vom Textabschnitt durchlaufen ...
-				var myFrame = myStory.textFrames[myStory.textFrames.length - 1];
+				var myFrame = myStory.textFrames[myStory.textContainers.length - 1];
 				var myOldPage = false; // wenn nicht als "false" definiert, ist myOldPage letzter "Page"-Wert???????????????????????
 				var myOldFirstIP = false;
 				while (myFrame != null) {
