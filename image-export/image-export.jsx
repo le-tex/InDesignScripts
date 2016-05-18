@@ -223,18 +223,8 @@ function drawWindow(){
               myWindow.optionsGroup.objectExportOptions = add("group");
               with(myWindow.optionsGroup.objectExportOptions){
                 myWindow.optionsGroup.objectExportOptions.checkbox = objectExportOptions.add ("checkbox", undefined, panel.objectExportOptionsTitle);
-                /* with InDesign ExtendScript API 11.0, there is no property customImageConversiona anymore
-                   so it's not possible to check whether exportOptions are set or not */
-                if(parseFloat(app.version) < 11){
-                  myWindow.optionsGroup.objectExportOptions.checkbox.value = image.objectExportOptions;
-                }else{
-                  myWindow.optionsGroup.objectExportOptions.checkbox.value = false;
-                  myWindow.optionsGroup.objectExportOptions.checkbox.enabled = false;
+		  myWindow.optionsGroup.objectExportOptions.checkbox.value = image.objectExportOptions;
                 }
-
-				
-				
-              }
               myWindow.optionsGroup.overrideExportFilenames = add("group");
               with(myWindow.optionsGroup.overrideExportFilenames){
                 myWindow.optionsGroup.overrideExportFilenames.checkbox = overrideExportFilenames.add ("checkbox", undefined, panel.overrideExportFilenamesTitle);
@@ -315,8 +305,11 @@ function getFilelinks(doc){
         }
         rectangle = cropRectangleToBleeds(rectangle);
         var objectExportOptions = rectangle.objectExportOptions;
-        // use format override in objectExportOptions if active
-        var overrideBool = image.objectExportOptions == true && objectExportOptions.customImageConversion == true;
+        // use format override in objectExportOptions if active. Unfortunately the property changed from API version 10 to 11
+	var customImageConversion = (parseFloat(app.version) < 11) ? objectExportOptions.customImageConversion : 
+	    objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT || 
+	    objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
+	var overrideBool = image.objectExportOptions && customImageConversion;
         var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
         var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
         var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;

@@ -40,7 +40,6 @@ lang = {
 ## Limitations
 
 * Embedded images are not exported. Consider to convert embedded images to linked images instead.
-* Object export options are disabled for InDesign versions since 11.0. Adobe removed some properties from the API, which are needed to check whether a custom image conversion is applied to an object or not.
 
 ## IDML
 
