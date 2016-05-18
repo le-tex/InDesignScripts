@@ -295,6 +295,8 @@ function getFilelinks(doc){
         for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         var rectangle = link.parent.parent;
+		if(rectangle.parentPage != null){
+		
 	      if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
         var originalBounds = rectangle.geometricBounds;
         // this is necessary to avoid moving of anchored objects with Y-Offset
@@ -362,6 +364,7 @@ function getFilelinks(doc){
         } else {
 	  missingLinks.push(link.name);
         }
+	  }
     }
     if (missingLinks.length > 0) {
         var result = confirm (missingLinks.length + " " + panel.promptMissingImages);
