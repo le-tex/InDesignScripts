@@ -305,8 +305,8 @@ function getFilelinks(doc){
       }
       rectangle = cropRectangleToBleeds(rectangle);
       var objectExportOptions = rectangle.objectExportOptions;
-      // use format override in objectExportOptions if active. Unfortunately the property changed from API version 10 to 11
-      var customImageConversion = (parseFloat(app.version) < 11) ? objectExportOptions.customImageConversion :
+      // use format override in objectExportOptions if active. Check InDesign version because the property changed.
+      var customImageConversion = (parseFloat(app.version) < 10) ? objectExportOptions.customImageConversion :
         objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT ||
         objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
       var overrideBool = image.objectExportOptions && customImageConversion;
