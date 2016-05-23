@@ -7,6 +7,7 @@
 
 //version 1.1
 //modified 2015-08-31: create backlinks
+//modified 2016-05-23: exactly match style names + specified conditions to process paras
 
 /*
  *
@@ -219,8 +220,9 @@ function checkSelection(options){
 
 function run(options){
     // collect styles with identical base name (without tilde)
-    options.endnoteParaStylePattern = eval("/^" + options.endnoteParaStyleName + "/g");
-    options.chapterStylePattern = eval("/^" + options.chapterStyleName + "/g");
+    options.endnoteParaStylePattern = eval("/^" + options.endnoteParaStyleName + "(~.+)?$/g");
+    options.chapterStylePattern = eval("/^" + options.chapterStyleName + "(~.+)?$/g");
+    options.endnoteTitleStylePattern = eval("/^" + options.endnoteTitleStyleName + "(~.+)?$/g");
     
     // progress bar
     var msgTitle = {de:"Schritt 1/2: Find and create link destinations"};
@@ -240,36 +242,36 @@ function run(options){
         for (var k = 0; k < story.paragraphs.length; k++){
             var para = story.paragraphs[k];
         
-        
-            if(para.appliedParagraphStyle.name.match(options.endnoteParaStylePattern)){
-            
-                if(para.appliedParagraphStyle.name.match(options.endnoteTitleStyleName) && para.contents.match(/\S/g)){
+                if(para.appliedParagraphStyle.name.match(options.endnoteTitleStylePattern) && para.contents.match(/\S/g)){
                 // Whitespace und Umbruchzeichen entfernen (000A = harter Umbruch, 00AD = bedingter Zeilenumbruch, 200B = bedingter Zeilenumbruch ohne Trennstrich, FEFF = Tagklammern)            
                 var endnotesTitle = para.contents.replace(/\s|[\u000A\u00AD\u200B\uFEFF]/g, "");
                 var endnotesTitleForProgress = para.contents.replace(/[\u000A\u00AD\u200B\uFEFF]/g, "");
+                //alert("endnotesTitle: " + endnotesTitle);
             }
                 
-                //alert("endnotesTitle: " + endnotesTitle);
-                if(endnotesTitle){
+                
+                if(para.appliedParagraphStyle.name.match(options.endnoteParaStylePattern) && endnotesTitle){
                     endnoteNrDestArray = findLinkdestinations(para, options.endnoteNumberStyleName, options.endnotePrefixLabel, "a", endnoteNrDestArray, endnotesTitle);
                     progress.bar.value++;
                     progress.file.text = endnotesTitleForProgress;
-                }
-            }
+                }            
         
-        else {
+       
                  if(para.appliedParagraphStyle.name.match(options.chapterStylePattern) && para.contents.match(/\S/g)){
                      var chapterTitle = para.contents.replace(/\s|[\u000A\u00AD\u200B\uFEFF]/g, ""); 
                      var chapterTitleForProgress = para.contents.replace(/[\u000A\u00AD\u200B\uFEFF]/g, "");
-                  }
-                
-                //alert("chapterTitle: " + chapterTitle);
-                if(chapterTitle){
+                  }                
+               
+                if(!para.appliedParagraphStyle.name.match(options.chapterStylePattern) && 
+                    !para.appliedParagraphStyle.name.match(options.endnoteParaStylePattern) && 
+                    !para.appliedParagraphStyle.name.match(options.endnoteTitleStylePattern) && 
+                    chapterTitle && para.contents.match(/\S/g)){
+                    //alert("Kapiteltitel: " + chapterTitle);
                     endnoteRefDestArray = findLinkdestinations(para, options.endnoteRefStyleName, options.endnotePrefixLabel, "b", endnoteRefDestArray, chapterTitle);
                     progress.bar.value++;
                     progress.file.text = chapterTitleForProgress;
                 }            
-         }
+         
        }
     }
    progress.close();
@@ -293,36 +295,36 @@ function run(options){
         for (var k = 0; k < story.paragraphs.length; k++){
             var para = story.paragraphs[k];
             
-            if (!para.appliedParagraphStyle.name.match(options.endnoteParaStylePattern) ){
+            
                 if(para.appliedParagraphStyle.name.match(options.chapterStylePattern) && para.contents.match(/\S/g)){
                         var chapterTitle = para.contents.replace(/\s|[\u000A\u00AD\u200B\uFEFF]/g, ""); 
                         var chapterTitleForProgress = para.contents.replace(/[\u000A\u00AD\u200B\uFEFF]/g, "");
                  }
 
                 //alert("Kapiteltitel: " + chapterTitle);
-                if(chapterTitle){
+                if(!para.appliedParagraphStyle.name.match(options.chapterStylePattern) && 
+                    !para.appliedParagraphStyle.name.match(options.endnoteParaStylePattern) && 
+                    !para.appliedParagraphStyle.name.match(options.endnoteTitleStylePattern) && 
+                    chapterTitle && para.contents.match(/\S/g)){
                     linkCount = createLinks(para, options.endnoteRefStyleName, options.endnotePrefixLabel, "a", chapterTitle, linkCount);
                     progress.bar.value++;
                     progress.file.text = chapterTitleForProgress;
                     }
         
-            }
-          else {
-        
-            if(para.appliedParagraphStyle.name.match(options.endnoteTitleStyleName) && para.contents.match(/\S/g)){
+            if(para.appliedParagraphStyle.name.match(options.endnoteTitleStylePattern) && para.contents.match(/\S/g)){
             // Whitespace und Umbruchzeichen entfernen (000A = harter Umbruch, 00AD = bedingter Zeilenumbruch, 200B = bedingter Zeilenumbruch ohne Trennstrich, FEFF = Tagklammern)            
             var endnotesTitle = para.contents.replace(/\s|[\u000A\u00AD\u200B\uFEFF]/g, "");
             var endnotesTitleForProgress = para.contents.replace(/[\u000A\u00AD\u200B\uFEFF]/g, "");
             }
                 
             //alert("endnotesTitle: " + endnotesTitle);
-            if(endnotesTitle){
+            if(para.appliedParagraphStyle.name.match(options.endnoteParaStylePattern) && endnotesTitle){
                linkCount = createLinks(para, options.endnoteNumberStyleName, options.endnotePrefixLabel, "b", endnotesTitle, linkCount);
                progress.bar.value++;
                progress.file.text = endnotesTitleForProgress;
             }
 
-         }        
+                
       }
     
     }  
@@ -353,7 +355,7 @@ function findLinkdestinations (para, grepStyleName, prefixLabel, id,  destArray,
 			}
             }
         
-	for (var i = 0; i < foundItemsArray.length; i++ ) {
+	for (var i = foundItemsArray.length - 1; i >= 0; i--) {
         var label = prefixLabel + foundItemsArray[i].Content + id + "_"+ title;
 		try {
 			var linkDestination = doc.hyperlinkTextDestinations.item(label);
