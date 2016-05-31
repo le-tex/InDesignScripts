@@ -12,10 +12,23 @@ var counter = 0;
 
 if(app.documents.length != 0) {
     var doc = app.activeDocument;
+    var progress = new Window('palette', localize("Creating text destinations") );
+    progress.frameLocation = [400,275];
+    progress.bar = progress.add('progressbar');
+    progress.bar.size = [400,15];
+    progress.bar.value = 0;
+    progress.bar.maxvalue = doc.stories.length;
+    progress.file = progress.add('statictext');
+    progress.file.size = [400,15];
+    progress.show();
     for(var i = 0; i < doc.stories.length; i++){
+        progress.bar.value++;
+        progress.file.text = "Story " + i + "/" + doc.stories.length;
+        
         var story = doc.stories[i];
         counter = insertTextDest(story, i, counter);
      }
+    progress.close();
     alert("Number of created text destinations: " + counter);
     
 }	
@@ -34,7 +47,9 @@ function insertTextDest(text, storyID, destCount){
         var para = text.paragraphs[j];
         if (lengths[j] != 1 && checkForDest(para, storyID)) {
             try{
-                doc.hyperlinkTextDestinations.add(para.insertionPoints[0], {name: String(Math.random()).substr(2, 6) + "_" + storyID});
+                var name = String(Math.random()).substr(2, 7) + lengths[j] + storyID;
+                name = name.slice(-8);
+                doc.hyperlinkTextDestinations.add(para.insertionPoints[0], {name: name + "_" + storyID});
                 destCount ++;
             }
             catch(e){
