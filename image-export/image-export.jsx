@@ -467,14 +467,22 @@ function isValidLink (link) {
 
 // return filename with new extension and conditionally attach random string
 function renameFile(basename, extension, rename) {
+  var cleanBasename = cleanString(basename, '_');
   if(rename) {
     hash = ((1 + Math.random())*0x1000).toString(36).slice(1, 6);
-    var renameFile = basename + '-' + hash + '.' + extension.toLowerCase();
+    var renameFile = cleanBasename + '-' + hash + '.' + extension.toLowerCase();
     return renameFile
   } else {
-    var renameFile = basename + '.' + extension.toLowerCase();
+    var renameFile = cleanBasename + '.' + extension.toLowerCase();
     return renameFile
   }
+}
+
+// clean string from illegal characters
+function cleanString(string, replacement){
+  var illegalCharsRegex = /[\x00-\x1f\x80-\x9f\s\/\?<>\\:\*\|":]/g;
+  var replace = string.replace(/[\x00-\x1f\x80-\x9f\s\/\?<>\\:\*\|":]/g, replacement);
+  return replace;
 }
 
 // get file basename
