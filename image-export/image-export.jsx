@@ -294,10 +294,10 @@ function getFilelinks(doc){
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     var rectangle = link.parent.parent;
-    // ignore images in overset text
-    if(rectangle.parentPage != null){
+     var originalBounds = rectangle.geometricBounds;
+    // ignore images in overset text and rectangles with zero width or height 
+    if(rectangle.parentPage != null && originalBounds[0] - originalBounds[2] != 0 && originalBounds[1] - originalBounds[3] != 0 ){
       if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-      var originalBounds = rectangle.geometricBounds;
       // this is necessary to avoid moving of anchored objects with Y-Offset
       var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
       if(imageExceedsPageY){
@@ -319,7 +319,6 @@ function getFilelinks(doc){
       var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
       var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
       var filenameLabelExists = filenameLabel.length > 0;
-
       if(isValidLink(link)){
         var basename = getBasename(link.name);
         // generate new filename if basename exists twice
