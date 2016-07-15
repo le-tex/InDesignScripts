@@ -1,3 +1,4 @@
+﻿#target indesign
 /*
 * image-export.jsx
 *
