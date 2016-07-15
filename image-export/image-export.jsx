@@ -294,7 +294,7 @@ function getFilelinks(doc){
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     var rectangle = link.parent.parent;
-     var originalBounds = rectangle.geometricBounds;
+    var originalBounds = rectangle.geometricBounds;
     // ignore images in overset text and rectangles with zero width or height 
     if(rectangle.parentPage != null && originalBounds[0] - originalBounds[2] != 0 && originalBounds[1] - originalBounds[3] != 0 ){
       if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
