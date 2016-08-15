@@ -284,17 +284,17 @@ function drawWindow(){
 
 
 function getFilelinks(doc){
-
   var docLinks = doc.links;
   var uniqueBasenames = [];
   var exportLinks = [];
   var missingLinks = [];
-
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     var rectangle = link.parent.parent;
-    var originalBounds = rectangle.geometricBounds;
+    // disable lock since this prevents images to be exported
+    rectangle.locked = false;
+    var originalBounds = (rectangle.parentPage != null) ? rectangle.geometricBounds : [0, 0, 0, 0];
     // ignore images in overset text and rectangles with zero width or height 
     if(rectangle.parentPage != null && originalBounds[0] - originalBounds[2] != 0 && originalBounds[1] - originalBounds[3] != 0 ){
       if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
@@ -341,8 +341,8 @@ function getFilelinks(doc){
         uniqueBasenames.push(getBasename(newFilename));
 
         /*
-        * construct link object
-        */
+            * construct link object
+            */ 
         linkObject = {
           link:link,
           pageItem:rectangle,
@@ -355,8 +355,8 @@ function getFilelinks(doc){
           originalBounds:originalBounds
         }
         /*
-        * check for custom object export options
-        */
+            * check for custom object export options
+            */
         exportLinks.push(linkObject);
 
       } else {
@@ -365,7 +365,7 @@ function getFilelinks(doc){
     }
   }
   if (missingLinks.length > 0) {
-    var result = confirm (missingLinks.length + " " + panel.promptMissingImages);
+    var result = confirm (missingLinks.length + " " + panel.promptMissingImages + "\n\n" + missingLinks.toString());
     if (!result) return;
   }
   // create directory
