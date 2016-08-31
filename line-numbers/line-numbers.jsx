@@ -286,7 +286,7 @@ function addNumbersToStory(doc, story, options){
     for (j = 0; j < textContainers.length; j++){
         currentTextFrame = textContainers[j];
         // exclude all frames with a line number object style
-        if(currentTextFrame.appliedObjectStyle.name != options.lineNumberObjStyleName){
+        if(currentTextFrame.appliedObjectStyle.name != options.lineNumberObjStyleName && currentTextFrame.parentPage != null){
             addNumbersToTextFrame(doc, currentTextFrame, options);
         }
     }
