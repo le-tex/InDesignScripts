@@ -39,13 +39,14 @@
 options = {
     debug:1,
     styles:[],
-    restartNumPage: 1,
-    restartNumFrame: 1,
-    ignoreEmptyLines: 1,
-    applyToStyle: 0,
-    applyTo: 0,
-    interval: 1,
-    startFrom: 1,
+    restartNumPage:1,
+    restartNumFrame:1,
+    ignoreEmptyLines:1,
+    applyToStyle:0,
+    applyTo:0,
+    interval:1,
+    intervalFirstLine:0,
+    startFrom:1,
     counter:0,
     pageOffset: app.documents[0].pages[0].documentOffset, // start with 1st page
     lineNumberObjStyleName: "Obj_LineNumber",
@@ -59,6 +60,7 @@ panel = {
     applyTitle:"Apply to",
     startTitle:"Start at",
     intervalTitle:"Interval",
+    intervalFirstLineTitle:"Start numbering with first line",
     restartNumPageTitle:"Restart numbering each page",
     restartNumFrameTitle:"Restart numbering each frame",
     ignoreEmptyLinesTitle:"Ignore empty lines",
@@ -147,6 +149,16 @@ function drawWindow (doc) {
     var optionsGroupPanelInputInterval = optionsGroupPanelIntervalGroup.add ("edittext", undefined, options.interval);
     optionsGroupPanelInputInterval.characters = 3;
     optionsGroupPanelIntervalGroup.add ("statictext", undefined, panel.intervalTitle);
+    var optionsGroupPanelInputIntervalFirstLine = optionsGroupPanel.add ("checkbox", undefined, panel.intervalFirstLineTitle);
+    optionsGroupPanelInputIntervalFirstLine.value = 1;
+    optionsGroupPanelInputIntervalFirstLine.enabled = optionsGroupPanelInputInterval.text == "1" ? false : true;
+    optionsGroupPanelInputInterval.onChanging = function(){
+        if(optionsGroupPanelInputInterval.text == "1"){
+            optionsGroupPanelInputIntervalFirstLine.enabled = false;
+        }else{
+            optionsGroupPanelInputIntervalFirstLine.enabled = true;
+        }
+    }
     var optionsGroupPanelRestartNumPage = optionsGroupPanel.add ("checkbox", undefined, panel.restartNumPageTitle);
     optionsGroupPanelRestartNumPage.value = options.restartNumPage;
     optionsGroupPanelRestartNumPage.enabled = (options.restartNumFrame == 1) ? false : true;
@@ -199,6 +211,7 @@ function drawWindow (doc) {
         options.ignoreEmptyLines = optionsGroupPanelIgnoreEmptyLines.value;
         options.startFrom = parseInt(optionsGroupPanelInputStart.text);
         options.interval = parseInt(optionsGroupPanelInputInterval.text);
+        options.intervalFirstLine = optionsGroupPanelInputIntervalFirstLine.value;
         options.applyTo = selectedRadio(optionsGroupApplyToGroup);
         options.lineNumberObjStyleName = lineNumberObjStyleInput.text;
         options.lineNumberParaStyleName = lineNumberParaStyleInput.text;
@@ -286,7 +299,7 @@ function addNumbersToStory(doc, story, options){
     for (j = 0; j < textContainers.length; j++){
         currentTextFrame = textContainers[j];
         // exclude all frames with a line number object style
-        if(currentTextFrame.appliedObjectStyle.name != options.lineNumberObjStyleName){
+        if(currentTextFrame.appliedObjectStyle.name != options.lineNumberObjStyleName && currentTextFrame.parentPage != null){
             addNumbersToTextFrame(doc, currentTextFrame, options);
         }
     }
@@ -296,7 +309,6 @@ function addNumbersToTextFrame(doc, textFrame, options){
     var currentPageOffset = textFrame.parentPage.documentOffset;
     var pageBreakBoolean = currentPageOffset != options.pageOffset;
     options.pageOffset = currentPageOffset;
-
     var lines = textFrame.lines;
     var penalty = 0;
     // discontinue line numbering at page breaks when corresponding option is set
@@ -320,7 +332,7 @@ function addNumbersToTextFrame(doc, textFrame, options){
 
         if(!Boolean(isLineEmpty(currentLine.contents) && options.ignoreEmptyLines == 1) 
           && inArray(lineParaStyle, options.styles)
-          && lineNumber % options.interval == 0 ){
+           && (lineNumber % options.interval == 0) || (lineNumber == 1 && options.intervalFirstLine == 1)){
 
             options.counter = options.counter += 1
 	    
