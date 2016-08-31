@@ -73,7 +73,6 @@ panel = {
     buttonCancelTitle:"Cancel",
     successMessage:" line numbers inserted.",
     removeMessage:" line numbers removed.",
-    styleListLength:12
 }
 
 main();
@@ -118,7 +117,6 @@ function main(){
 function drawWindow (doc) {
 
     var paraStyles = app.documents[0].allParagraphStyles.sort();                
-    var rows = panel.styleListLength;
 
     var myWindow = new Window ("palette", panel.title, undefined);
     myWindow.orientation = "row";
@@ -130,7 +128,7 @@ function drawWindow (doc) {
     stylesGroupList.alignment = "fill";
     stylesGroupList.preferredSize = [200, 325];
     
-    for (i = 0; i < rows; i++){
+    for (i = 0; i < paraStyles.length; i++){
         if(i < paraStyles.length && paraStyles[i].name != options.lineNumberParaStyleName){
             var listitem = stylesGroupList.add ("item");
             listitem.text = paraStyles[i].name;
