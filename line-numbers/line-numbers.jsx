@@ -155,6 +155,7 @@ function drawWindow (doc) {
     optionsGroupPanelInputInterval.onChanging = function(){
         if(optionsGroupPanelInputInterval.text == "1"){
             optionsGroupPanelInputIntervalFirstLine.enabled = false;
+            optionsGroupPanelInputIntervalFirstLine.value = 1;
         }else{
             optionsGroupPanelInputIntervalFirstLine.enabled = true;
         }
