@@ -229,6 +229,7 @@ function drawWindow (doc) {
         }
     }
     buttonRemoveNumbers.onClick = function(){
+        options.lineNumberObjStyleName = lineNumberObjStyleInput.text;
         removeNumbers(options);
     }
 
