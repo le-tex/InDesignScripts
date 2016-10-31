@@ -253,7 +253,7 @@ function getFilelinks(doc){
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
-        var rectangle = cropRectangleToBleeds(link.parent.parent);
+        var rectangle = link.parent.parent;
         var normalizedDensity = getMaxDensity(image.exportDPI, rectangle, image.maxResolution);
 
         if(isValidLink(link)){
@@ -419,28 +419,6 @@ function getMaxDensity(density, rectangle, maxResolution) {
   } else {
     return density;
   }
-}
-
-function cropRectangleToBleeds (rectangle){
-  var rect = rectangle;
-  var bounds = rect.geometricBounds;
-  var page = rect.parentPage;
-  // page is null if the object is on the pasteboard
-  if(page != null){
-    // iterate over corners and fit them into page
-    var newBounds = [];
-    for(var i = 0; i <= 3; i++) {
-      if((i == 0 || i == 1 ) && bounds[i] < page.bounds[i]){
-        newBounds[i] = page.bounds[i];
-      } else if((i == 2  || i == 3 ) && bounds[i] > page.bounds[i]){
-        newBounds[i] = page.bounds[i];
-      } else {
-        newBounds[i] = rect.geometricBounds[i];
-      }
-    }
-    rect.geometricBounds = newBounds;
-  }
-  return rect;
 }
 
 // get path relative to indesign file location
