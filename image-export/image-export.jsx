@@ -293,7 +293,12 @@ function getFilelinks(doc){
     var link = docLinks[i];
     var rectangle = link.parent.parent;
     // disable lock since this prevents images to be exported
-    rectangle.locked = false;
+    // note that just the group itself has a lock state, not their childs
+    if(rectangle.parent.constructor.name == 'Group'){
+      rectangle.parent.locked = false;
+    }else{
+      rectangle.locked = false;
+    }
     var originalBounds = (rectangle.parentPage != null) ? rectangle.geometricBounds : [0, 0, 0, 0];
     // ignore images in overset text and rectangles with zero width or height 
     if(rectangle.parentPage != null && originalBounds[0] - originalBounds[2] != 0 && originalBounds[1] - originalBounds[3] != 0 ){
