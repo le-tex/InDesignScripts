@@ -151,7 +151,7 @@ function jsExtensions(){
 }
 
 function exportImages(doc){
-    if(drawWindow()){
+    if(drawWindow() == 1){
       // overwrite internal Measurement Units to pixels
       app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
       // grab file links and export
