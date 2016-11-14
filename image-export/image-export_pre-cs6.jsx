@@ -254,6 +254,13 @@ function getFilelinks(doc){
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
         var rectangle = link.parent.parent;
+        // disable lock since this prevents images to be exported
+        // note that just the group itself has a lock state, not their childs
+        if(rectangle.parent.constructor.name == 'Group'){
+            rectangle.parent.locked = false;
+        }else{
+            rectangle.locked = false;
+        }
         var normalizedDensity = getMaxDensity(image.exportDPI, rectangle, image.maxResolution);
 
         if(isValidLink(link)){
