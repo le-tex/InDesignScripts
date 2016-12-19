@@ -1,4 +1,4 @@
-﻿#target indesign
+#target indesign
 /*
 * image-export.jsx
 *
@@ -288,6 +288,11 @@ function getFilelinks(doc){
   var uniqueBasenames = [];
   var exportLinks = [];
   var missingLinks = [];
+  // delete filename labels, if option is set
+  if(image.overrideExportFilenames == true){
+    deleteLabel(docLinks);
+  }
+  
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
@@ -571,4 +576,12 @@ function getDefaultExportPath() {
   var exportPath = String(app.activeDocument.fullName);
   exportPath = exportPath.substring(0, exportPath.lastIndexOf('/')) + '/' + image.exportDir;
   return exportPath
+}
+
+function deleteLabel(docLinks){
+  for (var i = 0; i < docLinks.length; i++) {
+    var link = docLinks[i];
+    var rectangle = link.parent.parent;
+    rectangle.insertLabel(image.pageItemLabel, '');
+  }
 }
