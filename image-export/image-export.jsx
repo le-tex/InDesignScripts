@@ -59,13 +59,14 @@ image = {
   exportDir:"export",
   exportQuality:2,
   exportFormat:0, // 0 = PNG | 1 = JPG
-  pageItemLabel:"letex:fileName"
+  pageItemLabel:"letex:fileName",
+  logFilename:"export.log"
 }
 /*
 * set panel preferences
 */
 panel = {
-  title:["Export Images", "Bilder exportieren"][lang.pre],
+  title:["Export Images", "Bilder exportieren"][lang.pre], 
   densityTitle:["Density (ppi)", "Auflösung (ppi)"][lang.pre],
   qualityTitle:["Quality", "Qualität"][lang.pre],
   qualityValues:[["max", "high", "medium", "low"], ["Maximum", "Hoch", "Mittel", "Niedrig"]][lang.pre],
@@ -293,9 +294,24 @@ function getFilelinks(doc){
     deleteLabel(docLinks);
   }
   
+  // clear log
+  clearLog(image.exportDir, image.logFilename);
+  var currentDate = new Date();
+  var dateTime = currentDate.getDate() + '/'
+                + (currentDate.getMonth()+1)  + '/' 
+                + currentDate.getFullYear() + ' '  
+                + currentDate.getHours() + ':'
+                + currentDate.getMinutes() + ':' 
+                + currentDate.getSeconds();
+  writeLog('Image export started at ' + dateTime + '\n', image.exportDir, image.logFilename);
+
+  
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
+    
+    writeLog(link.name, image.exportDir, image.logFilename);
+    
     var rectangle = link.parent.parent;
     // disable lock since this prevents images to be exported
     // note that just the group itself has a lock state, not their childs
@@ -351,8 +367,8 @@ function getFilelinks(doc){
         uniqueBasenames.push(getBasename(newFilename));
 
         /*
-            * construct link object
-            */ 
+         * construct link object
+         */ 
         linkObject = {
           link:link,
           pageItem:rectangle,
@@ -364,14 +380,19 @@ function getFilelinks(doc){
           objectExportOptions:objectExportOptions,
           originalBounds:originalBounds
         }
+        
         /*
-            * check for custom object export options
-            */
+         * check for custom object export options
+         */
         exportLinks.push(linkObject);
+        writeLog('=> stored to: ' + linkObject.newFilepath, image.exportDir, image.logFilename);
 
       } else {
         missingLinks.push(link.name);
       }
+    }
+    else{
+      writeLog('=> FAILED: image is not placed on a page.', image.exportDir, image.logFilename);
     }
   }
   if (missingLinks.length > 0) {
@@ -422,6 +443,7 @@ function getFilelinks(doc){
     progressBar.close();
 
     alert (exportLinks.length  + " " + panel.finishedMessage);
+    writeLog('\nFinished! Exported ' + exportLinks.length + ' of ' + docLinks.length + ' images.\nPlease check messages above for further details.', image.exportDir, image.logFilename);
     doc.save();
   }
   else {
@@ -466,9 +488,11 @@ function isValidLink (link) {
   } else {
     switch (link.status) {
       case LinkStatus.LINK_MISSING:
-      return false; break;
+        writeLog('=> FAILED: image file is missing.', image.exportDir, image.logFilename);
+        return false; break;
       case LinkStatus.LINK_EMBEDDED:
-      return false; break;
+        writeLog('=> FAILED: embedded image.', image.exportDir, image.logFilename);
+        return false; break;
       default:
       if(link != null) return true else return false;
     }
@@ -583,5 +607,27 @@ function deleteLabel(docLinks){
     var link = docLinks[i];
     var rectangle = link.parent.parent;
     rectangle.insertLabel(image.pageItemLabel, '');
+  }
+}
+
+function writeLog(message, dir, filename){
+  var path = dir + '/' + filename;
+  createDir(dir);
+  var write_file = File(path);
+  if (!write_file.exists) {
+        write_file = new File(path);
+  }
+  write_file.open('a', undefined, undefined);
+  write_file.encoding = "UTF-8";
+  write_file.lineFeed = "Unix";
+  write_file.writeln(message);
+  write_file.close();
+}
+
+function clearLog(dir, filename){
+  var path = dir + '/' + filename;
+  del_file = File(path);
+  if (del_file.exists) {
+    del_file.remove();
   }
 }
