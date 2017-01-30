@@ -305,7 +305,6 @@ function getFilelinks(doc){
                 + currentDate.getSeconds();
   writeLog('Image export started at ' + dateTime + '\n', image.exportDir, image.logFilename);
 
-  
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
@@ -316,9 +315,13 @@ function getFilelinks(doc){
     // disable lock since this prevents images to be exported
     // note that just the group itself has a lock state, not their childs
     if(rectangle.parent.constructor.name == 'Group'){
-      rectangle.parent.locked = false;
+      if(rectangle.parent.locked != false){
+        rectangle.parent.locked = false; 
+      }
     }else{
-      rectangle.locked = false;
+      if(rectangle.locked != false){
+        rectangle.locked = false;
+      }
     }
     var originalBounds = (rectangle.parentPage != null) ? rectangle.geometricBounds : [0, 0, 0, 0];
     // ignore images in overset text and rectangles with zero width or height 
@@ -345,6 +348,7 @@ function getFilelinks(doc){
       var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
       var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
       var filenameLabelExists = filenameLabel.length > 0;
+
       if(isValidLink(link)){
         var basename = getBasename(link.name);
         // generate new filename if basename exists twice
