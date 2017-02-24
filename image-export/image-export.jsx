@@ -56,6 +56,7 @@ image = {
     maxResolution:4000000,
     pngTransparency:true,
     objectExportOptions:true,
+    objectExportDensityFactor:0,
     overrideExportFilenames:false,
     exportDir:"export",
     exportQuality:2,
@@ -88,6 +89,8 @@ panel = {
     formatDescriptionPNG:["for line art and text", "Für Strichzeichnungen und Text"][lang.pre],
     formatDescriptionJPEG:["for photographs and gradients", "für Fotos und Verläufe"][lang.pre],
     objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
+    objectExportDensityFactorTitle:["Resolution Multiplier", "Multiplikator Auflösung"][lang.pre],
+    objectExportDensityFactorValues:[1, 2, 3, 4],
     overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
     maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
@@ -96,9 +99,9 @@ panel = {
     panelFilenameOptionsTitle:["Filenames", "Dateinamen"][lang.pre],
     miscellaneousOptionsTitle:["Miscellaneous Options", "Sonstige Optionen"][lang.pre],
     infoFilename:["Filename", "Dateiname"][lang.pre],
-    infoFormat:["Format", "Format"][lang.pre],
     infoWidth:["Width", "Breite"][lang.pre],
     infoHeight:["Height", "Höhe"][lang.pre],
+    infoNoImage:["No image selected.", "Kein Bild ausgewählt."][lang.pre],
     progressBarTitle:["export Images", "Bilder exportieren"][lang.pre],
     noValidLinks:["No valid links found.", "Keine Bild-Verknüpfungen gefunden"][lang.pre],
     finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
@@ -272,6 +275,10 @@ function drawWindow() {
     panelObjectExportOptions.alignChildren = "left";
     var objectExportOptions = panelObjectExportOptions.add("group");
     var objectExportOptionsCheckBox = objectExportOptions.add("checkbox", undefined, panel.objectExportOptionsTitle);
+    var objectExportOptionsDensity = panelObjectExportOptions.add("group");
+    var objectExportOptionsDensityDropdown = objectExportOptionsDensity.add("dropdownlist", undefined, panel.objectExportDensityFactorValues);
+    objectExportOptionsDensityDropdown.selection = image.objectExportDensityFactor;
+    var resolutionFactor = objectExportOptionsDensity.add("statictext", undefined, panel.objectExportDensityFactorTitle);
     objectExportOptionsCheckBox.value = image.objectExportOptions;
     var panelFilenameOptions = tabAdvanced.add("panel", undefined, panel.panelFilenameOptionsTitle);
     panelFilenameOptions.alignChildren = "left";
@@ -294,7 +301,7 @@ function drawWindow() {
      */
     var tabInfo = tpanel.add ("tab", undefined, panel.tabInfoTitle);
     tabInfo.alignChildren = "left";
-    tabInfo.iFilename = tabInfo.add("statictext", undefined, "No Image selected.");
+    tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage);
     tabInfo.iPosX = tabInfo.add("statictext", undefined, "");
     tabInfo.iPosY = tabInfo.add("statictext", undefined, "");
     tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
@@ -309,13 +316,13 @@ function drawWindow() {
                                  height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
                                  posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
                                  posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
-                                 tabInfo.iFilename.text = "filename: " + rectangle.extractLabel(image.pageItemLabel);
+                                 tabInfo.iFilename.text = panel.infoFilename + ": " + rectangle.extractLabel(image.pageItemLabel);
                                  tabInfo.iPosX.text = "x: " + posX;
                                  tabInfo.iPosY.text = "y: " + posY;
-                                 tabInfo.iWidth.text = "width: " + width;
-                                 tabInfo.iHeight.text = "height: " + height;
+                                 tabInfo.iWidth.text = panel.infoWidth + ": " + width;
+                                 tabInfo.iHeight.text = panel.infoHeight + ": " + height;
                              } else {
-                                 tabInfo.iFilename.text = "No Image selected.";
+                                 tabInfo.iFilename.text = panel.infoNoImage;
                                  tabInfo.iPosX.text = "";
                                  tabInfo.iPosY.text = "";
                                  tabInfo.iHeight.text = "";
@@ -343,6 +350,7 @@ function drawWindow() {
         image.exportFormat = formatDropdown.selection.text;
         image.maxResolution = Number(inputMaxRes.text);
         image.objectExportOptions = objectExportOptionsCheckBox.value;
+        image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
         image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
         app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false)
@@ -382,7 +390,7 @@ function getFilelinks(doc) {
         + currentDate.getHours() + ':'
         + currentDate.getMinutes() + ':' 
         + currentDate.getSeconds();
-    writeLog('Image export started at ' + dateTime + '\n', image.exportDir, image.logFilename);
+    writeLog("Image export started at " + dateTime + "\n", image.exportDir, image.logFilename);
     
     // iterate over file links
     for (var i = 0; i < docLinks.length; i++) {
@@ -420,8 +428,7 @@ function getFilelinks(doc) {
                 objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
             var overrideBool = image.objectExportOptions && customImageConversion;
             var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
-            var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
-            var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) : image.exportDPI;
+            var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
             var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
             var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
             var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
@@ -432,8 +439,9 @@ function getFilelinks(doc) {
                 var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
                 var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(link.name);
                 var newFilename;
-                var duplicate = isDuplicate(link, docLinks[i-1]);
-                if(inArray(basename, uniqueBasenames) && !duplicate){
+                // just adjacent images are compared.
+                var duplicates = hasDuplicates(link, docLinks, i);
+                if(inArray(basename, uniqueBasenames) && (!duplicates)){
                     newFilename = renameFile(basename, localFormat, true);
                 } else {
                     newFilename = renameFile(basename, localFormat, false);
@@ -452,18 +460,17 @@ function getFilelinks(doc) {
                     newFilepath:File(image.exportDir + "/" + newFilename),
                     objectExportOptions:objectExportOptions,
                     originalBounds:originalBounds
-                }        
+                }
                 /*
                  * check for custom object export options
                  */
                 exportLinks.push(linkObject);
-                writeLog('=> stored to: ' + linkObject.newFilepath, image.exportDir, image.logFilename);
-
+                writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
             } else {
                 missingLinks.push(link.name);
             }
         } else {
-            writeLog('=> FAILED: image is not placed on a page.', image.exportDir, image.logFilename);
+            writeLog("=> FAILED: image is not placed on a page.", image.exportDir, image.logFilename);
         }
     }
     if (missingLinks.length > 0) {
@@ -514,7 +521,7 @@ function getFilelinks(doc) {
         progressBar.close();
 
         alert (exportLinks.length  + " " + panel.finishedMessage);
-        writeLog('\nFinished! Exported ' + exportLinks.length + ' of ' + docLinks.length + ' images.\nPlease check messages above for further details.', image.exportDir, image.logFilename);
+        writeLog("\nFinished! Exported " + exportLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for further details.", image.exportDir, image.logFilename);
         doc.save();
     }
     else {
@@ -707,25 +714,32 @@ function linksToSortedArray(links){
     return arr;
 }
 // compare two links if they have equal dimensions
-function isDuplicate(link, nextLink) {
-    if(nextLink != undefined && link.name == nextLink.name) {
-        var rectangle = link.parent.parent;
-        var nextRectangle = nextLink.parent.parent;
-        var rectangleWidth = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1]) * 100) / 100;
-        var rectangleHeight = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
-        var nextRectangleWidth = Math.round((nextRectangle.geometricBounds[3] - nextRectangle.geometricBounds[1]) * 100) / 100;
-        var nextRectangleHeight = Math.round((nextRectangle.geometricBounds[2] - nextRectangle.geometricBounds[0]) * 100) / 100;        
-        var equalWidth  = rectangleWidth == nextRectangleWidth;
-        var equalHeight = rectangleHeight == nextRectangleHeight;
-        var equalFlip = rectangle.absoluteFlip == nextRectangle.absoluteFlip;
-        var equalRotation = rectangle.absoluteRotationAngle == nextRectangle.absoluteRotationAngle;
-        
-        if(equalFlip && equalRotation && equalWidth && equalHeight){
-            return true;
-        } else {
-            return false;
+function hasDuplicates(link, docLinks, index) {
+    var rectangle = link.parent.parent;
+    var nextLink;
+    var result = [];
+    var i = index + 1;
+    do{
+        nextLink = docLinks[i];
+        i++;
+        if(nextLink != undefined && link.name == nextLink.name) {
+            var nextRectangle = nextLink.parent.parent;
+            // InDesign calculates widths and heights not precisely, so we have to round them
+            var rectangleWidth = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1]) * 100) / 100;
+            var rectangleHeight = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
+            var nextRectangleWidth = Math.round((nextRectangle.geometricBounds[3] - nextRectangle.geometricBounds[1]) * 100) / 100;
+            var nextRectangleHeight = Math.round((nextRectangle.geometricBounds[2] - nextRectangle.geometricBounds[0]) * 100) / 100;        
+            var equalWidth  = rectangleWidth == nextRectangleWidth;
+            var equalHeight = rectangleHeight == nextRectangleHeight;
+            var equalFlip = rectangle.absoluteFlip == nextRectangle.absoluteFlip;
+            var equalRotation = rectangle.absoluteRotationAngle == nextRectangle.absoluteRotationAngle;
+            result.push(equalFlip && equalRotation && equalWidth && equalHeight);
         }
-    } else {
-        return false;
     }
+    while(i < docLinks.length);
+    if(inArray(true, result)){
+        writeLog("Found duplicate: " + link.name + ". Generate new filename: " + inArray(true, result), image.exportDir, image.logFilename);
+    }
+    return inArray(true, result);
+    return false;
 }
