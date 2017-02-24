@@ -55,7 +55,7 @@ image = {
     exportDPI:144,
     maxResolution:4000000,
     pngTransparency:true,
-    objectExportOptions:true,
+    objectEportOptions:true,
     objectExportDensityFactor:0,
     overrideExportFilenames:false,
     exportDir:"export",
@@ -423,9 +423,7 @@ function getFilelinks(doc) {
             rectangle = cropRectangleToBleeds(rectangle);
             var objectExportOptions = rectangle.objectExportOptions;
             // use format override in objectExportOptions if active. Check InDesign version because the property changed.
-            var customImageConversion = (parseFloat(app.version) < 10) ? objectExportOptions.customImageConversion :
-                objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT ||
-                objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
+            var customImageConversion = isObjectExportOptionActive(objectExportOptions);
             var overrideBool = image.objectExportOptions && customImageConversion;
             var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
             var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
@@ -713,6 +711,12 @@ function linksToSortedArray(links){
     });
     return arr;
 }
+function isObjectExportOptionActive(objectExportOptions){
+    var active = (parseFloat(app.version) < 10) ? objectExportOptions.customImageConversion :
+        objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT ||
+        objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
+    return active;
+}
 // compare two links if they have equal dimensions
 function hasDuplicates(link, docLinks, index) {
     var rectangle = link.parent.parent;
@@ -736,14 +740,15 @@ function hasDuplicates(link, docLinks, index) {
             var equalShearAngle = rectangle.absoluteShearAngle == nextRectangle.absoluteShearAngle;
             var equalHorizontalScale = rectangle.absoluteHorizontalScale == nextRectangle.absoluteHorizontalScale;
             var equalVerticalScale = rectangle.absoluteVerticalScale == nextRectangle.absoluteVerticalScale;
-            result.push(equalFlip && equalRotationAngle && equalWidth && equalHeight && equalShearAngle && equalHorizontalScale && equalVerticalScale);
+            // note: currently just the 
+            var objectExportOptionsActive = isObjectExportOptionActive(rectangle.objectExportOptions) == isObjectExportOptionActive(nextRectangle.objectExportOptions);
+            result.push(equalFlip && equalRotationAngle && equalWidth && equalHeight && equalShearAngle && equalHorizontalScale && equalVerticalScale && objectExportOptionsActive);
         }
         i++;
     }
     while(i < docLinks.length);
     if(inArray(true, result)){
-        writeLog("Found duplicate: " + link.name + ". Generate new filename: " + inArray(true, result), image.exportDir, image.logFilename);
+        writeLog("Found duplicate: " + link.name, image.exportDir, image.logFilename);
     }
     return inArray(true, result);
-    return false;
 }
