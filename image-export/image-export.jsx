@@ -89,7 +89,7 @@ panel = {
     formatDescriptionPNG:["for line art and text", "Für Strichzeichnungen und Text"][lang.pre],
     formatDescriptionJPEG:["for photographs and gradients", "für Fotos und Verläufe"][lang.pre],
     objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
-    objectExportDensityFactorTitle:["Resolution Multiplier", "Multiplikator Auflösung"][lang.pre],
+    objectExportDensityFactorTitle:["Density Multiplier", "Multiplikator Auflösung"][lang.pre],
     objectExportDensityFactorValues:[1, 2, 3, 4],
     overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
@@ -718,11 +718,11 @@ function hasDuplicates(link, docLinks, index) {
     var rectangle = link.parent.parent;
     var nextLink;
     var result = [];
-    var i = index + 1;
+    var i = 0;
     do{
         nextLink = docLinks[i];
-        i++;
-        if(nextLink != undefined && link.name == nextLink.name) {
+        // check whether link names match. The index var is used to prevent that an image is compared with itself.
+        if(link.name == nextLink.name && i != index) {
             var nextRectangle = nextLink.parent.parent;
             // InDesign calculates widths and heights not precisely, so we have to round them
             var rectangleWidth = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1]) * 100) / 100;
@@ -735,6 +735,7 @@ function hasDuplicates(link, docLinks, index) {
             var equalRotation = rectangle.absoluteRotationAngle == nextRectangle.absoluteRotationAngle;
             result.push(equalFlip && equalRotation && equalWidth && equalHeight);
         }
+        i++;
     }
     while(i < docLinks.length);
     if(inArray(true, result)){
