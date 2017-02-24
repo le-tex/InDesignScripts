@@ -77,7 +77,7 @@ imageInfo = {
  * set panel preferences
  */
 panel = {
-    title:["Export Images", "Bilder exportieren"][lang.pre],
+    title:["le-tex – Export Images", "le-tex – Bilder exportieren"][lang.pre],
     tabGeneralTitle:["General", "Allgemein"][lang.pre],
     tabAdvancedTitle:["Advanced", "Erweitert"][lang.pre],
     tabInfoTitle:["Info", "Informationen"][lang.pre],

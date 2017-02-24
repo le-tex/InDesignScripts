@@ -61,7 +61,7 @@ image = {
  * set panel preferences
  */
 panel = {
-    title:["Export Images", "Bilder exportieren"][lang.pre],
+    title:["le-tex – Export Images", "le-tex – Bilder exportieren"][lang.pre],
     densityTitle:["Density (ppi)", "Auflösung (ppi)"][lang.pre],
     qualityTitle:["Quality", "Qualität"][lang.pre],
     qualityValues:[["max", "high", "medium", "low"], ["Maximum", "Hoch", "Mittel", "Niedrig"]][lang.pre],
