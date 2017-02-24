@@ -732,8 +732,11 @@ function hasDuplicates(link, docLinks, index) {
             var equalWidth  = rectangleWidth == nextRectangleWidth;
             var equalHeight = rectangleHeight == nextRectangleHeight;
             var equalFlip = rectangle.absoluteFlip == nextRectangle.absoluteFlip;
-            var equalRotation = rectangle.absoluteRotationAngle == nextRectangle.absoluteRotationAngle;
-            result.push(equalFlip && equalRotation && equalWidth && equalHeight);
+            var equalRotationAngle = rectangle.absoluteRotationAngle == nextRectangle.absoluteRotationAngle;
+            var equalShearAngle = rectangle.absoluteShearAngle == nextRectangle.absoluteShearAngle;
+            var equalHorizontalScale = rectangle.absoluteHorizontalScale == nextRectangle.absoluteHorizontalScale;
+            var equalVerticalScale = rectangle.absoluteVerticalScale == nextRectangle.absoluteVerticalScale;
+            result.push(equalFlip && equalRotationAngle && equalWidth && equalHeight && equalShearAngle && equalHorizontalScale && equalVerticalScale);
         }
         i++;
     }
