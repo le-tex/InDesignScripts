@@ -54,7 +54,7 @@ options = {
 }
 
 panel = {
-    title:"Insert Line Numbers",
+    title:"le-tex – Insert Line Numbers",
     stylesTitle:"Select Paragraph Styles",
     optionsTitle:"Options",
     applyTitle:"Apply to",
