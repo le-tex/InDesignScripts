@@ -55,7 +55,7 @@ image = {
     exportDPI:144,
     maxResolution:4000000,
     pngTransparency:true,
-    objectEportOptions:true,
+    objectExportOptions:true,
     objectExportDensityFactor:0,
     overrideExportFilenames:false,
     exportDir:"export",
@@ -274,12 +274,12 @@ function drawWindow() {
     var panelObjectExportOptions = tabAdvanced.add("panel", undefined, panel.objectExportOptionsTitle);
     panelObjectExportOptions.alignChildren = "left";
     var objectExportOptions = panelObjectExportOptions.add("group");
-    var objectExportOptionsCheckBox = objectExportOptions.add("checkbox", undefined, panel.objectExportOptionsTitle);
+    var objectExportOptionsCheckbox = objectExportOptions.add("checkbox", undefined, panel.objectExportOptionsTitle);
+    objectExportOptionsCheckbox.value = image.objectExportOptions;
     var objectExportOptionsDensity = panelObjectExportOptions.add("group");
     var objectExportOptionsDensityDropdown = objectExportOptionsDensity.add("dropdownlist", undefined, panel.objectExportDensityFactorValues);
     objectExportOptionsDensityDropdown.selection = image.objectExportDensityFactor;
     var resolutionFactor = objectExportOptionsDensity.add("statictext", undefined, panel.objectExportDensityFactorTitle);
-    objectExportOptionsCheckBox.value = image.objectExportOptions;
     var panelFilenameOptions = tabAdvanced.add("panel", undefined, panel.panelFilenameOptionsTitle);
     panelFilenameOptions.alignChildren = "left";
     var overrideExportFilenames = panelFilenameOptions.add("group");
@@ -349,7 +349,7 @@ function drawWindow() {
         image.exportQuality = selectedRadiobutton(panelQualityRadiobuttons);
         image.exportFormat = formatDropdown.selection.text;
         image.maxResolution = Number(inputMaxRes.text);
-        image.objectExportOptions = objectExportOptionsCheckBox.value;
+        image.objectExportOptions = objectExportOptionsCheckbox.value;
         image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
         image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
