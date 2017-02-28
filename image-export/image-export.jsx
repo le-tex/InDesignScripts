@@ -213,10 +213,8 @@ function exportImages(doc){
         // overwrite internal Measurement Units to pixels
         app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
     } else {
-        app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false);
         return;
     }
-    app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false);
 }
 /*
  * User Interface
@@ -307,29 +305,27 @@ function drawWindow() {
     tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
     tabInfo.iHeight = tabInfo.add("statictext", undefined, "");
     tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = 40;
-    app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false);
-    app.addEventListener(Event.AFTER_SELECTION_CHANGED,
-                         function(){
-                             if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
-                                 var rectangle = app.selection[0];
-                                 width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100) / 100;
-                                 height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
-                                 posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
-                                 posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
-                                 tabInfo.iFilename.text = panel.infoFilename + ": " + rectangle.extractLabel(image.pageItemLabel);
-                                 tabInfo.iPosX.text = "x: " + posX;
-                                 tabInfo.iPosY.text = "y: " + posY;
-                                 tabInfo.iWidth.text = panel.infoWidth + ": " + width;
-                                 tabInfo.iHeight.text = panel.infoHeight + ": " + height;
-                             } else {
-                                 tabInfo.iFilename.text = panel.infoNoImage;
-                                 tabInfo.iPosX.text = "";
-                                 tabInfo.iPosY.text = "";
-                                 tabInfo.iHeight.text = "";
-                                 tabInfo.iWidth.text = "";
-                                 app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false);
-                             }
-                         }, false);
+    // listen to each selection change and update info tab
+    var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
+        if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
+            var rectangle = app.selection[0];
+            width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100) / 100;
+            height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
+            posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
+            posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
+            tabInfo.iFilename.text = panel.infoFilename + ": " + rectangle.extractLabel(image.pageItemLabel);
+            tabInfo.iPosX.text = "x: " + posX;
+            tabInfo.iPosY.text = "y: " + posY;
+            tabInfo.iWidth.text = panel.infoWidth + ": " + width;
+            tabInfo.iHeight.text = panel.infoHeight + ": " + height;
+        } else {
+            tabInfo.iFilename.text = panel.infoNoImage;
+            tabInfo.iPosX.text = "";
+            tabInfo.iPosY.text = "";
+            tabInfo.iHeight.text = "";
+            tabInfo.iWidth.text = "";
+        }
+    }, false);
     // buttons OK/Cancel
     var panelButtonGroup = myWindow.add("group");
     panelButtonGroup.orientation = "row";
@@ -353,7 +349,6 @@ function drawWindow() {
         image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
         image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
-        app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false)
         myWindow.close(1);
 
         function selectedRadiobutton (rbuttons){
@@ -363,10 +358,11 @@ function drawWindow() {
                 }
             }
         }
+        afterSelectChanged.remove();
         getFilelinks(app.documents[0]);
     }
     buttonCancel.onClick = function(){
-        app.removeEventListener(Event.AFTER_SELECTION_CHANGED, function(){}, false)
+        afterSelectChanged.remove();
         myWindow.close();
     }
     return myWindow.show();
