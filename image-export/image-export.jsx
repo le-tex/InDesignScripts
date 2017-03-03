@@ -44,7 +44,7 @@
  * set language
  */
 lang = {
-  pre: 0 // en = 0, de = 1
+  pre: 1 // en = 0, de = 1
 }
 /*
  * image options object
@@ -58,6 +58,7 @@ image = {
     objectExportOptions:true,
     objectExportDensityFactor:0,
     overrideExportFilenames:false,
+    exportFromHiddenLayers:false,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
@@ -93,6 +94,7 @@ panel = {
     objectExportDensityFactorValues:[1, 2, 3, 4],
     overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
+    exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
     maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
     selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
     selectDirMenuTitle:["Choose a directory", "Verzeichnis auswählen"][lang.pre],
@@ -285,8 +287,7 @@ function drawWindow() {
     overrideExportFilenamesCheckbox.value = image.overrideExportFilenames;
     var panelMiscellaneousOptions = tabAdvanced.add("panel", undefined, panel.miscellaneousOptionsTitle)
     panelMiscellaneousOptions.alignChildren = "left";
-    var pngTransparencyGroup = panelMiscellaneousOptions.add("group");
-    var pngTransparencyGroupCheckbox = pngTransparencyGroup.add("checkbox", undefined, panel.pngTransparencyTitle);
+    var pngTransparencyGroupCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.pngTransparencyTitle);
     pngTransparencyGroupCheckbox.value = image.pngTransparency;
     pngTransparencyGroupCheckbox.enabled = formatDropdown.selection.text == "PNG" ? true : false;
     // disable checkbox if selected format is not png
@@ -294,6 +295,8 @@ function drawWindow() {
         pngTransparencyGroupCheckbox.enabled = formatDropdown.selection.text == "PNG" ? true : false;
         formatDropdownDescription.text = formatDropdown.selection.text == "PNG" ? panel.formatDescriptionPNG : panel.formatDescriptionJPEG;
     };
+    var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
+    exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
     /*
      * Info Tab
      */
@@ -349,6 +352,7 @@ function drawWindow() {
         image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
         image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
+        image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
         myWindow.close(1);
 
         function selectedRadiobutton (rbuttons){
@@ -406,9 +410,14 @@ function getFilelinks(doc) {
                 rectangle.locked = false;
             }
         }
+        var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
         var originalBounds = (rectangle.parentPage != null) ? rectangle.geometricBounds : [0, 0, 0, 0];
         // ignore images in overset text and rectangles with zero width or height 
-        if(rectangle.parentPage != null && originalBounds[0] - originalBounds[2] != 0 && originalBounds[1] - originalBounds[3] != 0 ){
+        if(rectangle.parentPage != null
+           && originalBounds[0] - originalBounds[2] != 0
+           && originalBounds[1] - originalBounds[3] != 0
+           && exportFromHiddenLayers
+          ){
             if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
             // this is necessary to avoid moving of anchored objects with Y-Offset
             var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
