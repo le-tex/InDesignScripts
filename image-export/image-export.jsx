@@ -44,7 +44,7 @@
  * set language
  */
 lang = {
-  pre: 1 // en = 0, de = 1
+  pre: 0 // en = 0, de = 1
 }
 /*
  * image options object
@@ -59,6 +59,7 @@ image = {
     objectExportDensityFactor:0,
     overrideExportFilenames:false,
     exportFromHiddenLayers:false,
+    relinkToExportPaths:false,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
@@ -95,6 +96,8 @@ panel = {
     overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
     exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
+    relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
+    relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
     maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
     selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
     selectDirMenuTitle:["Choose a directory", "Verzeichnis auswählen"][lang.pre],
@@ -297,6 +300,13 @@ function drawWindow() {
     };
     var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
     exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
+    var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
+    relinkToExportPathsCheckbox.value = image.relinkToExportPath;
+    relinkToExportPathsCheckbox.onClick = function(){
+        if(relinkToExportPathsCheckbox.value == true) {
+            alert(panel.relinkToExportPathsWarning)
+        }
+    }
     /*
      * Info Tab
      */
@@ -353,6 +363,7 @@ function drawWindow() {
         image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
         image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
+        image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
         myWindow.close(1);
 
         function selectedRadiobutton (rbuttons){
@@ -395,8 +406,9 @@ function getFilelinks(doc) {
     // iterate over file links
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
+
         
-        writeLog(link.name, image.exportDir, image.logFilename);
+        writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
         
         var rectangle = link.parent.parent;
         // disable lock since this prevents images to be exported
@@ -421,7 +433,7 @@ function getFilelinks(doc) {
             if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
             // this is necessary to avoid moving of anchored objects with Y-Offset
             var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
-            if(imageExceedsPageY){
+            if(imageExceedsPageY == true){
                 originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0]; //y1
                 originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0]; //y2
             }
@@ -435,7 +447,7 @@ function getFilelinks(doc) {
             var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
             var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
             var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
-            if(isValidLink(link)){
+            if(isValidLink(link) == true){
                 /*
                  * set export filename
                  */
@@ -464,9 +476,6 @@ function getFilelinks(doc) {
                     objectExportOptions:objectExportOptions,
                     originalBounds:originalBounds
                 }
-                /*
-                 * check for custom object export options
-                 */
                 exportLinks.push(linkObject);
                 writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
             } else {
@@ -523,6 +532,12 @@ function getFilelinks(doc) {
         }
         progressBar.close();
 
+        /*
+         * danger zone: relink all images to their respective export paths
+         */
+        if(image.relinkToExportPaths == true) {
+            relinkToExportPaths(doc, exportLinks);
+        }
         alert (exportLinks.length  + " " + panel.finishedMessage);
         writeLog("\nFinished! Exported " + exportLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for further details.", image.exportDir, image.logFilename);
         doc.save();
@@ -757,4 +772,13 @@ function hasDuplicates(link, docLinks, index) {
         writeLog("Found duplicate: " + link.name, image.exportDir, image.logFilename);
     }
     return inArray(true, result);
+}
+function relinkToExportPaths (doc, exportLinks) {
+    for(var i = 0; i < exportLinks.length; i++) {
+        var linkName = exportLinks[i].link.name;
+        var exportPath = exportLinks[i].newFilepath
+        var link = doc.links.itemByName(linkName);
+        // relink to export path
+        link.relink(exportPath);
+    }
 }
