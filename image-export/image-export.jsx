@@ -612,7 +612,12 @@ function cleanString(string, replacement){
 // get file basename
 function getBasename(filename) {
     var basename = filename.match( /^(.*?)\.[a-z]{2,4}$/i);
-    return basename[1];
+    if(basename != null){
+        return basename[1];
+    }else
+        // no file extension
+        return filename;
+    
 }
 // check if string exists in array
 function inArray(string, array) {

@@ -254,12 +254,17 @@ function getFilelinks(doc){
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
         var rectangle = link.parent.parent;
+                alert(link.name);
         // disable lock since this prevents images to be exported
         // note that just the group itself has a lock state, not their childs
         if(rectangle.parent.constructor.name == 'Group'){
-            rectangle.parent.locked = false;
+            if(rectangle.parent.locked != false){
+                rectangle.parent.locked = false; 
+            }
         }else{
-            rectangle.locked = false;
+            if(rectangle.locked != false){
+                rectangle.locked = false;
+            }
         }
         var normalizedDensity = getMaxDensity(image.exportDPI, rectangle, image.maxResolution);
 
@@ -293,9 +298,12 @@ function getFilelinks(doc){
             exportLinks.push(linkObject);
 
         } else {
+            
             var missingLinks = true;
         }
+
     }
+    alert("hurz");
     if (missingLinks) {
         var result = confirm ("Missing Image Links found. Proceed?");
         if (!result) return;
@@ -400,7 +408,12 @@ function renameFile(basename, extension, rename) {
 // get file basename
 function getBasename(filename) {
     var basename = filename.match( /^(.*?)\.[a-z]{2,4}$/i);
-    return basename[1];
+    if(basename != null){
+        return basename[1];
+    }else{
+        // no file extension
+        return filename;
+    }
 }
 // check if string exists in array
 function inArray(string, array) {
