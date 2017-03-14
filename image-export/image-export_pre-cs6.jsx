@@ -254,7 +254,6 @@ function getFilelinks(doc){
         var link = docLinks[i];
         var originalBounds = link.parent.parent.geometricBounds;
         var rectangle = link.parent.parent;
-                alert(link.name);
         // disable lock since this prevents images to be exported
         // note that just the group itself has a lock state, not their childs
         if(rectangle.parent.constructor.name == 'Group'){
@@ -303,7 +302,6 @@ function getFilelinks(doc){
         }
 
     }
-    alert("hurz");
     if (missingLinks) {
         var result = confirm ("Missing Image Links found. Proceed?");
         if (!result) return;
