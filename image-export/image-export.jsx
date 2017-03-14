@@ -112,7 +112,6 @@ panel = {
     finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
     buttonOK:"OK",
     buttonCancel:["Cancel", "Abbrechen"][lang.pre],
-    errorPasteboardImage:["Warning! Images on pasteboard will not be exported: ", "Warnung! Bild auf Montagefläche wird nicht exportiert: "][lang.pre],
     errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
     errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
     promptMissingImages:["images cannot be exported. Proceed?","Bilder können nicht exportiert werden. Fortfahren?"][lang.pre],
@@ -407,47 +406,46 @@ function getFilelinks(doc) {
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
 
-        
-        writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
-        
-        var rectangle = link.parent.parent;
-        // disable lock since this prevents images to be exported
-        // note that just the group itself has a lock state, not their childs
-        if(rectangle.parent.constructor.name == 'Group'){
-            if(rectangle.parent.locked != false){
-                rectangle.parent.locked = false; 
+        if(isValidLink(link) == true){
+            writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
+            
+            var rectangle = link.parent.parent;
+            // disable lock since this prevents images to be exported
+            // note that just the group itself has a lock state, not their childs
+            if(rectangle.parent.constructor.name == 'Group'){
+                if(rectangle.parent.locked != false){
+                    rectangle.parent.locked = false; 
+                }
+            } else {
+                if(rectangle.locked != false){
+                    rectangle.locked = false;
+                }
             }
-        } else {
-            if(rectangle.locked != false){
-                rectangle.locked = false;
-            }
-        }
-        var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
-        var originalBounds = (rectangle.parentPage != null) ? rectangle.geometricBounds : [0, 0, 0, 0];
-        // ignore images in overset text and rectangles with zero width or height 
-        if(rectangle.parentPage != null
-           && originalBounds[0] - originalBounds[2] != 0
-           && originalBounds[1] - originalBounds[3] != 0
-           && exportFromHiddenLayers
-          ){
-            if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-            // this is necessary to avoid moving of anchored objects with Y-Offset
-            var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
-            if(imageExceedsPageY == true){
-                originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0]; //y1
-                originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0]; //y2
-            }
-            rectangle = cropRectangleToBleeds(rectangle);
-            var objectExportOptions = rectangle.objectExportOptions;
-            // use format override in objectExportOptions if active. Check InDesign version because the property changed.
-            var customImageConversion = isObjectExportOptionActive(objectExportOptions);
-            var overrideBool = image.objectExportOptions && customImageConversion;
-            var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
-            var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
-            var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
-            var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
-            var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
-            if(isValidLink(link) == true){
+            var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
+            var originalBounds = rectangle.geometricBounds;
+            // ignore images in overset text and rectangles with zero width or height 
+            if(exportFromHiddenLayers
+               && originalBounds[0] - originalBounds[2] != 0
+               && originalBounds[1] - originalBounds[3] != 0
+              ){
+                if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
+                // this is necessary to avoid moving of anchored objects with Y-Offset
+                var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
+                if(imageExceedsPageY == true){
+                    originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0]; //y1
+                    originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0]; //y2
+                }
+                rectangle = cropRectangleToBleeds(rectangle);
+                var objectExportOptions = rectangle.objectExportOptions;
+                // use format override in objectExportOptions if active. Check InDesign version because the property changed.
+                var customImageConversion = isObjectExportOptionActive(objectExportOptions);
+                var overrideBool = image.objectExportOptions && customImageConversion;
+                var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
+                var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
+                var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
+                var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
+                var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
+
                 /*
                  * set export filename
                  */
@@ -577,6 +575,7 @@ function createDir (folder) {
 // check if image is missing or embedded
 function isValidLink (link) {
     if(link.parent.parent.parentPage == null) {
+        writeLog('=> FAILED: image is on pasteboard or overset text.', image.exportDir, image.logFilename);
         return false;
     } else {
         switch (link.status) {

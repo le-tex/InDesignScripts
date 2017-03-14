@@ -74,7 +74,6 @@ panel = {
     finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
     buttonOK:"OK",
     buttonCancel:["Cancel", "Abbrechen"][lang.pre],
-    errorPasteboardImage:["Warning! Images on pasteboard will not be exported: ", "Warnung! Bild auf Montagefläche wird nicht exportiert: "][lang.pre],
     errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
     errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
     promptMissingImages:["Some images cannot be exported. Proceed?","Einige Bilder können nicht exportiert werden. Fortfahren?"][lang.pre]
@@ -252,22 +251,25 @@ function getFilelinks(doc){
      */
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
-        var originalBounds = link.parent.parent.geometricBounds;
-        var rectangle = link.parent.parent;
-        // disable lock since this prevents images to be exported
-        // note that just the group itself has a lock state, not their childs
-        if(rectangle.parent.constructor.name == 'Group'){
-            if(rectangle.parent.locked != false){
-                rectangle.parent.locked = false; 
-            }
-        }else{
-            if(rectangle.locked != false){
-                rectangle.locked = false;
-            }
-        }
-        var normalizedDensity = getMaxDensity(image.exportDPI, rectangle, image.maxResolution);
 
         if(isValidLink(link)){
+        
+            var originalBounds = link.parent.parent.geometricBounds;
+            var rectangle = link.parent.parent;
+            // disable lock since this prevents images to be exported
+            // note that just the group itself has a lock state, not their childs
+            
+            if(rectangle.parent.constructor.name == 'Group'){
+                if(rectangle.parent.locked != false){
+                    rectangle.parent.locked = false; 
+                }
+            }else{
+                if(rectangle.locked != false){
+                    rectangle.locked = false;
+                }
+            }
+            var normalizedDensity = getMaxDensity(image.exportDPI, rectangle, image.maxResolution);
+
             var basename = getBasename(link.name);
             // use existing filename label
             if(rectangle.extractLabel(image.pageItemLabel).length > 0){
@@ -279,6 +281,7 @@ function getFilelinks(doc){
                 uniqueBasenames.push(basename);
                 var newFilename = renameFile(basename, "jpg", false);
             }
+            
             /*
              * construct link object
              */
@@ -291,6 +294,7 @@ function getFilelinks(doc){
                 newFilepath:File(image.exportDir + "/" + newFilename),
                 originalBounds:originalBounds
             }
+
             /*
              * check for custom object export options
              */
@@ -302,6 +306,7 @@ function getFilelinks(doc){
         }
 
     }
+
     if (missingLinks) {
         var result = confirm ("Missing Image Links found. Proceed?");
         if (!result) return;
@@ -379,7 +384,7 @@ function createDir (folder) {
 // check if image is missing or embedded
 function isValidLink (link) {
     if(link.parent.parent.parentPage == null) {
-      alert(panel.errorPasteboardImage + link.name); return false;
+        return false;
     } else {
       switch (link.status) {
           case LinkStatus.LINK_MISSING:
