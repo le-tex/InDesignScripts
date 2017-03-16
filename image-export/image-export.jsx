@@ -441,7 +441,7 @@ function getFilelinks(doc) {
                 // use format override in objectExportOptions if active. Check InDesign version because the property changed.
                 var customImageConversion = isObjectExportOptionActive(objectExportOptions);
                 var overrideBool = image.objectExportOptions && customImageConversion;
-                var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString() : image.exportFormat;
+                var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString().replace(/^JPEG/g, "JPG") : image.exportFormat;
                 var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
                 var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
                 var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
