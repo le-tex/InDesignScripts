@@ -294,8 +294,9 @@ function drawWindow() {
     pngTransparencyGroupCheckbox.enabled = formatDropdown.selection.text == "PNG" ? true : false;
     // disable checkbox if selected format is not png
     formatDropdown.onChange = function(){
-        pngTransparencyGroupCheckbox.enabled = formatDropdown.selection.text == "PNG" ? true : false;
-        formatDropdownDescription.text = formatDropdown.selection.text == "PNG" ? panel.formatDescriptionPNG : panel.formatDescriptionJPEG;
+        var pngFormatActive = formatDropdown.selection.text == "PNG" || isFormatOverrideActive("PNG");
+        pngTransparencyGroupCheckbox.enabled = pngFormatActive ? true : false;
+        formatDropdownDescription.text = pngFormatActive ? panel.formatDescriptionPNG : panel.formatDescriptionJPEG;
     };
     var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
     exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
@@ -693,7 +694,7 @@ function getDefaultExportPath() {
 }
 // delete all image file labels 
 function deleteLabel(docLinks){
-    for (var i = 0; i < docLinks.length; i++) {
+    for (var i = 0; i <= docLinks.length; i++) {
         var link = docLinks[i];
         var rectangle = link.parent.parent;
         rectangle.insertLabel(image.pageItemLabel, '');
@@ -741,6 +742,23 @@ function isObjectExportOptionActive(objectExportOptions){
         objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
     return active;
 }
+function isFormatOverrideActive(searchFormat){
+    var result = false;
+    var links = app.documents[0].links;
+    for(var i = 0; i < links.length; i++){
+        var rectangle = links[i].parent.parent;
+        var objectExportOptions = rectangle.objectExportOptions;
+        if(isObjectExportOptionActive(objectExportOptions)){
+            var localFormat = objectExportOptions.imageConversionType.toString();
+            if(localFormat == searchFormat){
+                result = true;
+            }
+        }
+    }
+    return result;
+}
+
+
 // compare two links if they have equal dimensions
 function hasDuplicates(link, docLinks, index) {
     var rectangle = link.parent.parent;
