@@ -291,11 +291,12 @@ function drawWindow() {
     panelMiscellaneousOptions.alignChildren = "left";
     var pngTransparencyGroupCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.pngTransparencyTitle);
     pngTransparencyGroupCheckbox.value = image.pngTransparency;
-    pngTransparencyGroupCheckbox.enabled = formatDropdown.selection.text == "PNG" ? true : false;
+    var pngFormatActive = formatDropdown.selection.text == "PNG" || isFormatOverrideActive("PNG");
+    pngTransparencyGroupCheckbox.enabled = pngFormatActive;
     // disable checkbox if selected format is not png
     formatDropdown.onChange = function(){
-        var pngFormatActive = formatDropdown.selection.text == "PNG" || isFormatOverrideActive("PNG");
-        pngTransparencyGroupCheckbox.enabled = pngFormatActive ? true : false;
+        pngFormatActive = formatDropdown.selection.text == "PNG" || isFormatOverrideActive("PNG");
+        pngTransparencyGroupCheckbox.enabled = pngFormatActive;
         formatDropdownDescription.text = pngFormatActive ? panel.formatDescriptionPNG : panel.formatDescriptionJPEG;
     };
     var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
