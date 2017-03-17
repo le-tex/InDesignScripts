@@ -695,7 +695,7 @@ function getDefaultExportPath() {
 }
 // delete all image file labels 
 function deleteLabel(docLinks){
-    for (var i = 0; i <= docLinks.length; i++) {
+    for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         var rectangle = link.parent.parent;
         rectangle.insertLabel(image.pageItemLabel, '');
