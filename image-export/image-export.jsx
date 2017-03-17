@@ -302,7 +302,7 @@ function drawWindow() {
     var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
     exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
     var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
-    relinkToExportPathsCheckbox.value = image.relinkToExportPath;
+    relinkToExportPathsCheckbox.value = image.relinkToExportPaths;
     relinkToExportPathsCheckbox.onClick = function(){
         if(relinkToExportPathsCheckbox.value == true) {
             alert(panel.relinkToExportPathsWarning)
@@ -798,10 +798,13 @@ function hasDuplicates(link, docLinks, index) {
 }
 function relinkToExportPaths (doc, exportLinks) {
     for(var i = 0; i < exportLinks.length; i++) {
-        var linkName = exportLinks[i].link.name;
-        var exportPath = exportLinks[i].newFilepath
-        var link = doc.links.itemByName(linkName);
+        var linkId = exportLinks[i].link.id;
+        var exportPath = exportLinks[i].newFilepath;
+        var link = doc.links.itemByID(linkId);
+        var rectangle = link.parent.parent;        
         // relink to export path
         link.relink(exportPath);
+        // fit content to frame, necessary because export crops, flips, etc
+        rectangle.fit(FitOptions.CONTENT_TO_FRAME);
     }
 }
