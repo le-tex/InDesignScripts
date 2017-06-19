@@ -103,6 +103,7 @@ panel = {
     selectDirMenuTitle:["Choose a directory", "Verzeichnis auswählen"][lang.pre],
     panelFilenameOptionsTitle:["Filenames", "Dateinamen"][lang.pre],
     miscellaneousOptionsTitle:["Miscellaneous Options", "Sonstige Optionen"][lang.pre],
+    infoCharacters:[40],
     infoFilename:["Filename", "Dateiname"][lang.pre],
     infoWidth:["Width", "Breite"][lang.pre],
     infoHeight:["Height", "Höhe"][lang.pre],
@@ -313,12 +314,12 @@ function drawWindow() {
      */
     var tabInfo = tpanel.add ("tab", undefined, panel.tabInfoTitle);
     tabInfo.alignChildren = "left";
-    tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage);
+    tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n\n\n", {multiline:true});
     tabInfo.iPosX = tabInfo.add("statictext", undefined, "");
     tabInfo.iPosY = tabInfo.add("statictext", undefined, "");
     tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
     tabInfo.iHeight = tabInfo.add("statictext", undefined, "");
-    tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = 40;
+    tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = panel.infoCharacters;
     // listen to each selection change and update info tab
     var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
         if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
@@ -327,7 +328,8 @@ function drawWindow() {
             height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
             posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
             posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
-            tabInfo.iFilename.text = panel.infoFilename + ": " + rectangle.extractLabel(image.pageItemLabel);
+            var fileNameString = splitStringToArray(rectangle.extractLabel(image.pageItemLabel), panel.infoCharacters).join("\n");
+            tabInfo.iFilename.text = panel.infoFilename + ":\n" + fileNameString;
             tabInfo.iPosX.text = "x: " + posX;
             tabInfo.iPosY.text = "y: " + posY;
             tabInfo.iWidth.text = panel.infoWidth + ": " + width;
@@ -807,4 +809,12 @@ function relinkToExportPaths (doc, exportLinks) {
         // fit content to frame, necessary because export crops, flips, etc
         rectangle.fit(FitOptions.CONTENT_TO_FRAME);
     }
+}
+function splitStringToArray (string, index) {
+    var tokens = [];
+    for(var i = 0; i < string.length; i++){
+        tokens.push(string.substring(i,  i + index - 1));
+        i = i + index - 2;
+    }
+    return tokens;
 }
