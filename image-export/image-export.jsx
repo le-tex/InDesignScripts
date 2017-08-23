@@ -98,7 +98,7 @@ panel = {
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
     exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
     relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
-    exportGroupsAsSingleImageTitle:["Export groups of images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
+    exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
     relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
     maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
     selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
