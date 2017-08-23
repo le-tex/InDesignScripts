@@ -60,6 +60,7 @@ image = {
     overrideExportFilenames:false,
     exportFromHiddenLayers:false,
     relinkToExportPaths:false,
+    exportGroupsAsSingleImage:true,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
@@ -97,6 +98,7 @@ panel = {
     pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
     exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
     relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
+    exportGroupsAsSingleImageTitle:["Export groups of images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
     relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
     maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
     selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
@@ -309,6 +311,8 @@ function drawWindow() {
             alert(panel.relinkToExportPathsWarning)
         }
     }
+    var exportGroupsAsSingleImageCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportGroupsAsSingleImageTitle);
+    exportGroupsAsSingleImageCheckbox.value = image.exportGroupsAsSingleImage;
     /*
      * Info Tab
      */
@@ -367,6 +371,7 @@ function drawWindow() {
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
         image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
         image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
+        image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
         myWindow.close(1);
 
         function selectedRadiobutton (rbuttons){
@@ -414,9 +419,15 @@ function getFilelinks(doc) {
             writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
             
             var rectangle = link.parent.parent;
+            var rectangleParent = rectangle.parent;
+            if(rectangleParent.constructor.name == "Group"){
+                // try little trick, set group to rectangle
+                rectangle = rectangleParent;
+            }
+            
             // disable lock since this prevents images to be exported
             // note that just the group itself has a lock state, not their childs
-            if(rectangle.parent.constructor.name == 'Group'){
+            if(rectangle.parent.constructor.name == "Group"){
                 if(rectangle.parent.locked != false){
                     rectangle.parent.locked = false; 
                 }
@@ -785,10 +796,11 @@ function hasDuplicates(link, docLinks, index) {
             var equalShearAngle = rectangle.absoluteShearAngle == nextRectangle.absoluteShearAngle;
             var equalHorizontalScale = rectangle.absoluteHorizontalScale == nextRectangle.absoluteHorizontalScale;
             var equalVerticalScale = rectangle.absoluteVerticalScale == nextRectangle.absoluteVerticalScale;
+            var inGroup = rectangle.parent.constructor.name == "Group";
             // note: either objectExportOptions are not active, then we safely ignore them or we
             // check if they are active for the two images
             var objectExportOptionsActive = !image.objectExportOptions || isObjectExportOptionActive(rectangle.objectExportOptions) == isObjectExportOptionActive(nextRectangle.objectExportOptions);
-            result.push(equalFlip && equalRotationAngle && equalWidth && equalHeight && equalShearAngle && equalHorizontalScale && equalVerticalScale && objectExportOptionsActive);
+            result.push(equalFlip && equalRotationAngle && equalWidth && equalHeight && equalShearAngle && equalHorizontalScale && equalVerticalScale && inGroup && objectExportOptionsActive);
         }
         i++;
     }
