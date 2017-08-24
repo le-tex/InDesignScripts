@@ -491,7 +491,7 @@ function getFilelinks(doc) {
                     newFilepath:File(image.exportDir + "/" + newFilename),
                     objectExportOptions:objectExportOptions,
                     originalBounds:originalBounds,
-                    grouped:rectangle.constructor.name == "Group",
+                    group:rectangle.constructor.name == "Group",
                     id:rectangle.id
                 }
                 exportLinks.push(linkObject);
@@ -820,11 +820,20 @@ function relinkToExportPaths (doc, exportLinks) {
         var linkId = exportLinks[i].link.id;
         var exportPath = exportLinks[i].newFilepath;
         var link = doc.links.itemByID(linkId);
-        var rectangle = link.parent.parent;        
-        // relink to export path
-        link.relink(exportPath);
-        // fit content to frame, necessary because export crops, flips, etc
-        rectangle.fit(FitOptions.CONTENT_TO_FRAME);
+        var rectangle = link.parent.parent;
+        if(exportLinks[i].group){
+            var x = exportLinks[i].pageItem.geometricBounds[1];
+            var y = exportLinks[i].pageItem.geometricBounds[0];
+            var group =  doc.groups.itemByID(exportLinks[i].id);
+            var spread = group.parent;
+            var image = spread.place(new File(exportPath), [x,y], doc.layers[0]);
+            group.remove();
+        } else {
+            // relink to export path
+            link.relink(exportPath);
+            // fit content to frame, necessary because export crops, flips, etc
+            rectangle.fit(FitOptions.CONTENT_TO_FRAME);
+        }
     }
 }
 function splitStringToArray (string, index) {
