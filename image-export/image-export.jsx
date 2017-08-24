@@ -395,6 +395,8 @@ function getFilelinks(doc) {
     var uniqueBasenames = [];
     var exportLinks = [];
     var missingLinks = [];
+    var imageGroupIds = [];
+    var imageGroupIterator = 0;
     // delete filename labels, if option is set
     if(image.overrideExportFilenames == true){
         deleteLabel(docLinks);
@@ -419,14 +421,12 @@ function getFilelinks(doc) {
             writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
             
             var rectangle = link.parent.parent;
-            var rectangleParent = rectangle.parent;
-            if(rectangleParent.constructor.name == "Group"){
-                // try little trick, set group to rectangle
-                rectangle = rectangleParent;
+            // if a group should be exported as single image, replace rectangle with group object
+            if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
+                rectangle = getTopmostGroup(rectangle);
             }
-            
             // disable lock since this prevents images to be exported
-            // note that just the group itself has a lock state, not their childs
+            // note that just the group itself has a lock state, not their children
             if(rectangle.parent.constructor.name == "Group"){
                 if(rectangle.parent.locked != false){
                     rectangle.parent.locked = false; 
@@ -466,10 +466,13 @@ function getFilelinks(doc) {
                  */
                 var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
                 var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(link.name);
+                
                 var newFilename;
                 // just adjacent images are compared.
                 var duplicates = hasDuplicates(link, docLinks, i);
-                if(inArray(basename, uniqueBasenames) && (!duplicates)){
+                if( rectangle.constructor.name == "Group" ){
+                    newFilename = renameFile("group_" + rectangle.id, localFormat, false);
+                } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
                     newFilename = renameFile(basename, localFormat, true);
                 } else {
                     newFilename = renameFile(basename, localFormat, false);
@@ -487,7 +490,9 @@ function getFilelinks(doc) {
                     newFilename:newFilename,
                     newFilepath:File(image.exportDir + "/" + newFilename),
                     objectExportOptions:objectExportOptions,
-                    originalBounds:originalBounds
+                    originalBounds:originalBounds,
+                    grouped:rectangle.constructor.name == "Group",
+                    id:rectangle.id
                 }
                 exportLinks.push(linkObject);
                 writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
@@ -829,4 +834,11 @@ function splitStringToArray (string, index) {
         i = i + index - 2;
     }
     return tokens;
+}
+function getTopmostGroup(rectangle){
+    var p = rectangle.parent;
+    while(p.parent.constructor.name == "Group"){
+        p = p.parent;
+    }
+    return p;
 }
