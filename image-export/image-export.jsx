@@ -6,37 +6,11 @@
  * Export images from an InDesign document to web-friendly formats.
  *
  *
- * Note: this script requires at least InDesign Version 8.0 (CS6).
- *
+ * Note: this script requires at least InDesign Version 8.0 (CS6). For 
+ * versions prior to 8.0, please try image-export_pre-cs6.jsx which 
+ * comes with a limited feature set.
  *
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
- *
- *
- * LICENSE
- *
- * Copyright (c) 2015, Gregor Fellenz and le-tex publishing services GmbH
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
@@ -612,31 +586,25 @@ function isValidLink (link) {
 }
 // return filename with new extension and conditionally attach random string
 function renameFile(basename, extension, rename) {
-    var cleanBasename = cleanString(basename, '_');
+    var normalizedBasename = basename.replace(/[%\x00-\x1f\x80-\x9f\s\/\?<>\\:\*\|":]/g, '_');
     if(rename) {
         hash = ((1 + Math.random())*0x1000).toString(36).slice(1, 6);
-        var renameFile = cleanBasename + '-' + hash + '.' + extension.toLowerCase();
+        var renameFile = normalizedBasename + '-' + hash + '.' + extension.toLowerCase();
         return renameFile
     } else {
-        var renameFile = cleanBasename + '.' + extension.toLowerCase();
+        var renameFile = normalizedBasename + '.' + extension.toLowerCase();
         return renameFile
     }
-}
-// clean string from illegal characters
-function cleanString(string, replacement){
-    var illegalCharsRegex = /[\x00-\x1f\x80-\x9f\s\/\?<>\\:\*\|":]/g;
-    var replace = string.replace(/[\x00-\x1f\x80-\x9f\s\/\?<>\\:\*\|":]/g, replacement);
-    return replace;
 }
 // get file basename
 function getBasename(filename) {
     var basename = filename.match( /^(.*?)\.[a-z]{2,4}$/i);
     if(basename != null){
         return basename[1];
-    }else
+    } else {
         // no file extension
         return filename;
-    
+    }
 }
 // check if string exists in array
 function inArray(string, array) {
