@@ -190,11 +190,10 @@ function jsExtensions(){
     }
 }
 function exportImages(doc){
-    if(drawWindow() == 1){
-        // overwrite internal Measurement Units to pixels
-        app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
-    } else {
-        return;
+    try{
+        drawWindow() == 1
+    } catch(e){
+        alert(e);
     }
 }
 /*
@@ -365,6 +364,7 @@ function drawWindow() {
     return myWindow.show();
 }
 function getFilelinks(doc) {
+    app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
     var docLinks = linksToSortedArray(doc.links);
     var uniqueBasenames = [];
     var exportLinks = [];
@@ -622,7 +622,7 @@ function getMaxDensity(density, rectangle, maxResolution) {
     var densityFactor = density / baseMultiplier;
     var width =  (bounds[3] - bounds[1]);
     var height = (bounds[2] - bounds[0]);
-    var resolution = width * height * Math.pow(densityFactor, 2);
+    var resolution = Math.round(width * height * Math.pow(densityFactor, 2));
     if(resolution > maxResolution) {
         var maxDensity =  Math.floor(Math.sqrt(maxResolution * Math.pow(densityFactor, 2) / resolution) * baseMultiplier);
         return maxDensity;
