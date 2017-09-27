@@ -34,7 +34,7 @@ image = {
     overrideExportFilenames:false,
     exportFromHiddenLayers:false,
     relinkToExportPaths:false,
-    exportGroupsAsSingleImage:true,
+    exportGroupsAsSingleImage:false,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
