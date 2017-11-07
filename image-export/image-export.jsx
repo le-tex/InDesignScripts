@@ -418,12 +418,6 @@ function getFilelinks(doc) {
                && originalBounds[1] - originalBounds[3] != 0
               ){
                 if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-                // this is necessary to avoid moving of anchored objects with Y-Offset
-                var imageExceedsPageY = rectangle.parentPage.bounds[0] > originalBounds[0];
-                if(imageExceedsPageY == true){
-                    originalBounds[0] = originalBounds[0] + getAnchoredObjectOffset(rectangle)[0]; //y1
-                    originalBounds[2] = originalBounds[2] + getAnchoredObjectOffset(rectangle)[0]; //y2
-                }
                 rectangle = cropRectangleToBleeds(rectangle);
                 var objectExportOptions = rectangle.objectExportOptions;
                 // use format override in objectExportOptions if active. Check InDesign version because the property changed.
@@ -639,7 +633,16 @@ function cropRectangleToBleeds (rectangle){
     // page is null if the object is on the pasteboard
     var rulerOrigin = document.viewPreferences.rulerOrigin;
     if(page != null){
-        // iterate over corners and fit them into page
+        // this is necessary to avoid moving of anchored objects with Y-Offset
+        imageExceedsPageY = page.bounds[0] > bounds[0];
+        if(imageExceedsPageY == true){
+            offsetY = bounds[0] - page.bounds[0];
+            bounds[0] = bounds[0] + offsetY;
+            // TO-DO: fix bottom cropping
+            bounds[2] = bounds[2] + rect.anchoredObjectSettings.anchorYoffset;
+            rect.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
+        }
+        // iterate over each corner and fit them into page
         var newBounds = [];
         for(var i = 0; i <= 3; i++) {
             // y1
@@ -663,15 +666,6 @@ function cropRectangleToBleeds (rectangle){
     }
     document.viewPreferences.rulerOrigin =  rulerOrigin;
     return rect;
-}
-function getAnchoredObjectOffset (obj){
-    if(obj.parent.constructor === Character){
-        anchorYoffset = obj.anchoredObjectSettings.anchorYoffset;
-        anchorXoffset = obj.anchoredObjectSettings.anchorXoffset;
-        return [anchorYoffset, anchorXoffset];
-    } else {
-        return [0, 0];
-    }
 }
 // get path relative to indesign file location
 function getDefaultExportPath() {
