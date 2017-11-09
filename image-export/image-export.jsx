@@ -635,7 +635,7 @@ function cropRectangleToBleeds (rectangle){
     if(page != null){
         // given [x1, y1] = 0, add space to top-left corner to avoid to move images
         imageExceedsPageTop = page.bounds[0] > bounds[0];
-        imageExceedsPageLeft = Math.floor(page.bounds[1]) > Math.floor(bounds[1]);
+        imageExceedsPageLeft = page.bounds[1] > bounds[1];
         if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageTop){
             offsetTop = bounds[0] - page.bounds[0];
             bounds[0] = bounds[0] + offsetTop;
