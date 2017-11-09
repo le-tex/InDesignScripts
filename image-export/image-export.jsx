@@ -633,28 +633,31 @@ function cropRectangleToBleeds (rectangle){
     // page is null if the object is on the pasteboard
     var rulerOrigin = document.viewPreferences.rulerOrigin;
     if(page != null){
-        // this is necessary to avoid moving of anchored objects with Y-Offset
-        imageExceedsPageY = page.bounds[0] > bounds[0];
-        if(imageExceedsPageY == true){
-            offsetY = bounds[0] - page.bounds[0];
-            bounds[0] = bounds[0] + offsetY;
-            // TO-DO: fix bottom cropping
-            bounds[2] = bounds[2] + rect.anchoredObjectSettings.anchorYoffset;
-            rect.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
+        // given [x1, y1] = 0, add space to top-left corner to avoid to move images
+        imageExceedsPageTop = page.bounds[0] > bounds[0];
+        imageExceedsPageLeft = Math.floor(page.bounds[1]) > Math.floor(bounds[1]);
+        if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageTop){
+            offsetTop = bounds[0] - page.bounds[0];
+            bounds[0] = bounds[0] + offsetTop;
         }
+        if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageLeft ){
+            offsetLeft = bounds[1] - page.bounds[1];
+            bounds[1] = bounds[1] + offsetLeft;
+        }
+        rect.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
         // iterate over each corner and fit them into page
         var newBounds = [];
         for(var i = 0; i <= 3; i++) {
-            // y1
+            // y1 (top-left)
             if(i == 0 && bounds[i] < page.bounds[i]){
                 newBounds[i] = page.bounds[i];
-                // x1
+            // y2 (bottom-right)
             } else if(i == 2 && bounds[i] > page.bounds[i]){
                 newBounds[i] = page.bounds[i];
-                // left edge, do not crop images which touch the spine
+            // x1 (top-left)
             } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
                 newBounds[i] = page.bounds[i];
-                // right edge
+            // x2 (bottom-right)
             } else if(i == 3 && bounds[i] > page.bounds[i] && page.side.toString() != "LEFT_HAND"){
                 newBounds[i] = page.bounds[i];
             } else {
