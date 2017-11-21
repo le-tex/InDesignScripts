@@ -49,6 +49,9 @@ imageInfo = {
     format:null,
     width:null,
     height:null,
+    anchorPos:null,
+    anchorYoffset:null,
+    anchorXoffset:null,
 }
 /*
  * set panel preferences
@@ -81,8 +84,10 @@ panel = {
     miscellaneousOptionsTitle:["Miscellaneous Options", "Sonstige Optionen"][lang.pre],
     infoCharacters:[40],
     infoFilename:["Filename", "Dateiname"][lang.pre],
-    infoWidth:["Width", "Breite"][lang.pre],
-    infoHeight:["Height", "Höhe"][lang.pre],
+    infoWidth:["width", "Breite"][lang.pre],
+    infoHeight:["height", "Höhe"][lang.pre],
+    infoAnchorPosTitle:["Anchor Position", "Verankerungsposition"][lang.pre],
+    infoAnchorPos:[["above line", "anchored", "inline position"], ["Über Zeile", "Benutzerdefiniert", "Eingebunden"]][lang.pre],
     infoNoImage:["No image selected.", "Kein Bild ausgewählt."][lang.pre],
     progressBarTitle:["export Images", "Bilder exportieren"][lang.pre],
     noValidLinks:["No valid links found.", "Keine Bild-Verknüpfungen gefunden"][lang.pre],
@@ -296,7 +301,11 @@ function drawWindow() {
     tabInfo.iPosY = tabInfo.add("statictext", undefined, "");
     tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
     tabInfo.iHeight = tabInfo.add("statictext", undefined, "");
-    tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = panel.infoCharacters;
+    tabInfo.iAnchorPos = tabInfo.add("statictext", undefined, "");
+    tabInfo.iAnchorXoffset = tabInfo.add("statictext", undefined, "");
+    tabInfo.iAnchorYoffset = tabInfo.add("statictext", undefined, "");
+    
+    tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = tabInfo.iAnchorPos.characters = tabInfo.iAnchorXoffset.characters = tabInfo.iAnchorYoffset.characters = panel.infoCharacters;
     // listen to each selection change and update info tab
     var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
         if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
@@ -305,18 +314,28 @@ function drawWindow() {
             height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
             posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
             posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
+	    anchorPosIndex = getAnchoredPosition(rectangle);
+	    anchorPos = panel.infoAnchorPos[anchorPosIndex];
+	    offsetX = Math.round(rectangle.anchoredObjectSettings.anchorXoffset * 100) / 100;
+	    offsetY = Math.round(rectangle.anchoredObjectSettings.anchorYoffset * 100) / 100;
             var fileNameString = splitStringToArray(rectangle.extractLabel(image.pageItemLabel), panel.infoCharacters).join("\n");
             tabInfo.iFilename.text = panel.infoFilename + ":\n" + fileNameString;
             tabInfo.iPosX.text = "x: " + posX;
             tabInfo.iPosY.text = "y: " + posY;
             tabInfo.iWidth.text = panel.infoWidth + ": " + width;
             tabInfo.iHeight.text = panel.infoHeight + ": " + height;
+	    tabInfo.iAnchorPos.text = panel.infoAnchorPosTitle + ": " + anchorPos;
+	    tabInfo.iAnchorXoffset.text =  "offsetX: " + offsetX;
+	    tabInfo.iAnchorYoffset.text =  "offsetY: " + offsetY;
         } else {
             tabInfo.iFilename.text = panel.infoNoImage;
             tabInfo.iPosX.text = "";
             tabInfo.iPosY.text = "";
             tabInfo.iHeight.text = "";
             tabInfo.iWidth.text = "";
+	    tabInfo.iAnchorPos.text = "";
+	    tabInfo.iAnchorXoffset.text =  "";
+	    tabInfo.iAnchorYoffset.text =  "";
         }
     }, false);
     // buttons OK/Cancel
@@ -375,7 +394,6 @@ function getFilelinks(doc) {
     if(image.overrideExportFilenames == true){
         deleteLabel(docLinks);
     }
-    
     // clear log
     clearLog(image.exportDir, image.logFilename);
     var currentDate = new Date();
@@ -624,7 +642,7 @@ function getMaxDensity(density, rectangle, maxResolution) {
         return density;
     }
 }
-// crop rectangle to page bleeds
+// crop a rectangle to page bleeds
 function cropRectangleToBleeds (rectangle){
     document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
     var rect = rectangle;
@@ -632,13 +650,13 @@ function cropRectangleToBleeds (rectangle){
     var page = rect.parentPage;
     // page is null if the object is on the pasteboard
     var rulerOrigin = document.viewPreferences.rulerOrigin;
-    if(page != null){
+    if(page != null){	
         // given [x1, y1] = 0, add space to top-left corner to avoid to move images
         imageExceedsPageTop = page.bounds[0] > bounds[0];
         imageExceedsPageLeft = page.bounds[1] > bounds[1];
         if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageTop){
-            offsetTop = bounds[0] - page.bounds[0];
-            bounds[0] = bounds[0] + offsetTop;
+	    offsetTop = bounds[0] - page.bounds[0];
+	    bounds[0] = bounds[0] + offsetTop;
         }
         if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageLeft ){
             offsetLeft = bounds[1] - page.bounds[1];
@@ -670,6 +688,15 @@ function cropRectangleToBleeds (rectangle){
     document.viewPreferences.rulerOrigin =  rulerOrigin;
     return rect;
 }
+// get anchor position, needed for cropRectangleToBleeds()
+function getAnchoredPosition(rectangle){
+    // 1095716961: AnchorPosition.ABOVE_LINE
+    // 1097814113: AnchorPosition.ANCHORED
+    // 1095716969: AnchorPosition.INLINE_POSITION
+    anchoredPosIndex = [1095716961, 1097814113, 1095716969].indexOf(rectangle.anchoredObjectSettings.anchoredPosition);
+    return anchoredPosIndex;
+}
+
 // get path relative to indesign file location
 function getDefaultExportPath() {
     var exportPath = String(app.activeDocument.fullName);
