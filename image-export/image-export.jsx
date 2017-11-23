@@ -428,11 +428,8 @@ function getFilelinks(doc) {
                 if(rectangle.parent.locked != false){
                     rectangle.parent.locked = false; 
                 }
-            } else {
-                if(rectangle.locked != false){
-                    rectangle.locked = false;
-                }
             }
+            rectangle.locked = rectangle.itemLayer.locked = false;
             var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
             var originalBounds = rectangle.geometricBounds;
             // ignore images in overset text and rectangles with zero width or height 
