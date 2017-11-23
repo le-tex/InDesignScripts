@@ -657,6 +657,8 @@ function cropRectangleToBleeds (rectangle){
         if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageTop){
 	    offsetTop = bounds[0] - page.bounds[0];
 	    bounds[0] = bounds[0] + offsetTop;
+	    // add to frame to prevent that the frame disappears
+	    bounds[2] = bounds[2] + offsetTop;   
         }
         if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageLeft ){
             offsetLeft = bounds[1] - page.bounds[1];
