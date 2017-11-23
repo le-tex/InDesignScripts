@@ -35,6 +35,7 @@ image = {
     exportFromHiddenLayers:false,
     relinkToExportPaths:false,
     exportGroupsAsSingleImage:false,
+    cropImageToPage:true,
     exportDir:"export",
     exportQuality:2,
     exportFormat:0, // 0 = PNG | 1 = JPG
@@ -86,6 +87,7 @@ panel = {
     infoFilename:["Filename", "Dateiname"][lang.pre],
     infoWidth:["width", "Breite"][lang.pre],
     infoHeight:["height", "Höhe"][lang.pre],
+    cropImageToPageTitle:["Crop image to page margins", "Bild auf Seite beschneiden"][lang.pre],
     infoAnchorPosTitle:["Anchor Position", "Verankerungsposition"][lang.pre],
     infoAnchorPos:[["above line", "anchored", "inline position"], ["Über Zeile", "Benutzerdefiniert", "Eingebunden"]][lang.pre],
     infoNoImage:["No image selected.", "Kein Bild ausgewählt."][lang.pre],
@@ -280,6 +282,8 @@ function drawWindow() {
         pngTransparencyGroupCheckbox.enabled = pngFormatActive;
         formatDropdownDescription.text = pngFormatActive ? panel.formatDescriptionPNG : panel.formatDescriptionJPEG;
     };
+    var cropImageToPageCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.cropImageToPageTitle);
+    cropImageToPageCheckbox.value = image.cropImageToPage;
     var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
     exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
     var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
@@ -361,6 +365,7 @@ function drawWindow() {
         image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
         image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
         image.pngTransparency = pngTransparencyGroupCheckbox.value;
+	image.cropImageToPage = cropImageToPageCheckbox.value;
         image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
         image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
         image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
@@ -436,7 +441,7 @@ function getFilelinks(doc) {
                && originalBounds[1] - originalBounds[3] != 0
               ){
                 if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-                rectangle = cropRectangleToBleeds(rectangle);
+                rectangle = image.cropRectangleToPage ? cropRectangleToPage(rectangle) : rectangle;
                 var objectExportOptions = rectangle.objectExportOptions;
                 // use format override in objectExportOptions if active. Check InDesign version because the property changed.
                 var customImageConversion = isObjectExportOptionActive(objectExportOptions);
@@ -643,7 +648,7 @@ function getMaxDensity(density, rectangle, maxResolution) {
     }
 }
 // crop a rectangle to page bleeds
-function cropRectangleToBleeds (rectangle){
+function cropRectangleToPage (rectangle){
     document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
     var rect = rectangle;
     var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
@@ -690,7 +695,7 @@ function cropRectangleToBleeds (rectangle){
     document.viewPreferences.rulerOrigin =  rulerOrigin;
     return rect;
 }
-// get anchor position, needed for cropRectangleToBleeds()
+// get anchor position, needed for cropRectangleToPage()
 function getAnchoredPosition(rectangle){
     // 1095716961: AnchorPosition.ABOVE_LINE
     // 1097814113: AnchorPosition.ANCHORED
