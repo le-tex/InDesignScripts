@@ -438,7 +438,7 @@ function getFilelinks(doc) {
                && originalBounds[1] - originalBounds[3] != 0
               ){
                 if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-                rectangle = image.cropRectangleToPage ? cropRectangleToPage(rectangle) : rectangle;
+                rectangle = image.cropImageToPage ? cropRectangleToPage(rectangle) : rectangle;
                 var objectExportOptions = rectangle.objectExportOptions;
                 // use format override in objectExportOptions if active. Check InDesign version because the property changed.
                 var customImageConversion = isObjectExportOptionActive(objectExportOptions);
@@ -659,10 +659,8 @@ function cropRectangleToPage (rectangle){
         if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageTop){
 	    offsetTop = bounds[0] - page.bounds[0];
 	    bounds[0] = bounds[0] + offsetTop;
-	    // add to frame to prevent that the frame disappears
-	    bounds[2] = bounds[2] + offsetTop;   
         }
-        if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageLeft ){
+	if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageLeft ){
             offsetLeft = bounds[1] - page.bounds[1];
             bounds[1] = bounds[1] + offsetLeft;
         }
@@ -675,7 +673,7 @@ function cropRectangleToPage (rectangle){
                 newBounds[i] = page.bounds[i];
             // y2 (bottom-right)
             } else if(i == 2 && bounds[i] > page.bounds[i]){
-                newBounds[i] = page.bounds[i];
+		newBounds[i] = page.bounds[i];
             // x1 (top-left)
             } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
                 newBounds[i] = page.bounds[i];
