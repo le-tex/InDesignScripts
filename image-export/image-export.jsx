@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-
+version = "1.0";
 /*
  * set language
  */
@@ -208,7 +208,7 @@ function exportImages(doc){
  */
 function drawWindow() {
     //var myWindow = new Window("dialog", panel.title, undefined, {resizable:true});
-    var myWindow = new Window("palette", panel.title, undefined);
+    var myWindow = new Window("palette", panel.title + " " + version, undefined);
     myWindow.orientation = "column";
     myWindow.alignChildren ="fill";
     var tpanel = myWindow.add("tabbedpanel");
