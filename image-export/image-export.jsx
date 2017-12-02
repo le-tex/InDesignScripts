@@ -413,10 +413,9 @@ function getFilelinks(doc) {
     // iterate over file links
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
+        writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
 
-        if(isValidLink(link) == true){
-            writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
-            
+        if(isValidLink(link) == true){    
             var rectangle = link.parent.parent;
             // if a group should be exported as single image, replace rectangle with group object
             if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
@@ -488,7 +487,7 @@ function getFilelinks(doc) {
                 missingLinks.push(link.name);
             }
         } else {
-            writeLog("=> FAILED: image is not placed on a page.", image.exportDir, image.logFilename);
+            writeLog("=> FAILED: image couldn't be converted.", image.exportDir, image.logFilename);
         }
     }
     if (missingLinks.length > 0) {
@@ -582,7 +581,7 @@ function createDir (folder) {
 }
 // check if image is missing or embedded
 function isValidLink (link) {
-    if(link.parent.parent.parentPage == null) {
+    if(link.parent.hasOwnProperty("parentPage") && link.parent.parent.parentPage == null){
         writeLog('=> FAILED: image is on pasteboard or overset text.', image.exportDir, image.logFilename);
         return false;
     } else {
@@ -760,12 +759,11 @@ function isFormatOverrideActive(searchFormat){
     var links = app.documents[0].links;
     for(var i = 0; i < links.length; i++){
         var rectangle = links[i].parent.parent;
-        var objectExportOptions = rectangle.objectExportOptions;
-        if(isObjectExportOptionActive(objectExportOptions)){
-            var localFormat = objectExportOptions.imageConversionType.toString();
-            if(localFormat == searchFormat){
-                result = true;
-            }
+        if(rectangle.hasOwnProperty("objectExportOptions")
+	   && isObjectExportOptionActive(rectangle.objectExportOptions)
+	   && rectangle.objectExportOptions.imageConversionType.toString() == searchFormat
+	  ){
+            result = true;
         }
     }
     return result;
