@@ -749,7 +749,7 @@ function linksToSortedArray(links){
     return arr;
 }
 function isObjectExportOptionActive(objectExportOptions){
-    var active = (parseFloat(app.version) < 10) ? objectExportOptions.customImageConversion :
+    var active = (parseFloat(app.version) <= 10) ? objectExportOptions.customImageConversion :
         objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT ||
         objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
     return active;
