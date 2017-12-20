@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "1.0";
+version = "v1.0.1";
 /*
  * set language
  */
@@ -583,6 +583,9 @@ function createDir (folder) {
 function isValidLink (link) {
     if(link.parent.hasOwnProperty("parentPage") && link.parent.parent.parentPage == null){
         writeLog('=> FAILED: image is on pasteboard or overset text.', image.exportDir, image.logFilename);
+        return false;
+    } else if(link.parent.constructor.name == 'Story'){
+        writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
         return false;
     } else {
         switch (link.status) {
