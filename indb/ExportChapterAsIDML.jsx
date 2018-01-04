@@ -37,7 +37,7 @@ function export_to_idml (book)
 function chapters_to_idml (thisbook, chapters) {
 	var myScriptFileName = app.activeScript;
 	var myScriptFile = File(myScriptFileName);
-	var myFolder = thisbook.filePath.selectDlg ("Verzeichnis auswählen:");  
+        var myFolder = Folder.selectDialog();  
 	if(myFolder != null){
 		var myFolderName = myFolder.fsName; // Windows-spezifische Namenskonvention ( /f/TEMP/  ==>  F:\TEMP )
 		var myDefaultViewPDF = app.pdfExportPreferences.viewPDF;
