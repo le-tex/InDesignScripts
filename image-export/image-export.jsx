@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.1";
+version = "v1.0.2";
 /*
  * set language
  */
@@ -414,21 +414,13 @@ function getFilelinks(doc) {
     for (var i = 0; i < docLinks.length; i++) {
         var link = docLinks[i];
         writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
-
         if(isValidLink(link) == true){    
             var rectangle = link.parent.parent;
             // if a group should be exported as single image, replace rectangle with group object
             if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
                 rectangle = getTopmostGroup(rectangle);
             }
-            // disable lock since this prevents images to be exported
-            // note that just the group itself has a lock state, not their children
-            if(rectangle.parent.constructor.name == "Group"){
-                if(rectangle.parent.locked != false){
-                    rectangle.parent.locked = false; 
-                }
-            }
-            rectangle.locked = rectangle.itemLayer.locked = false;
+            rectangle = disableLocks(rectangle);
             var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
             var originalBounds = rectangle.geometricBounds;
             // ignore images in overset text and rectangles with zero width or height 
@@ -447,7 +439,6 @@ function getFilelinks(doc) {
                 var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
                 var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
                 var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
-
                 /*
                  * set export filename
                  */
@@ -845,4 +836,22 @@ function getTopmostGroup(rectangle){
         p = p.parent;
     }
     return p;
+}
+// disable lock since this prevents images to be exported
+// note that just the group itself has a lock state, not their children
+function disableLocks(rectangle){
+ if(rectangle.parent.constructor.name == "Group"
+    && rectangle.parent.hasOwnProperty("locked")
+    && rectangle.parent.locked != false){
+  rectangle.parent.locked = false;
+ }
+ if(rectangle.itemLayer.hasOwnProperty("locked")
+    && rectangle.itemLayer.locked != false){
+  rectangle.itemLayer.locked = false;
+ }
+ if(rectangle.hasOwnProperty("locked")
+    && rectangle.locked != false){
+  rectangle.locked = false;
+ }
+ return rectangle;
 }
