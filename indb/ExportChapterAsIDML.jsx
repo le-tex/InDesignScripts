@@ -91,7 +91,7 @@ function select_items (book)
     var book_contents = book.bookContents.everyItem().fullName;
     for (var i = 0; i < book_contents.length; i++)
         array[i] = File (book_contents[i]).name;
-    var w = new Window ('dialog', book.name + ': Kapitel als IDML exportieren');
+    var w = new Window ('dialog', book.name + ': Kapitel als IDML exportieren v.1.0.1');
     w.alignChildren = ['left', 'top'];
     w.orientation = 'row';
     var g1 = w.add ('group');
