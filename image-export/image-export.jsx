@@ -18,7 +18,7 @@ version = "v1.0.2";
  * set language
  */
 lang = {
-  pre: 0 // en = 0, de = 1
+  pre: app.locale == 1279477613 ? 1 : 0 // en = 0, de = 1
 }
 /*
  * image options object
