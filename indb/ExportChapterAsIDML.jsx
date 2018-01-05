@@ -16,7 +16,7 @@
 version = "v1.0.1";
 
 lang = {
-  pre: 0 // en = 0, de = 1
+    pre: app.locale == 1279477613 ? 1 : 0 // en = 0, de = 1
 }
 panel = {
   title:["le-tex – Export INDB as IDML", "le-tex – INDB als IDML exportieren"][lang.pre],
