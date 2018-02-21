@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.2";
+version = "v1.0.3";
 /*
  * set language
  */
@@ -128,6 +128,7 @@ function main(){
         app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;
         doc = doc.save();
         app.scriptPreferences.userInteractionLevel = userLevel;
+        document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
       } catch (e) {
         alert ("The document couldn't be saved.\n" + e);
         return;
@@ -414,7 +415,7 @@ function getFilelinks(doc) {
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
-    if(isValidLink(link) == true){    
+    if(isValidLink(link) == true){
       var rectangle = link.parent.parent;
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
@@ -423,6 +424,24 @@ function getFilelinks(doc) {
       rectangle = disableLocks(rectangle);
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       var originalBounds = rectangle.geometricBounds;
+      // restore the frame of anchored objects which overlaps the page
+      // after running cropRectangleToPage()
+      var offsetLeft = originalBounds[1] - rectangle.parentPage.bounds[1]
+      if(image.cropImageToPage
+         && rectangle.hasOwnProperty('anchoredObjectSettings')
+         && offsetLeft < 0
+         && rectangle.parentPage.side.toString() != "RIGHT_HAND"){
+        originalBounds[1] = originalBounds[1] + offsetLeft;
+        originalBounds[3] = originalBounds[3] + offsetLeft;
+      }
+      var offsetTop = originalBounds[0] - rectangle.parentPage.bounds[0];
+      if(image.cropImageToPage
+         && rectangle.hasOwnProperty('anchoredObjectSettings')
+         && offsetTop < 0){
+        alert(originalBounds[0]);
+        originalBounds[0] = originalBounds[0] + offsetTop / 2 ;
+        originalBounds[2] = originalBounds[2] + offsetTop / 2 ;
+      }
       // ignore images in overset text and rectangles with zero width or height 
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
@@ -639,24 +658,11 @@ function getMaxDensity(density, rectangle, maxResolution) {
 }
 // crop a rectangle to page bleeds
 function cropRectangleToPage (rectangle){
-  document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
   var rect = rectangle;
   var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rect.parentPage;
   // page is null if the object is on the pasteboard
-  var rulerOrigin = document.viewPreferences.rulerOrigin;
-  if(page != null){	
-    // given [x1, y1] = 0, add space to top-left corner to avoid to move images
-    imageExceedsPageTop = page.bounds[0] > bounds[0];
-    imageExceedsPageLeft = page.bounds[1] > bounds[1];
-    if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageTop){
-      offsetTop = bounds[0] - page.bounds[0];
-      bounds[0] = bounds[0] + offsetTop;
-    }
-    if(rect.hasOwnProperty("anchoredObjectSettings") && imageExceedsPageLeft ){
-      offsetLeft = bounds[1] - page.bounds[1];
-      bounds[1] = bounds[1] + offsetLeft;
-    }
+  if(page != null){
     rect.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
     // iterate over each corner and fit them into page
     var newBounds = [];
@@ -677,10 +683,9 @@ function cropRectangleToPage (rectangle){
         newBounds[i] = bounds[i];
       }
     }
-    // restore old bounds
+    // assign new bounds
     rect.geometricBounds = newBounds;
   }
-  document.viewPreferences.rulerOrigin =  rulerOrigin;
   return rect;
 }
 // get anchor position, needed for cropRectangleToPage()
