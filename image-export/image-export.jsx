@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.3";
+version = "v1.0.4";
 /*
  * set language
  */
@@ -426,9 +426,9 @@ function getFilelinks(doc) {
       var originalBounds = rectangle.geometricBounds;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
-      var offsetLeft = originalBounds[1] - rectangle.parentPage.bounds[1]
+      var offsetLeft = originalBounds[1] - rectangle.parentPage.bounds[1];
       if(image.cropImageToPage
-         && rectangle.hasOwnProperty('anchoredObjectSettings')
+         && rectangle.parent.constructor.name == "Character"
          && offsetLeft < 0
          && rectangle.parentPage.side.toString() != "RIGHT_HAND"){
         originalBounds[1] = originalBounds[1] + offsetLeft;
@@ -436,7 +436,7 @@ function getFilelinks(doc) {
       }
       var offsetTop = originalBounds[0] - rectangle.parentPage.bounds[0];
       if(image.cropImageToPage
-         && rectangle.hasOwnProperty('anchoredObjectSettings')
+         && rectangle.parent.constructor.name == "Character"
          && offsetTop < 0){
         originalBounds[0] = originalBounds[0] + offsetTop / 2 ;
         originalBounds[2] = originalBounds[2] + offsetTop / 2 ;
