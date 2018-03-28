@@ -438,7 +438,6 @@ function getFilelinks(doc) {
       if(image.cropImageToPage
          && rectangle.hasOwnProperty('anchoredObjectSettings')
          && offsetTop < 0){
-        alert(originalBounds[0]);
         originalBounds[0] = originalBounds[0] + offsetTop / 2 ;
         originalBounds[2] = originalBounds[2] + offsetTop / 2 ;
       }
