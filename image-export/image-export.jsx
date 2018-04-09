@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.4";
+version = "v1.0.5";
 /*
  * set language
  */
@@ -308,8 +308,7 @@ function drawWindow() {
   tabInfo.iHeight = tabInfo.add("statictext", undefined, "");
   tabInfo.iAnchorPos = tabInfo.add("statictext", undefined, "");
   tabInfo.iAnchorXoffset = tabInfo.add("statictext", undefined, "");
-  tabInfo.iAnchorYoffset = tabInfo.add("statictext", undefined, "");
-  
+  tabInfo.iAnchorYoffset = tabInfo.add("statictext", undefined, "");  
   tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = tabInfo.iAnchorPos.characters = tabInfo.iAnchorXoffset.characters = tabInfo.iAnchorYoffset.characters = panel.infoCharacters;
   // listen to each selection change and update info tab
   var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
@@ -423,31 +422,32 @@ function getFilelinks(doc) {
       }
       rectangle = disableLocks(rectangle);
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
-      var originalBounds = rectangle.geometricBounds;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
-      var offsetLeft = originalBounds[1] - rectangle.parentPage.bounds[1];
-      if(image.cropImageToPage
-         && rectangle.parent.constructor.name == "Character"
-         && offsetLeft < 0
-         && rectangle.parentPage.side.toString() != "RIGHT_HAND"){
-        originalBounds[1] = originalBounds[1] + offsetLeft;
-        originalBounds[3] = originalBounds[3] + offsetLeft;
-      }
-      var offsetTop = originalBounds[0] - rectangle.parentPage.bounds[0];
-      if(image.cropImageToPage
-         && rectangle.parent.constructor.name == "Character"
-         && offsetTop < 0){
-        originalBounds[0] = originalBounds[0] + offsetTop / 2 ;
-        originalBounds[2] = originalBounds[2] + offsetTop / 2 ;
-      }
+      var originalBounds = rectangle.geometricBounds;
+      // offsets y1, x1, y2, x2 (top, left, bottom, right)
+      var boundOffsets = [originalBounds[0] - rectangle.parentPage.bounds[0], 
+                          originalBounds[1] - rectangle.parentPage.bounds[1], 
+                          originalBounds[2] - rectangle.parentPage.bounds[2],
+                          originalBounds[3] - rectangle.parentPage.bounds[3]];
+      var anchored = rectangle.parent.constructor.name == "Character";
+      //var anchorPoint = anchored ? rectangle.parent : null;
+      //var anchorSettings = anchored ? rectangle.anchoredObjectSettings : null;
+      var insPoint = anchored ? rectangle.parent.insertionPoints[1] : null;
+      var anchoredPosition = anchored ? rectangle.anchoredObjectSettings.anchoredPosition : null;
       // ignore images in overset text and rectangles with zero width or height 
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
          && originalBounds[1] - originalBounds[3] != 0
         ){
         if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-        rectangle = image.cropImageToPage ? cropRectangleToPage(rectangle) : rectangle;
+        // crop image if exceeds page
+        if(image.cropImageToPage && (boundOffsets[0] < 0
+                                     || boundOffsets[1] < 0
+                                     || boundOffsets[3] < 0)
+          ){
+          rectangle = cropRectangleToPage(rectangle);
+        }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
         var customImageConversion = isObjectExportOptionActive(objectExportOptions);
@@ -476,7 +476,7 @@ function getFilelinks(doc) {
         uniqueBasenames.push(getBasename(newFilename));
         /*
          * construct link object
-         */ 
+         */
         linkObject = {
           link:link,
           pageItem:rectangle,
@@ -486,6 +486,9 @@ function getFilelinks(doc) {
           newFilename:newFilename,
           newFilepath:File(image.exportDir + "/" + newFilename),
           objectExportOptions:objectExportOptions,
+          anchored:anchored,
+          anchoredPosition:anchoredPosition,
+          insertionPoint:insPoint,
           originalBounds:originalBounds,
           group:rectangle.constructor.name == "Group",
           id:rectangle.id
@@ -543,6 +546,10 @@ function getFilelinks(doc) {
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
       // restore original bounds
       exportLinks[i].pageItem.geometricBounds = exportLinks[i].originalBounds;
+      // restore anchor
+      if(exportLinks[i].anchored){        
+        exportLinks[i].pageItem.anchoredObjectSettings.insertAnchoredObject( exportLinks[i].insertionPoint, exportLinks[i].anchoredPosition );        
+      }
     }
     progressBar.close();
 
@@ -660,6 +667,10 @@ function cropRectangleToPage (rectangle){
   var rect = rectangle;
   var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rect.parentPage;
+  // release anchors to avoid displaced images. we need to restore the anchor later
+  if(rectangle.parent.constructor.name == "Character"){
+    rectangle.anchoredObjectSettings.releaseAnchoredObject();
+  }
   // page is null if the object is on the pasteboard
   if(page != null){
     rect.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
@@ -669,13 +680,13 @@ function cropRectangleToPage (rectangle){
       // y1 (top-left)
       if(i == 0 && bounds[i] < page.bounds[i]){
         newBounds[i] = page.bounds[i];
-        // y2 (bottom-right)
+      // y2 (bottom-right)
       } else if(i == 2 && bounds[i] > page.bounds[i]){
-	newBounds[i] = page.bounds[i];
-        // x1 (top-left)
+        newBounds[i] = page.bounds[i];
+      // x1 (top-left)
       } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
         newBounds[i] = page.bounds[i];
-        // x2 (bottom-right)
+      // x2 (bottom-right)
       } else if(i == 3 && bounds[i] > page.bounds[i] && page.side.toString() != "LEFT_HAND"){
         newBounds[i] = page.bounds[i];
       } else {
