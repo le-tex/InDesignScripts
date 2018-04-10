@@ -430,10 +430,11 @@ function getFilelinks(doc) {
                           originalBounds[1] - rectangle.parentPage.bounds[1], 
                           originalBounds[2] - rectangle.parentPage.bounds[2],
                           originalBounds[3] - rectangle.parentPage.bounds[3]];
+      var exceedsPage = boundOffsets[0] < 0 || boundOffsets[1] < 0 || boundOffsets[2] > 0 || boundOffsets[3] > 0
       var anchored = rectangle.parent.constructor.name == "Character";
       //var anchorPoint = anchored ? rectangle.parent : null;
       //var anchorSettings = anchored ? rectangle.anchoredObjectSettings : null;
-      var insPoint = anchored ? rectangle.parent.insertionPoints[1] : null;
+      var insPoint = anchored ? rectangle.parent.insertionPoints[0] : null;
       var anchoredPosition = anchored ? rectangle.anchoredObjectSettings.anchoredPosition : null;
       // ignore images in overset text and rectangles with zero width or height 
       if(exportFromHiddenLayers
@@ -442,10 +443,7 @@ function getFilelinks(doc) {
         ){
         if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
         // crop image if exceeds page
-        if(image.cropImageToPage && (boundOffsets[0] < 0
-                                     || boundOffsets[1] < 0
-                                     || boundOffsets[3] < 0)
-          ){
+        if(image.cropImageToPage && exceedsPage){
           rectangle = cropRectangleToPage(rectangle);
         }
         var objectExportOptions = rectangle.objectExportOptions;
@@ -489,6 +487,7 @@ function getFilelinks(doc) {
           anchored:anchored,
           anchoredPosition:anchoredPosition,
           insertionPoint:insPoint,
+          exceedsPage:exceedsPage,
           originalBounds:originalBounds,
           group:rectangle.constructor.name == "Group",
           id:rectangle.id
@@ -544,11 +543,13 @@ function getFilelinks(doc) {
       exportLinks[i].pageItem.exportFile(exportFormat, exportLinks[i].newFilepath);
       // insert label with new file link for postprocessing
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
-      // restore original bounds
-      exportLinks[i].pageItem.geometricBounds = exportLinks[i].originalBounds;
       // restore anchor
-      if(exportLinks[i].anchored){        
-        exportLinks[i].pageItem.anchoredObjectSettings.insertAnchoredObject( exportLinks[i].insertionPoint, exportLinks[i].anchoredPosition );        
+      if(image.cropImageToPage && exportLinks[i].exceedsPage){
+        if(exportLinks[i].anchored){        
+          exportLinks[i].pageItem.anchoredObjectSettings.insertAnchoredObject( exportLinks[i].insertionPoint, exportLinks[i].anchoredPosition );        
+        }
+        // restore original bounds
+        exportLinks[i].pageItem.geometricBounds = exportLinks[i].originalBounds;
       }
     }
     progressBar.close();
