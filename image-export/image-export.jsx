@@ -545,11 +545,11 @@ function getFilelinks(doc) {
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
       // restore anchor
       if(image.cropImageToPage && exportLinks[i].exceedsPage){
-        if(exportLinks[i].anchored){        
-          exportLinks[i].pageItem.anchoredObjectSettings.insertAnchoredObject( exportLinks[i].insertionPoint, exportLinks[i].anchoredPosition );        
-        }
         // restore original bounds
         exportLinks[i].pageItem.geometricBounds = exportLinks[i].originalBounds;
+        if(exportLinks[i].anchored){
+          exportLinks[i].pageItem.anchoredObjectSettings.insertAnchoredObject( exportLinks[i].insertionPoint, exportLinks[i].anchoredPosition );        
+        }
       }
     }
     progressBar.close();
