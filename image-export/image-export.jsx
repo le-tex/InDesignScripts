@@ -465,7 +465,7 @@ function getFilelinks(doc) {
         // just adjacent images are compared.
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
-          newFilename = renameFile("group_" + rectangle.id, localFormat, false);
+          newFilename = renameFile(rectangle.rectangles[0].images[0].itemLink.name + "_group", localFormat, false);
         } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
           newFilename = renameFile(basename, localFormat, true);
         } else {
