@@ -432,19 +432,19 @@ function getFilelinks(doc) {
                           originalBounds[3] - rectangle.parentPage.bounds[3]];
       var exceedsPage = boundOffsets[0] < 0 || boundOffsets[1] < 0 || boundOffsets[2] > 0 || boundOffsets[3] > 0
       var anchored = rectangle.parent.constructor.name == "Character";
-      //var anchorPoint = anchored ? rectangle.parent : null;
-      //var anchorSettings = anchored ? rectangle.anchoredObjectSettings : null;
-      var insPoint = anchored ? rectangle.parent.insertionPoints[0] : null;
-      var anchoredPosition = anchored ? rectangle.anchoredObjectSettings.anchoredPosition : null;
       // ignore images in overset text and rectangles with zero width or height 
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
          && originalBounds[1] - originalBounds[3] != 0
         ){
         if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-        // crop image if exceeds page
+        /* since cropping works not well with anchored images, we
+         * create a duplicate of the rectangle where the cropping is applied
+         */ 
+        var rectangleCopy = null;
         if(image.cropImageToPage && exceedsPage){
-          rectangle = cropRectangleToPage(rectangle);
+          rectangleCopy = rectangle.duplicate(undefined, [0, 0]);
+          rectangleCopy = cropRectangleToPage(rectangle, rectangleCopy);
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
@@ -485,8 +485,7 @@ function getFilelinks(doc) {
           newFilepath:File(image.exportDir + "/" + newFilename),
           objectExportOptions:objectExportOptions,
           anchored:anchored,
-          anchoredPosition:anchoredPosition,
-          insertionPoint:insPoint,
+          rectangleCopy:rectangleCopy,
           exceedsPage:exceedsPage,
           originalBounds:originalBounds,
           group:rectangle.constructor.name == "Group",
@@ -539,18 +538,14 @@ function getFilelinks(doc) {
       app.pngExportPreferences.useDocumentBleeds = true;
 
       progressBar.hit("export " + exportLinks[i].newFilename, i);
-
-      exportLinks[i].pageItem.exportFile(exportFormat, exportLinks[i].newFilepath);
+      if(image.cropImageToPage && exportLinks[i].exceedsPage){
+        exportLinks[i].rectangleCopy.exportFile(exportFormat, exportLinks[i].newFilepath);
+        exportLinks[i].rectangleCopy.remove();
+      } else {
+        exportLinks[i].pageItem.exportFile(exportFormat, exportLinks[i].newFilepath);
+      }
       // insert label with new file link for postprocessing
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
-      // restore anchor
-      if(image.cropImageToPage && exportLinks[i].exceedsPage){
-        // restore original bounds
-        exportLinks[i].pageItem.geometricBounds = exportLinks[i].originalBounds;
-        if(exportLinks[i].anchored){
-          exportLinks[i].pageItem.anchoredObjectSettings.insertAnchoredObject( exportLinks[i].insertionPoint, exportLinks[i].anchoredPosition );        
-        }
-      }
     }
     progressBar.close();
 
@@ -664,17 +659,16 @@ function getMaxDensity(density, rectangle, maxResolution) {
   }
 }
 // crop a rectangle to page bleeds
-function cropRectangleToPage (rectangle){
-  var rect = rectangle;
-  var bounds = rect.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
-  var page = rect.parentPage;
+function cropRectangleToPage (rectangle, rectangleCopy){
+  var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
+  var page = rectangle.parentPage;
   // release anchors to avoid displaced images. we need to restore the anchor later
   if(rectangle.parent.constructor.name == "Character"){
     rectangle.anchoredObjectSettings.releaseAnchoredObject();
   }
   // page is null if the object is on the pasteboard
   if(page != null){
-    rect.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
+    // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
     // iterate over each corner and fit them into page
     var newBounds = [];
     for(var i = 0; i <= 3; i++) {
@@ -695,9 +689,9 @@ function cropRectangleToPage (rectangle){
       }
     }
     // assign new bounds
-    rect.geometricBounds = newBounds;
+    rectangleCopy.geometricBounds = newBounds;
   }
-  return rect;
+  return rectangleCopy;
 }
 // get anchor position, needed for cropRectangleToPage()
 function getAnchoredPosition(rectangle){
