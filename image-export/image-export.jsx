@@ -430,7 +430,11 @@ function getFilelinks(doc) {
                           originalBounds[1] - rectangle.parentPage.bounds[1], 
                           originalBounds[2] - rectangle.parentPage.bounds[2],
                           originalBounds[3] - rectangle.parentPage.bounds[3]];
-      var exceedsPage = boundOffsets[0] < 0 || boundOffsets[1] < 0 || boundOffsets[2] > 0 || boundOffsets[3] > 0
+      var absoluteAccuracy = 5; // in px
+      var exceedsPage = boundOffsets[0] < (0 - absoluteAccuracy)
+                     || boundOffsets[1] < (0 - absoluteAccuracy)
+                     || boundOffsets[2] > absoluteAccuracy
+                     || boundOffsets[3] > absoluteAccuracy
       var anchored = rectangle.parent.constructor.name == "Character";
       // ignore images in overset text and rectangles with zero width or height 
       if(exportFromHiddenLayers
