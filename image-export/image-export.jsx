@@ -468,11 +468,7 @@ function getFilelinks(doc) {
         var newFilename;
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
-          for(k = 0; k < rectangle.rectangles.length; k++){
-            if(rectangle.rectangles[k].images.length != 0){
-              newFilename = renameFile(rectangle.rectangles[k].images[0].itemLink.name + "_group", localFormat, false);
-            }
-          }
+          newFilename = renameFile(link.name + "_group", localFormat, false);
         } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
           newFilename = renameFile(basename, localFormat, true);
         } else {
