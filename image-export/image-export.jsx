@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.6";
+version = "v1.0.7";
 /*
  * set language
  */
