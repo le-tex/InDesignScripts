@@ -464,12 +464,11 @@ function getFilelinks(doc) {
          */
         var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
         var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(link.name);
-        
         var newFilename;
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
-          newFilename = renameFile(getBasename(link.name) + "_group", localFormat, false);
-        } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
+          newFilename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? renameFile(basename, localFormat, false) : renameFile(getBasename(link.name) + "_group", localFormat, false);
+       } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
           newFilename = renameFile(basename, localFormat, true);
         } else {
           newFilename = renameFile(basename, localFormat, false);
