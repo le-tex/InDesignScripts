@@ -466,10 +466,13 @@ function getFilelinks(doc) {
         var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(link.name);
         
         var newFilename;
-        // just adjacent images are compared.
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
-          newFilename = renameFile(rectangle.rectangles[0].images[0].itemLink.name + "_group", localFormat, false);
+          for(k = 0; k < rectangle.rectangles.length; k++){
+            if(rectangle.rectangles[k].images.length != 0){
+              newFilename = renameFile(rectangle.rectangles[k].images[0].itemLink.name + "_group", localFormat, false);
+            }
+          }
         } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
           newFilename = renameFile(basename, localFormat, true);
         } else {
