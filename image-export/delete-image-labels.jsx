@@ -42,12 +42,17 @@ function main(){
 }
 
 function deleteLabel(doc){
-  var docLinks = doc.links;
-  for (var i = 0; i < docLinks.length; i++) {
-    var link = docLinks[i];
+  for (var i = 0; i < doc.links.length; i++) {
+    var link = doc.links[i];
     var rectangle = link.parent.parent;
     for (j = 0; j < options.labelNames.length; ++j) {
       rectangle.insertLabel(options.labelNames[j], '');
+    }
+  }
+  for (var i = 0; i < doc.groups.length; i++) {
+    var group = doc.groups[i];
+    for (j = 0; j < options.labelNames.length; ++j) {
+      group.insertLabel(options.labelNames[j], '');
     }
   }
   alert('OK');
