@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.7";
+version = "v1.0.8";
 /*
  * set language
  */
@@ -397,7 +397,7 @@ function getFilelinks(doc) {
   var imageGroupIterator = 0;
   // delete filename labels, if option is set
   if(image.overrideExportFilenames == true){
-    deleteLabel(docLinks);
+    deleteLabel(doc);
   }
   // clear log
   clearLog(image.exportDir, image.logFilename);
@@ -711,11 +711,15 @@ function getDefaultExportPath() {
   return exportPath
 }
 // delete all image file labels 
-function deleteLabel(docLinks){
-  for (var i = 0; i < docLinks.length; i++) {
-    var link = docLinks[i];
+function deleteLabel(doc){  
+  for (var i = 0; i < doc.links.length; i++) {
+    var link = doc.links[i];
     var rectangle = link.parent.parent;
     rectangle.insertLabel(image.pageItemLabel, '');
+  }
+  for (var i = 0; i < doc.groups.length; i++) {
+    var group = doc.groups[i];
+    group.insertLabel(image.pageItemLabel, '');
   }
 }
 // simple logging
