@@ -421,6 +421,11 @@ function getFilelinks(doc) {
         rectangle = getTopmostGroup(rectangle);
       }
       rectangle = disableLocks(rectangle);
+      writeLog("flip: " + rectangle.absoluteFlip
+               + "\nshear angle: " + rectangle.absoluteShearAngle
+               + "\nrotation angle:" + rectangle.rotationAngle
+               + "\nabsolute rotation angle: " + rectangle.absoluteShearAngle, image.exportDir, image.logFilename);
+      
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
@@ -448,7 +453,8 @@ function getFilelinks(doc) {
         var rectangleCopy = null;
         if(image.cropImageToPage && exceedsPage){
           rectangleCopy = rectangle.duplicate(undefined, [0, 0]);
-          rectangleCopy = cropRectangleToPage(rectangle, rectangleCopy);
+          rectangleCopy.rotationAngle = rectangle.rotationAngle;
+          rectangleCopy = cropRectangleToPage(rectangleCopy);
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
@@ -661,7 +667,7 @@ function getMaxDensity(density, rectangle, maxResolution) {
   }
 }
 // crop a rectangle to page bleeds
-function cropRectangleToPage (rectangle, rectangleCopy){
+function cropRectangleToPage (rectangle){
   var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rectangle.parentPage;
   // release anchors to avoid displaced images. we need to restore the anchor later
@@ -691,9 +697,9 @@ function cropRectangleToPage (rectangle, rectangleCopy){
       }
     }
     // assign new bounds
-    rectangleCopy.geometricBounds = newBounds;
+    rectangle.geometricBounds = newBounds;
   }
-  return rectangleCopy;
+  return rectangle;
 }
 // get anchor position, needed for cropRectangleToPage()
 function getAnchoredPosition(rectangle){
