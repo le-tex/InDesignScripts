@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.0.8";
+version = "v1.1.0";
 /*
  * set language
  */
@@ -413,7 +413,7 @@ function getFilelinks(doc) {
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
-    writeLog(link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
+    writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link) == true){
       var rectangle = link.parent.parent;
       // if a group should be exported as single image, replace rectangle with group object
@@ -421,11 +421,15 @@ function getFilelinks(doc) {
         rectangle = getTopmostGroup(rectangle);
       }
       rectangle = disableLocks(rectangle);
-      writeLog("flip: " + rectangle.absoluteFlip
+      parentPage = (rectangle.parentPage != null) ? rectangle.parentPage.name : "null";
+      writeLog(  "page: " + parentPage
                + "\nshear angle: " + rectangle.absoluteShearAngle
-               + "\nrotation angle:" + rectangle.rotationAngle
-               + "\nabsolute rotation angle: " + rectangle.absoluteShearAngle, image.exportDir, image.logFilename);
-      
+               + "\nrotation angle: " + rectangle.rotationAngle
+               + "\nabsolute rotation angle: " + rectangle.absoluteShearAngle
+               + "\ny1: "   + rectangle.geometricBounds[0]
+               + ", x1: " + rectangle.geometricBounds[1]
+               + ", y2: " + rectangle.geometricBounds[2]
+               + ", x2: " + rectangle.geometricBounds[3], image.exportDir, image.logFilename);
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
@@ -674,6 +678,8 @@ function cropRectangleToPage (rectangle){
   if(rectangle.parent.constructor.name == "Character"){
     rectangle.anchoredObjectSettings.releaseAnchoredObject();
   }
+
+  
   // page is null if the object is on the pasteboard
   if(page != null){
     // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
