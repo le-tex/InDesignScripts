@@ -21,14 +21,6 @@ A script for Adobe InDesign to export images to web-friendly formats.
 * support InDesign object export options
 * set resolution limit
 
-For example, setting `lang.pre` to `1` will change the interface language to german.
-
-```javascript
-lang = {
-  pre: 0
-}
-```
-
 ## Limitations
 
 * Embedded images are not exported. Consider to convert embedded images to linked images instead.
