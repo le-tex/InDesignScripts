@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.0";
+version = "v1.1.1";
 /*
  * set language
  */
@@ -408,7 +408,7 @@ function getFilelinks(doc) {
       + currentDate.getHours() + ':'
       + currentDate.getMinutes() + ':' 
       + currentDate.getSeconds();
-  writeLog("Image export started at " + dateTime + "\n", image.exportDir, image.logFilename);
+  writeLog("le-tex image-export " + version + "\nstarted at " + dateTime + "\n", image.exportDir, image.logFilename);
   
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
