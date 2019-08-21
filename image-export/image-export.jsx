@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.1";
+version = "v1.1.2";
 /*
  * set language
  */
@@ -51,8 +51,6 @@ imageInfo = {
   width:null,
   height:null,
   anchorPos:null,
-  anchorYoffset:null,
-  anchorXoffset:null,
 }
 /*
  * set panel preferences
@@ -422,18 +420,26 @@ function getFilelinks(doc) {
       }
       rectangle = disableLocks(rectangle);
       parentPage = (rectangle.parentPage != null) ? rectangle.parentPage.name : "null";
-      writeLog(  "page: " + parentPage
-               + "\nshear angle: " + rectangle.absoluteShearAngle
-               + "\nrotation angle: " + rectangle.rotationAngle
-               + "\nabsolute rotation angle: " + rectangle.absoluteShearAngle
-               + "\ny1: "   + rectangle.geometricBounds[0]
-               + ", x1: " + rectangle.geometricBounds[1]
-               + ", y2: " + rectangle.geometricBounds[2]
-               + ", x2: " + rectangle.geometricBounds[3], image.exportDir, image.logFilename);
-      var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
       var originalBounds = rectangle.geometricBounds;
+      var rotationAngle = rectangle.rotationAngle;
+      var shearAngle = rectangle.absoluteShearAngle;
+      var anchored = rectangle.parent.constructor.name == "Character";
+      var anchorXoffset = (anchored) ? rectangle.anchoredObjectSettings.anchorXoffset : null;
+      var anchorYoffset = (anchored) ? rectangle.anchoredObjectSettings.anchorYoffset : null;
+      var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
+      writeLog(  "page: " + parentPage
+                 + "\nshear angle: "    + shearAngle
+                 + "\nrotation angle: " + rotationAngle
+                 + "\ny1: " + originalBounds[0]
+                 + ", x1: " + originalBounds[1]
+                 + ", y2: " + originalBounds[2]
+                 + ", x2: " + originalBounds[3]
+                 + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                 + "\ntext wrap mode: "  + textWrapMode
+                 , image.exportDir, image.logFilename);
+      var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       // offsets y1, x1, y2, x2 (top, left, bottom, right)
       var boundOffsets = [originalBounds[0] - rectangle.parentPage.bounds[0], 
                           originalBounds[1] - rectangle.parentPage.bounds[1], 
@@ -444,7 +450,6 @@ function getFilelinks(doc) {
                      || boundOffsets[1] < (0 - absoluteAccuracy)
                      || boundOffsets[2] > absoluteAccuracy
                      || boundOffsets[3] > absoluteAccuracy
-      var anchored = rectangle.parent.constructor.name == "Character";
       // ignore images in overset text and rectangles with zero width or height 
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
@@ -456,9 +461,14 @@ function getFilelinks(doc) {
          */ 
         var rectangleCopy = null;
         if(image.cropImageToPage && exceedsPage){
+          // disable text wrap temporarily, otherwise duplicate will be suppressed
+          rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
+          // create duplicate of image
           rectangleCopy = rectangle.duplicate(undefined, [0, 0]);
+          // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
-          rectangleCopy = cropRectangleToPage(rectangleCopy);
+          //rectangleCopy = cropRectangleToPage(rectangleCopy);
+          rectangle.textWrapPreferences.textWrapMode = textWrapMode;
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
@@ -677,9 +687,7 @@ function cropRectangleToPage (rectangle){
   // release anchors to avoid displaced images. we need to restore the anchor later
   if(rectangle.parent.constructor.name == "Character"){
     rectangle.anchoredObjectSettings.releaseAnchoredObject();
-  }
-
-  
+  }  
   // page is null if the object is on the pasteboard
   if(page != null){
     // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
