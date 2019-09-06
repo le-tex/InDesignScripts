@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.2";
+version = "v1.1.3";
 /*
  * set language
  */
@@ -294,6 +294,9 @@ function drawWindow() {
   }
   var exportGroupsAsSingleImageCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportGroupsAsSingleImageTitle);
   exportGroupsAsSingleImageCheckbox.value = image.exportGroupsAsSingleImage;
+  exportGroupsAsSingleImageCheckbox.onClick = function(){
+    overrideExportFilenamesCheckbox.value = (exportGroupsAsSingleImageCheckbox.value == true) ? true : overrideExportFilenamesCheckbox.value;    
+  }
   /*
    * Info Tab
    */
