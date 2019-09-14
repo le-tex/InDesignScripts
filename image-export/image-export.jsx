@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.3";
+version = "v1.1.4";
 /*
  * set language
  */
@@ -417,8 +417,11 @@ function getFilelinks(doc) {
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link) == true){
       var rectangle = link.parent.parent;
+      var linkname = link.name;
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
+        // use always the filename of the first graphic to avoid duplicates
+        linkname = rectangle.parent.rectangles[0].graphics[0].itemLink.name;
         rectangle = getTopmostGroup(rectangle);
       }
       rectangle = disableLocks(rectangle);
@@ -486,11 +489,11 @@ function getFilelinks(doc) {
          * set export filename
          */
         var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
-        var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(link.name);
+        var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(linkname);
         var newFilename;
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
-          newFilename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? renameFile(basename, localFormat, false) : renameFile(getBasename(link.name) + "_group", localFormat, false);
+          newFilename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? renameFile(basename, localFormat, false) : renameFile(getBasename(linkname) + "_group", localFormat, false);
        } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
           newFilename = renameFile(basename, localFormat, true);
         } else {
@@ -519,10 +522,8 @@ function getFilelinks(doc) {
         exportLinks.push(linkObject);
         writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
       } else {
-        missingLinks.push(link.name);
+        missingLinks.push(linkname);
       }
-    } else {
-      writeLog("=> FAILED: image couldn't be converted.", image.exportDir, image.logFilename);
     }
   }
   if (missingLinks.length > 0) {
@@ -618,12 +619,16 @@ function createDir (folder) {
 }
 // check if image is missing or embedded
 function isValidLink (link) {
+  var rectangle = link.parent.parent;
   if(link.parent.hasOwnProperty("parentPage") && link.parent.parent.parentPage == null){
     writeLog('=> FAILED: image is on pasteboard or overset text.', image.exportDir, image.logFilename);
     return false;
   } else if(link.parent.constructor.name == 'Story'){
     writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
     return false;
+  } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
+    // when export groups as single image is activated, just use the 1st one
+    writeLog('=> INFO: part of image group.', image.exportDir, image.logFilename);
   } else {
     switch (link.status) {
     case LinkStatus.LINK_MISSING:
