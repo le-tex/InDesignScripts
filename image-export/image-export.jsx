@@ -403,7 +403,6 @@ function getFilelinks(doc) {
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
-    alert("hjurz: " + isValidLink(link));
     if(isValidLink(link) == true){
       var rectangle = link.parent.parent;
       var linkname = link.name;
