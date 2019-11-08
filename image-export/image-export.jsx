@@ -13,11 +13,13 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.6";
+jsExtensions();
+var version = "v1.2.0";
+var doc = app.documents[0];
 /*
  * set language
  */
-lang = {
+var lang = {
   pre: app.locale == 1279477613 ? 1 : 0 // en = 0, de = 1
 }
 /*
@@ -26,22 +28,28 @@ lang = {
 image = {
   minExportDPI:1,
   maxExportDPI:2400,
-  exportDPI:144,
+  exportDPI:parseInt(getConfigValue("letex:exportDPI", "144")[0], 10),
   baseDPI:72,
-  maxResolution:4000000,
-  pngTransparency:true,
-  objectExportOptions:true,
-  objectExportDensityFactor:0,
-  overrideExportFilenames:false,
-  exportFromHiddenLayers:false,
-  relinkToExportPaths:false,
-  exportGroupsAsSingleImage:false,
-  cropImageToPage:true,
+  maxResolution:parseInt(getConfigValue("letex:maxResolution", "4000000")[0], 10),
+  pngTransparency:getConfigValue("letex:pngTransparency", "true")[0] == "true",
+  objectExportOptions:getConfigValue("letex:objectExportOptions", "true")[0] == "true",
+  objectExportDensityFactor:parseInt(getConfigValue("letex:objectExportDensityFactor", 1)[0], 10) - 1,
+  overrideExportFilenames:getConfigValue("letex:overrideExportFilenames", "false")[0] == "true",
+  exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
+  relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
+  exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
+  cropImageToPage:getConfigValue("letex:cropImageToPage", "true")[0] == "true",
   exportDir:"export",
-  exportQuality:2,
-  exportFormat:0, // 0 = PNG | 1 = JPG
+  exportQuality:parseInt(getConfigValue("letex:exportQuality", "2")[0], 10),
+  exportFormat:["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
   pageItemLabel:"letex:fileName",
   logFilename:"export.log"
+}
+function getConfigValue(label, defaultValue) {
+  var value = [doc.extractLabel(label), defaultValue].filter( function(text) {
+    return text != ""
+  })
+  return value;
 }
 /*
  * image options object
@@ -95,6 +103,7 @@ panel = {
   finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
   buttonOK:"OK",
   buttonCancel:["Cancel", "Abbrechen"][lang.pre],
+  buttonSaveSettings:["Save Config", "Konfiguration speichern"][lang.pre],
   errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
   errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
   promptMissingImages:["images cannot be exported. Proceed?","Bilder können nicht exportiert werden. Fortfahren?"][lang.pre],
@@ -139,7 +148,6 @@ function main(){
   // show window
   try {
     // register event listener
-    jsExtensions();
     exportImages(doc);
   } catch (e) {
     alert ("Error:\n" + e);
@@ -194,6 +202,41 @@ function jsExtensions(){
       }
       return undefined;
     };
+  }
+  // filter
+  if (!Array.prototype.filter) {
+    Array.prototype.filter = function(func, thisArg) {
+      'use strict';
+      if ( ! ((typeof func === 'Function' || typeof func === 'function') && this) )
+        throw new TypeError();
+      
+      var len = this.length >>> 0,
+          res = new Array(len), // preallocate array
+          t = this, c = 0, i = -1;
+      if (thisArg === undefined) {
+        while (++i !== len){
+          // checks to see if the key was set
+          if (i in this){
+            if (func(t[i], i, t)){
+              res[c++] = t[i];
+            }
+          }
+        }
+      }
+      else{
+        while (++i !== len){
+          // checks to see if the key was set
+          if (i in this){
+            if (func.call(thisArg, t[i], i, t)){
+              res[c++] = t[i];
+            }
+          }
+        }
+      }
+      
+      res.length = c; // shrink down array to proper size
+      return res;
+    }
   }
 }
 function exportImages(doc){
@@ -339,6 +382,7 @@ function drawWindow() {
   panelButtonGroup.orientation = "row";
   var buttonOK = panelButtonGroup.add("button", undefined, panel.buttonOK, {name: "ok"});
   var buttonCancel = panelButtonGroup.add("button", undefined, panel.buttonCancel, {name: "cancel"} );
+  var buttonSaveSettings = panelButtonGroup.add("button", undefined, panel.buttonSaveSettings );
   // change text to selected file path
   panelSelectDirButton.onClick  = function() {
     var result = Folder.selectDialog ();
@@ -362,22 +406,38 @@ function drawWindow() {
     image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
     image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
     myWindow.close(1);
-
-    function selectedRadiobutton (rbuttons){
-      for(var i = 0; i < rbuttons.children.length; i++) {
-        if(rbuttons.children[i].value == true) {
-          return i;
-        }
-      }
-    }
     afterSelectChanged.remove();
     getFilelinks(app.documents[0]);
   }
-  buttonCancel.onClick = function(){
+  buttonCancel.onClick = function() {
+    afterSelectChanged.remove();
+    myWindow.close();
+  }
+  buttonSaveSettings.onClick = function() {
+    var doc = app.documents[0];
+    doc.insertLabel("letex:exportDPI", densityInputDPI.text);
+    doc.insertLabel("letex:exportQuality", String(selectedRadiobutton(panelQualityRadiobuttons)));
+    doc.insertLabel("letex:exportFormat", formatDropdown.selection.text);
+    doc.insertLabel("letex:maxResolution", inputMaxRes.text);
+    doc.insertLabel("letex:objectExportOptions", String(objectExportOptionsCheckbox.value));
+    doc.insertLabel("letex:objectExportDensityFactor", objectExportOptionsDensityDropdown.selection.text);
+    doc.insertLabel("letex:overrideExportFilenames", String(overrideExportFilenamesCheckbox.value));
+    doc.insertLabel("letex:pngTransparency", String(pngTransparencyGroupCheckbox.value));
+    doc.insertLabel("letex:cropImageToPage", String(cropImageToPageCheckbox.value));
+    doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
+    doc.insertLabel("letex:relinkToExportPaths", String(relinkToExportPathsCheckbox.value));
+    doc.insertLabel("letex:exportGroupsAsSingleImage", String(exportGroupsAsSingleImageCheckbox.value));
     afterSelectChanged.remove();
     myWindow.close();
   }
   return myWindow.show();
+}
+function selectedRadiobutton (rbuttons){
+  for(var i = 0; i < rbuttons.children.length; i++) {
+    if(rbuttons.children[i].value == true) {
+      return i;
+    }
+  }
 }
 function getFilelinks(doc) {
   app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
