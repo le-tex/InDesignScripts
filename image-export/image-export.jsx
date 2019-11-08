@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.5";
+version = "v1.1.6";
 /*
  * set language
  */
@@ -302,45 +302,33 @@ function drawWindow() {
    */
   var tabInfo = tpanel.add ("tab", undefined, panel.tabInfoTitle);
   tabInfo.alignChildren = "left";
-  tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n\n\n", {multiline:true});
+  tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n", {multiline:true});
   tabInfo.iPosX = tabInfo.add("statictext", undefined, "");
   tabInfo.iPosY = tabInfo.add("statictext", undefined, "");
   tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
   tabInfo.iHeight = tabInfo.add("statictext", undefined, "");
-  tabInfo.iAnchorPos = tabInfo.add("statictext", undefined, "");
-  tabInfo.iAnchorXoffset = tabInfo.add("statictext", undefined, "");
-  tabInfo.iAnchorYoffset = tabInfo.add("statictext", undefined, "");  
-  tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = tabInfo.iAnchorPos.characters = tabInfo.iAnchorXoffset.characters = tabInfo.iAnchorYoffset.characters = panel.infoCharacters;
+  tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = panel.infoCharacters;
   // listen to each selection change and update info tab
   var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
+    
     if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
       var rectangle = app.selection[0];
       width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100) / 100;
       height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
       posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
       posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
-      anchorPosIndex = getAnchoredPosition(rectangle);
-      anchorPos = panel.infoAnchorPos[anchorPosIndex];
-      offsetX = Math.round(rectangle.anchoredObjectSettings.anchorXoffset * 100) / 100;
-      offsetY = Math.round(rectangle.anchoredObjectSettings.anchorYoffset * 100) / 100;
       var fileNameString = splitStringToArray(rectangle.extractLabel(image.pageItemLabel), panel.infoCharacters).join("\n");
       tabInfo.iFilename.text = panel.infoFilename + ":\n" + fileNameString;
-      tabInfo.iPosX.text = "x: " + posX;
-      tabInfo.iPosY.text = "y: " + posY;
-      tabInfo.iWidth.text = panel.infoWidth + ": " + width;
-      tabInfo.iHeight.text = panel.infoHeight + ": " + height;
-      tabInfo.iAnchorPos.text = panel.infoAnchorPosTitle + ": " + anchorPos;
-      tabInfo.iAnchorXoffset.text =  "offsetX: " + offsetX;
-      tabInfo.iAnchorYoffset.text =  "offsetY: " + offsetY;
+      tabInfo.iPosX.text = "x: " + posX + "px";
+      tabInfo.iPosY.text = "y: " + posY + "px";
+      tabInfo.iWidth.text = panel.infoWidth + ": " + width + "px";
+      tabInfo.iHeight.text = panel.infoHeight + ": " + height + "px";
     } else {
       tabInfo.iFilename.text = panel.infoNoImage;
       tabInfo.iPosX.text = "";
       tabInfo.iPosY.text = "";
       tabInfo.iHeight.text = "";
       tabInfo.iWidth.text = "";
-      tabInfo.iAnchorPos.text = "";
-      tabInfo.iAnchorXoffset.text =  "";
-      tabInfo.iAnchorYoffset.text =  "";
     }
   }, false);
   // buttons OK/Cancel
@@ -415,6 +403,7 @@ function getFilelinks(doc) {
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
+    alert("hjurz: " + isValidLink(link));
     if(isValidLink(link) == true){
       var rectangle = link.parent.parent;
       var linkname = link.name;
@@ -627,8 +616,8 @@ function isValidLink (link) {
     writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
     return false;
   } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
-    // when export groups as single image is activated, just use the 1st one
     writeLog('=> INFO: part of image group.', image.exportDir, image.logFilename);
+    return true;
   } else {
     switch (link.status) {
     case LinkStatus.LINK_MISSING:
