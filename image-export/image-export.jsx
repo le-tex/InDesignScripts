@@ -302,7 +302,7 @@ function drawWindow() {
    */
   var tabInfo = tpanel.add ("tab", undefined, panel.tabInfoTitle);
   tabInfo.alignChildren = "left";
-  tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n", {multiline:true});
+  tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n\n", {multiline:true});
   tabInfo.iPosX = tabInfo.add("statictext", undefined, "");
   tabInfo.iPosY = tabInfo.add("statictext", undefined, "");
   tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
