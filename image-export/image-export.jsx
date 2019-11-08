@@ -13,7 +13,7 @@
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
  *
  */
-version = "v1.1.4";
+version = "v1.1.5";
 /*
  * set language
  */
@@ -473,7 +473,7 @@ function getFilelinks(doc) {
           rectangleCopy = rectangle.duplicate(undefined, [0, 0]);
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
-          //rectangleCopy = cropRectangleToPage(rectangleCopy);
+          rectangleCopy = cropRectangleToPage(rectangleCopy);
           rectangle.textWrapPreferences.textWrapMode = textWrapMode;
         }
         var objectExportOptions = rectangle.objectExportOptions;
