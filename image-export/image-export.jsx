@@ -27,6 +27,7 @@ image = {
   minExportDPI:1,
   maxExportDPI:2400,
   exportDPI:144,
+  baseDPI:72,
   maxResolution:4000000,
   pngTransparency:true,
   objectExportOptions:true,
@@ -238,8 +239,9 @@ function drawWindow() {
   var densitySliderDPI = densityGroup.add("slider", undefined, image.exportDPI, image.minExportDPI, image.maxExportDPI);
   densityGroup.add ("statictext", undefined, panel.densityTitle);
   // synchronize slider and input field
-  densitySliderDPI.onChanging = function () {densityInputDPI.text = densitySliderDPI.value};
-  densityInputDPI.onChanging = function () {densitySliderDPI.value = densityInputDPI.text};
+  var outDPI
+  densitySliderDPI.onChanging = function () { densityInputDPI.text   = densitySliderDPI.value; };
+  densityInputDPI.onChanging  = function () { densitySliderDPI.value = densityInputDPI.text };
   var panelMaxResolutionGroup = panelQuality.add("group");
   panelMaxResolutionGroup.add("statictext", undefined, panel.maxResolutionTitle);  
   var inputMaxRes = panelMaxResolutionGroup.add("edittext", undefined, image.maxResolution);
@@ -313,8 +315,9 @@ function drawWindow() {
     
     if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
       var rectangle = app.selection[0];
-      width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100) / 100;
-      height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
+      outDensity = getMaxDensity(densitySliderDPI.value, rectangle, image.maxResolution, image.baseDPI)
+      width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100 / 100 * outDensity / image.baseDPI);
+      height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100 / 100 * outDensity / image.baseDPI);
       posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
       posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
       var fileNameString = splitStringToArray(rectangle.extractLabel(image.pageItemLabel), panel.infoCharacters).join("\n");
@@ -470,7 +473,7 @@ function getFilelinks(doc) {
         var overrideBool = image.objectExportOptions && customImageConversion;
         var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString().replace(/^JPEG/g, "JPG") : image.exportFormat;
         var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
-        var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution);
+        var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution, image.baseDPI);
         var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
         var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
         /*
@@ -662,15 +665,14 @@ function inArray(string, array) {
   return false;
 }
 // get density limit according to maximal resolution value
-function getMaxDensity(density, rectangle, maxResolution) {
+function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
   var bounds = rectangle.geometricBounds;
-  var baseMultiplier = 72;
-  var densityFactor = density / baseMultiplier;
+  var densityFactor = density / baseDensity;
   var width =  (bounds[3] - bounds[1]);
   var height = (bounds[2] - bounds[0]);
   var resolution = Math.round(width * height * Math.pow(densityFactor, 2));
   if(resolution > maxResolution) {
-    var maxDensity =  Math.floor(Math.sqrt(maxResolution * Math.pow(densityFactor, 2) / resolution) * baseMultiplier);
+    var maxDensity =  Math.floor(Math.sqrt(maxResolution * Math.pow(densityFactor, 2) / resolution) * baseDensity);
     return maxDensity;
   } else {
     return density;
