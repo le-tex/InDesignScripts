@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.0";
+var version = "v1.2.1";
 var doc = app.documents[0];
 /*
  * set language
@@ -39,6 +39,7 @@ image = {
   relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
   exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
   cropImageToPage:getConfigValue("letex:cropImageToPage", "true")[0] == "true",
+  removeRectangleStroke:getConfigValue("letex:removeRectangleStroke", "false")[0] == "true",
   exportDir:"export",
   exportQuality:parseInt(getConfigValue("letex:exportQuality", "2")[0], 10),
   exportFormat:["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
@@ -85,6 +86,7 @@ panel = {
   relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
   exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
   relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
+  removeRectangleStrokeTitle:["Remove Stroke", "Rahmen entfernen"][lang.pre],
   maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
   selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
   selectDirMenuTitle:["Choose a directory", "Verzeichnis auswählen"][lang.pre],
@@ -328,6 +330,8 @@ function drawWindow() {
   };
   var cropImageToPageCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.cropImageToPageTitle);
   cropImageToPageCheckbox.value = image.cropImageToPage;
+  var removeRectangleStrokeCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.removeRectangleStrokeTitle);
+  removeRectangleStrokeCheckbox.value = image.removeRectangleStroke;
   var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
   exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
   var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
@@ -405,6 +409,7 @@ function drawWindow() {
     image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
     image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
     image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
+    image.removeRectangleStroke = removeRectangleStrokeCheckbox.value;
     myWindow.close(1);
     afterSelectChanged.remove();
     getFilelinks(app.documents[0]);
@@ -427,6 +432,7 @@ function drawWindow() {
     doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
     doc.insertLabel("letex:relinkToExportPaths", String(relinkToExportPathsCheckbox.value));
     doc.insertLabel("letex:exportGroupsAsSingleImage", String(exportGroupsAsSingleImageCheckbox.value));
+    doc.insertLabel("letex:removeRectangleStroke", String(removeRectangleStrokeCheckbox.value));
     afterSelectChanged.remove();
     myWindow.close();
   }
@@ -517,7 +523,7 @@ function getFilelinks(doc) {
          * create a duplicate of the rectangle where the cropping is applied
          */ 
         var rectangleCopy = null;
-        if(image.cropImageToPage && exceedsPage){
+        if((image.cropImageToPage && exceedsPage) || image.removeRectangleStroke){
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // create duplicate of image
@@ -526,6 +532,7 @@ function getFilelinks(doc) {
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           rectangleCopy = cropRectangleToPage(rectangleCopy);
           rectangle.textWrapPreferences.textWrapMode = textWrapMode;
+          rectangleCopy.strokeWeight = (image.removeRectangleStroke) ? 0 : rectangleCopy.strokeWeight;
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
