@@ -33,7 +33,8 @@ image = {
   maxResolution:parseInt(getConfigValue("letex:maxResolution", "4000000")[0], 10),
   pngTransparency:getConfigValue("letex:pngTransparency", "true")[0] == "true",
   objectExportOptions:getConfigValue("letex:objectExportOptions", "true")[0] == "true",
-  objectExportDensityFactor:parseInt(getConfigValue("letex:objectExportDensityFactor", 1)[0], 10) - 1,
+  objectExportDensityFactorValues:[1, 2, 3, 4],
+  objectExportDensityFactor:parseInt(getConfigValue("letex:objectExportDensityFactor", "1")[0], 10) - 1,
   overrideExportFilenames:getConfigValue("letex:overrideExportFilenames", "false")[0] == "true",
   exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
   relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
@@ -79,7 +80,6 @@ panel = {
   formatDescriptionJPEG:["for photographs and gradients", "für Fotos und Verläufe"][lang.pre],
   objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
   objectExportDensityFactorTitle:["Density Multiplier", "Multiplikator Auflösung"][lang.pre],
-  objectExportDensityFactorValues:[1, 2, 3, 4],
   overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
   pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
   exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
@@ -308,7 +308,7 @@ function drawWindow() {
   var objectExportOptionsCheckbox = objectExportOptions.add("checkbox", undefined, panel.objectExportOptionsTitle);
   objectExportOptionsCheckbox.value = image.objectExportOptions;
   var objectExportOptionsDensity = panelObjectExportOptions.add("group");
-  var objectExportOptionsDensityDropdown = objectExportOptionsDensity.add("dropdownlist", undefined, panel.objectExportDensityFactorValues);
+  var objectExportOptionsDensityDropdown = objectExportOptionsDensity.add("dropdownlist", undefined, image.objectExportDensityFactorValues);
   objectExportOptionsDensityDropdown.selection = image.objectExportDensityFactor;
   var resolutionFactor = objectExportOptionsDensity.add("statictext", undefined, panel.objectExportDensityFactorTitle);
   var panelFilenameOptions = tabAdvanced.add("panel", undefined, panel.panelFilenameOptionsTitle);
