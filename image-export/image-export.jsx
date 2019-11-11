@@ -523,7 +523,9 @@ function getFilelinks(doc) {
          * create a duplicate of the rectangle where the cropping is applied
          */ 
         var rectangleCopy = null;
-        if((image.cropImageToPage && exceedsPage) || image.removeRectangleStroke){
+        if((image.cropImageToPage && exceedsPage)
+           || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
+          ){
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // create duplicate of image
@@ -622,7 +624,9 @@ function getFilelinks(doc) {
       app.pngExportPreferences.useDocumentBleeds = true;
 
       progressBar.hit("export " + exportLinks[i].newFilename, i);
-      if(image.cropImageToPage && exportLinks[i].exceedsPage){
+      if((image.cropImageToPage && exportLinks[i].exceedsPage)
+         || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
+        ){
         exportLinks[i].rectangleCopy.exportFile(exportFormat, exportLinks[i].newFilepath);
         exportLinks[i].rectangleCopy.remove();
       } else {
