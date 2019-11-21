@@ -98,6 +98,7 @@ function main(){
       // Process all table cells in the story since they won't be included in the frame iteration:
       if(!myMasterSpreadFlag && myStory.tables.length > 0) {
         for (var t = 0; t < myStory.tables.length; t++) {
+		 myStory.tables[t].notes.everyItem().remove();
           for (var c = 0; c < myStory.tables[t].cells.length; c++) {
             var myCell = myStory.tables[t].cells[c];
             var firstCellChar = myCell.characters[0];
