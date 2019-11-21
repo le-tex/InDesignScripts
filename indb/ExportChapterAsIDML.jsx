@@ -22,7 +22,7 @@ panel = {
   title:["le-tex – Export INDB as IDML", "le-tex – INDB als IDML exportieren"][lang.pre],
   selectDirTitle:["Select output directory", "Speicherort auswählen"][lang.pre],
   buttonDirSelect:["Select", "Auswählen"][lang.pre],
-  selectChaptersTitle:["Select output directory", "Speicherort auswählen"][lang.pre],
+  selectChaptersTitle:["Select book parts", "Buchteile auswählen"][lang.pre],
   buttonSelectAll:["Select all", "Alle markieren"][lang.pre],
   buttonDeselect:["Deselect all", "Auswahl aufheben"][lang.pre],
   buttonInvertSelection:["Invert selection", "Auswahl umkehren"][lang.pre],
