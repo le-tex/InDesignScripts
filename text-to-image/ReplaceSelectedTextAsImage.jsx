@@ -13,7 +13,7 @@ var searchNextMathToolsFormat = false; // values: true or false: when 'true', ju
 myDoc = app.activeDocument;
 selection = app.selection[0];
 if(selection) {
-  var myTf = selection.insertionPoints[0].textFrames.add({geometricBounds:[0, 0, 4, 4 ]}),
+  var myTf = selection.insertionPoints[0].textFrames.add({geometricBounds:[0, 0, 10, 4 ]}),
     d  = new Date(),
     random = Math.floor(Math.random()*Math.floor(d / 1000)),
     strFilename = strImageFilenamePrefix + selection.parentTextFrames[0].parentPage.name + '_' + random + '.png';
