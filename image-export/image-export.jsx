@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.1";
+var version = "v1.2.2";
 var doc = app.documents[0];
 /*
  * set language
@@ -534,7 +534,8 @@ function getFilelinks(doc) {
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           rectangleCopy = cropRectangleToPage(rectangleCopy);
           rectangle.textWrapPreferences.textWrapMode = textWrapMode;
-          rectangleCopy.strokeWeight = image.removeRectangleStroke ? 0 : rectangle.strokeWeight;
+          // setting strokeTint to 0 is more robust. Setting strokeWeight to 0 adds sometimes a stroke
+          rectangleCopy.strokeTint = image.removeRectangleStroke ? 0 : rectangle.strokeTint;
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
