@@ -534,7 +534,7 @@ function getFilelinks(doc) {
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           rectangleCopy = cropRectangleToPage(rectangleCopy);
           rectangle.textWrapPreferences.textWrapMode = textWrapMode;
-          rectangleCopy.strokeWeight = (image.removeRectangleStroke) ? 0 : rectangleCopy.strokeWeight;
+          rectangleCopy.strokeWeight = image.removeRectangleStroke ? 0 : rectangle.strokeWeight;
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
