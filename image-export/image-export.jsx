@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.2";
+var version = "v1.2.3";
 var doc = app.documents[0];
 /*
  * set language
@@ -529,7 +529,7 @@ function getFilelinks(doc) {
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // create duplicate of image
-          rectangleCopy = rectangle.duplicate(undefined, [0, 0]);
+          rectangleCopy = rectangle.duplicate( [originalBounds[0], originalBounds[1]] , [0, 0] );
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           rectangleCopy = cropRectangleToPage(rectangleCopy);
