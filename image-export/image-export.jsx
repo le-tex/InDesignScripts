@@ -683,26 +683,33 @@ function createDir (folder) {
 // check if image is missing or embedded
 function isValidLink (link) {
   var rectangle = link.parent.parent;
-  if(link.parent.hasOwnProperty("parentPage") && link.parent.parent.parentPage == null){
-    writeLog('=> FAILED: image is on pasteboard or overset text.', image.exportDir, image.logFilename);
-    return false;
-  } else if(link.parent.constructor.name == 'Story'){
-    writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
-    return false;
-  } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
-    writeLog('=> INFO: part of image group.', image.exportDir, image.logFilename);
-    return true;
-  } else {
-    switch (link.status) {
-    case LinkStatus.LINK_MISSING:
-      writeLog('=> FAILED: image file is missing.', image.exportDir, image.logFilename);
-      return false; break;
-    case LinkStatus.LINK_EMBEDDED:
-      writeLog('=> FAILED: embedded image.', image.exportDir, image.logFilename);
-      return false; break;
-    default:
-      if(link != null) return true else return false;
+  try {
+    // script would crash when geometricBounds not available, e.g. image is placed on overset text
+    var bounds = rectangle.geometricBounds;
+    if(rectangle.hasOwnProperty("parentPage") && rectangle.parentPage == null){
+      writeLog('=> FAILED: image is on pasteboard', image.exportDir, image.logFilename);
+      return false;
+    } else if(link.parent.constructor.name == 'Story'){
+      writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
+      return false;
+    } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
+      writeLog('=> INFO: part of image group.', image.exportDir, image.logFilename);
+      return true;
+    } else {
+      switch (link.status) {
+      case LinkStatus.LINK_MISSING:
+        writeLog('=> FAILED: image file is missing.', image.exportDir, image.logFilename);
+        return false; break;
+      case LinkStatus.LINK_EMBEDDED:
+        writeLog('=> FAILED: embedded image.', image.exportDir, image.logFilename);
+        return false; break;
+      default:
+        if(link != null) return true else return false;
+      }
     }
+  }catch (e) {
+    writeLog('=> FAILED: image is placed in overset text', image.exportDir, image.logFilename);
+    return false;
   }
 }
 // return filename with new extension and conditionally attach random string
