@@ -472,7 +472,7 @@ function getFilelinks(doc) {
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
-    if(isValidLink(link) == true){
+    if(isValidLink(link)){
       var rectangle = link.parent.parent;
       var linkname = link.name;
       // if a group should be exported as single image, replace rectangle with group object
@@ -513,7 +513,7 @@ function getFilelinks(doc) {
                      || boundOffsets[1] < (0 - absoluteAccuracy)
                      || boundOffsets[2] > absoluteAccuracy
                      || boundOffsets[3] > absoluteAccuracy
-      // ignore images in overset text and rectangles with zero width or height 
+      // ignore images in overset text and rectangles with zero width or height
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
          && originalBounds[1] - originalBounds[3] != 0
@@ -707,7 +707,7 @@ function isValidLink (link) {
         if(link != null) return true else return false;
       }
     }
-  }catch (e) {
+  } catch (e) {
     writeLog('=> FAILED: image is placed in overset text', image.exportDir, image.logFilename);
     return false;
   }
@@ -886,13 +886,13 @@ function hasDuplicates(link, docLinks, index) {
   do{
     nextLink = docLinks[i];
     // check whether link names match. The index var is used to prevent that an image is compared with itself.
-    if(link.name == nextLink.name && i != index) {
+    if( link.name == nextLink.name && i != index && isValidLink(nextLink)) {
       var nextRectangle = nextLink.parent.parent;
       // InDesign calculates widths and heights not precisely, so we have to round them
       var rectangleWidth = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1]) * 100) / 100;
       var rectangleHeight = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
       var nextRectangleWidth = Math.round((nextRectangle.geometricBounds[3] - nextRectangle.geometricBounds[1]) * 100) / 100;
-      var nextRectangleHeight = Math.round((nextRectangle.geometricBounds[2] - nextRectangle.geometricBounds[0]) * 100) / 100;        
+      var nextRectangleHeight = Math.round((nextRectangle.geometricBounds[2] - nextRectangle.geometricBounds[0]) * 100) / 100;
       var equalWidth  = rectangleWidth == nextRectangleWidth;
       var equalHeight = rectangleHeight == nextRectangleHeight;
       var equalFlip = rectangle.absoluteFlip == nextRectangle.absoluteFlip;
