@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.4";
+var version = "v1.2.5";
 var doc = app.documents[0];
 /*
  * set language
@@ -359,8 +359,8 @@ function drawWindow() {
   tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = panel.infoCharacters;
   // listen to each selection change and update info tab
   var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
-    
-    if(app.selection[0] != undefined && app.selection[0].constructor.name == "Rectangle"){
+    if(app.selection[0] != undefined
+       && (["Rectangle", "Group"].indexOf(app.selection[0].constructor.name) >= 0)){
       var rectangle = app.selection[0];
       outDensity = getMaxDensity(densitySliderDPI.value, rectangle, image.maxResolution, image.baseDPI)
       width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100 / 100 * outDensity / image.baseDPI);
