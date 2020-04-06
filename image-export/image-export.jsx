@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.5";
+var version = "v1.2.6";
 var doc = app.documents[0];
 /*
  * set language
@@ -343,9 +343,6 @@ function drawWindow() {
   }
   var exportGroupsAsSingleImageCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportGroupsAsSingleImageTitle);
   exportGroupsAsSingleImageCheckbox.value = image.exportGroupsAsSingleImage;
-  exportGroupsAsSingleImageCheckbox.onClick = function(){
-    overrideExportFilenamesCheckbox.value = (exportGroupsAsSingleImageCheckbox.value == true) ? true : overrideExportFilenamesCheckbox.value;    
-  }
   /*
    * Info Tab
    */
@@ -454,8 +451,8 @@ function getFilelinks(doc) {
   var imageGroupIds = [];
   var imageGroupIterator = 0;
   // delete filename labels, if option is set
-  if(image.overrideExportFilenames == true){
-    deleteLabel(doc);
+  if(image.overrideExportFilenames == true || image.exportGroupsAsSingleImage == true){
+    deleteLabel(doc, image.overrideExportFilenames, image.exportGroupsAsSingleImage);
   }
   // clear log
   clearLog(image.exportDir, image.logFilename);
@@ -808,11 +805,15 @@ function getDefaultExportPath() {
   return exportPath
 }
 // delete all image file labels 
-function deleteLabel(doc){  
+function deleteLabel(doc, deleteAllLabels, deleteOnlyGroupLabels){  
   for (var i = 0; i < doc.links.length; i++) {
     var link = doc.links[i];
     var rectangle = link.parent.parent;
-    rectangle.insertLabel(image.pageItemLabel, '');
+    if(deleteAllLabels == true
+       || ( deleteOnlyGroupLabels == true && rectangle.parent.constructor.name == "Group" )
+      ) {
+      rectangle.insertLabel(image.pageItemLabel, '');
+    }
   }
   for (var i = 0; i < doc.groups.length; i++) {
     var group = doc.groups[i];
