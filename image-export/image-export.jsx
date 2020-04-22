@@ -119,6 +119,8 @@ main();
  * main pipeline
  */
 function main(){
+  var userLevel = app.scriptPreferences.userInteractionLevel;
+  app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;    
   // open file dialog and load a document
   if (app.layoutWindows.length == 0) {
     var file = File.openDialog ("Select a file", "InDesign:*.indd;*.indb;*.idml, InDesign Document:*.indd, InDesign Book:*.indb, InDesign Markup:*.idml", true)
@@ -134,11 +136,7 @@ function main(){
   if ((!doc.saved || doc.modified)) {
     if ( confirm ("The document needs to be saved.", undefined, "Document not saved.")) {
       try {
-        var userLevel = app.scriptPreferences.userInteractionLevel;
-        app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;
         doc = doc.save();
-        app.scriptPreferences.userInteractionLevel = userLevel;
-        document.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
       } catch (e) {
         alert ("The document couldn't be saved.\n" + e);
         return;
@@ -149,11 +147,11 @@ function main(){
   }
   // show window
   try {
-    // register event listener
     exportImages(doc);
   } catch (e) {
     alert ("Error:\n" + e);
   }
+  app.scriptPreferences.userInteractionLevel = userLevel;
 }
 /*
  * add JavaScript extensions
@@ -443,13 +441,16 @@ function selectedRadiobutton (rbuttons){
   }
 }
 function getFilelinks(doc) {
-  app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
+  var rulerOrigin = doc.viewPreferences.rulerOrigin;
+  var measurementUnit = app.scriptPreferences.measurementUnit;
   var docLinks = linksToSortedArray(doc.links);
   var uniqueBasenames = [];
   var exportLinks = [];
   var missingLinks = [];
   var imageGroupIds = [];
   var imageGroupIterator = 0;
+  app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
+  doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
   // delete filename labels, if option is set
   if(image.overrideExportFilenames == true || image.exportGroupsAsSingleImage == true){
     deleteLabel(doc, image.overrideExportFilenames, image.exportGroupsAsSingleImage);
@@ -526,6 +527,7 @@ function getFilelinks(doc) {
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // create duplicate of image
+          
           rectangleCopy = rectangle.duplicate( [originalBounds[0], originalBounds[1]] , [0, 0] );
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
@@ -648,6 +650,8 @@ function getFilelinks(doc) {
   else {
     alert (panel.noValidLinks);
   }
+  app.scriptPreferences.measurementUnit = measurementUnit;
+  doc.viewPreferences.rulerOrigin = rulerOrigin;
 }
 // draw simple progress bar
 function getProgressBar (title){
@@ -701,7 +705,11 @@ function isValidLink (link) {
         writeLog('=> FAILED: embedded image.', image.exportDir, image.logFilename);
         return false; break;
       default:
-        if(link != null) return true else return false;
+        if(link != null) {
+          return true
+        } else {
+          return false
+        }
       }
     }
   } catch (e) {
@@ -755,15 +763,26 @@ function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
   }
 }
 // crop a rectangle to page bleeds
-function cropRectangleToPage (rectangle){
+function cropRectangleToPage (rectangle){  
   var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rectangle.parentPage;
   // release anchors to avoid displaced images. we need to restore the anchor later
   if(rectangle.parent.constructor.name == "Character"){
     rectangle.anchoredObjectSettings.releaseAnchoredObject();
-  }  
+  }
   // page is null if the object is on the pasteboard
   if(page != null){
+      writeLog(  "Cropping rectangle to page bounds!\nrect bounds:"
+             + "\ny1: " + bounds[0]
+             + ", x1: " + bounds[1]
+             + ", y2: " + bounds[2]
+             + ", x2: " + bounds[3]
+             + "\npage bounds:"
+             + "\ny1: " + page.bounds[0]
+             + ", x1: " + page.bounds[1]
+             + ", y2: " + page.bounds[2]
+             + ", x2: " + page.bounds[3]
+             , image.exportDir, image.logFilename);
     // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
     // iterate over each corner and fit them into page
     var newBounds = [];
