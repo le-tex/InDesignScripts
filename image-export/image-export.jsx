@@ -528,7 +528,7 @@ function getFilelinks(doc) {
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // create duplicate of image
           
-          rectangleCopy = rectangle.duplicate( [originalBounds[0], originalBounds[1]] , [0, 0] );
+          rectangleCopy = rectangle.duplicate( [originalBounds[1], originalBounds[0]] , [0, 0] );
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           rectangleCopy = cropRectangleToPage(rectangleCopy);
