@@ -527,7 +527,6 @@ function getFilelinks(doc) {
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // create duplicate of image
-          
           rectangleCopy = rectangle.duplicate( [originalBounds[1], originalBounds[0]] , [0, 0] );
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
@@ -772,16 +771,11 @@ function cropRectangleToPage (rectangle){
   }
   // page is null if the object is on the pasteboard
   if(page != null){
-      writeLog(  "Cropping rectangle to page bounds!\nrect bounds:"
-             + "\ny1: " + bounds[0]
-             + ", x1: " + bounds[1]
-             + ", y2: " + bounds[2]
-             + ", x2: " + bounds[3]
-             + "\npage bounds:"
-             + "\ny1: " + page.bounds[0]
-             + ", x1: " + page.bounds[1]
-             + ", y2: " + page.bounds[2]
-             + ", x2: " + page.bounds[3]
+    writeLog( "Cropping rectangle to page bounds!\nrect bounds / page bounds:"
+             + "\ny1: " + bounds[0] + " / " + page.bounds[0]
+             + "\nx1: " + bounds[1] + " / " + page.bounds[1]
+             + "\ny2: " + bounds[2] + " / " + page.bounds[2]
+             + "\nx2: " + bounds[3] + " / " + page.bounds[3]
              , image.exportDir, image.logFilename);
     // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
     // iterate over each corner and fit them into page
@@ -796,9 +790,16 @@ function cropRectangleToPage (rectangle){
       // x1 (top-left)
       } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
         newBounds[i] = page.bounds[i];
-      // x2 (bottom-right)
-      } else if(i == 3 && bounds[i] > page.bounds[i] && page.side.toString() != "LEFT_HAND"){
+      // x2 (bottom-right), first page
+      } else if(i == 3 && bounds[i] > page.bounds[i] 
+                && page.side.toString() != "LEFT_HAND"
+                && page.index == 0){
         newBounds[i] = page.bounds[i];
+      // x2 (bottom-right), not first page, page width is doubled
+      } else if(i == 3 && bounds[i] > (page.bounds[i] / 2)
+                && page.side.toString() != "LEFT_HAND"
+                && page.index != 0){
+        newBounds[i] = (page.bounds[i] / 2);
       } else {
         newBounds[i] = bounds[i];
       }
