@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.6";
+var version = "v1.2.7";
 var doc = app.documents[0];
 /*
  * set language
