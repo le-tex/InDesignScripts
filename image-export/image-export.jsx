@@ -568,11 +568,12 @@ function getFilelinks(doc) {
          */
         var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
         var basename;
-        if (filenameLabel.length > 0 && image.overrideExportFilenames == false) {
-          basename = getBasename(filenameLabel);
-        } else if (image.renameExportFilenames == true) {
+	if (image.renameExportFilenames == true) {
           var counter = pad( index + 1, image.exportFilenameSchema.split("#").length - 1);
           basename = image.exportFilenameSchema.replace("#", counter).replace(/#/g, "");
+	}
+        else if (filenameLabel.length > 0 && image.overrideExportFilenames == false) {
+          basename = getBasename(filenameLabel);
         } else {
           basename = getBasename(linkname);
         }
