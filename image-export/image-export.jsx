@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.7";
+var version = "v1.2.8";
 var doc = app.documents[0];
 /*
  * set language
@@ -36,6 +36,8 @@ image = {
   objectExportDensityFactorValues:[1, 2, 3, 4],
   objectExportDensityFactor:parseInt(getConfigValue("letex:objectExportDensityFactor", "1")[0], 10) - 1,
   overrideExportFilenames:getConfigValue("letex:overrideExportFilenames", "false")[0] == "true",
+  exportFilenameSchema:getConfigValue("letex:exportFilenameSchema", "img_###")[0],
+  renameExportFilenames:getConfigValue("letex:renameExportFilenames", "false")[0] == "true",
   exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
   relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
   exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
@@ -81,6 +83,8 @@ panel = {
   objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
   objectExportDensityFactorTitle:["Density Multiplier", "Multiplikator Auflösung"][lang.pre],
   overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
+  renameExportFilenamesTitle:["Rename Export Filenames (# for numbering)", "Exportierte Dateien umbenennen (# für Nummer)"][lang.pre],
+  exportFilenameSchemaTitle:["Filename", "Dateiname"][lang.pre],
   pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
   exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
   relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
@@ -314,6 +318,16 @@ function drawWindow() {
   var overrideExportFilenames = panelFilenameOptions.add("group");
   var overrideExportFilenamesCheckbox = overrideExportFilenames.add("checkbox", undefined, panel.overrideExportFilenamesTitle);
   overrideExportFilenamesCheckbox.value = image.overrideExportFilenames;
+  var renameExportFilenamesCheckbox = panelFilenameOptions.add("checkbox", undefined, panel.renameExportFilenamesTitle);
+  renameExportFilenamesCheckbox.value = image.renameExportFilenames;
+  var exportFilenameSchemaInput = panelFilenameOptions.add("edittext");
+  exportFilenameSchemaInput.enabled = image.renameExportFilenames;
+  exportFilenameSchemaInput.preferredSize.width = 255;
+  exportFilenameSchemaInput.text = image.exportFilenameSchema;
+  renameExportFilenamesCheckbox.onClick = function(){
+    exportFilenameSchemaInputActive = renameExportFilenamesCheckbox.value == true;
+    exportFilenameSchemaInput.enabled = overrideExportFilenamesCheckbox.value = exportFilenameSchemaInputActive;
+  };
   var panelMiscellaneousOptions = tabAdvanced.add("panel", undefined, panel.miscellaneousOptionsTitle)
   panelMiscellaneousOptions.alignChildren = "left";
   var pngTransparencyGroupCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.pngTransparencyTitle);
@@ -399,6 +413,8 @@ function drawWindow() {
     image.objectExportOptions = objectExportOptionsCheckbox.value;
     image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
     image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
+    image.renameExportFilenames = renameExportFilenamesCheckbox.value;
+    image.exportFilenameSchema = exportFilenameSchemaInput.text
     image.pngTransparency = pngTransparencyGroupCheckbox.value;
     image.cropImageToPage = cropImageToPageCheckbox.value;
     image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
@@ -422,6 +438,8 @@ function drawWindow() {
     doc.insertLabel("letex:objectExportOptions", String(objectExportOptionsCheckbox.value));
     doc.insertLabel("letex:objectExportDensityFactor", objectExportOptionsDensityDropdown.selection.text);
     doc.insertLabel("letex:overrideExportFilenames", String(overrideExportFilenamesCheckbox.value));
+    doc.insertLabel("letex:renameExportFilenames", String(renameExportFilenamesCheckbox.value));
+    doc.insertLabel("letex:exportFilenameSchema", String(exportFilenameSchemaInput.text));
     doc.insertLabel("letex:pngTransparency", String(pngTransparencyGroupCheckbox.value));
     doc.insertLabel("letex:cropImageToPage", String(cropImageToPageCheckbox.value));
     doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
@@ -469,6 +487,7 @@ function getFilelinks(doc) {
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
+    var index = i;
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link)){
       var rectangle = link.parent.parent;
@@ -548,7 +567,15 @@ function getFilelinks(doc) {
          * set export filename
          */
         var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
-        var basename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? getBasename(filenameLabel) : getBasename(linkname);
+        var basename;
+        if (filenameLabel.length > 0 && image.overrideExportFilenames == false) {
+          basename = getBasename(filenameLabel);
+        } else if (image.renameExportFilenames == true) {
+          var counter = pad( index + 1, image.exportFilenameSchema.split("#").length - 1);
+          basename = image.exportFilenameSchema.replace("#", counter).replace(/#/g, "");
+        } else {
+          basename = getBasename(linkname);
+        }
         var newFilename;
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
@@ -747,6 +774,11 @@ function inArray(string, array) {
   }
   return false;
 }
+function pad(num, size) {
+    var string = num+"";
+    while (string.length < size) string = "0" + string;
+    return string;
+}
 // get density limit according to maximal resolution value
 function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
   var bounds = rectangle.geometricBounds;
@@ -896,8 +928,6 @@ function isFormatOverrideActive(searchFormat){
   }
   return result;
 }
-
-
 // compare two links if they have equal dimensions
 function hasDuplicates(link, docLinks, index) {
   var rectangle = link.parent.parent;
