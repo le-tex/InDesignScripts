@@ -977,7 +977,16 @@ function relinkToExportPaths (doc, exportLinks) {
       var y = exportLinks[i].pageItem.geometricBounds[0];
       var group =  doc.groups.itemByID(exportLinks[i].id);
       var spread = group.parentPage.parent;
-      var image = spread.place(new File(exportPath), [x,y], doc.layers[0]);
+      // check if group is anchored?
+      if(group.parent.constructor.name == "Character"){
+        var character = group.parent;
+        var newAnchoredRectangle = character.insertionPoints[-1].rectangles.add();
+        newAnchoredRectangle.place(new File(exportPath));
+        newAnchoredRectangle.properties = group.properties;
+        newAnchoredRectangle.anchoredObjectSettings.properties = group.anchoredObjectSettings.properties;
+      } else {
+        spread.place(new File(exportPath), [x,y], doc.layers[0]);
+      }
       group.remove();
     } else {
       // relink to export path
