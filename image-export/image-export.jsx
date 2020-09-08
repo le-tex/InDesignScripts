@@ -986,6 +986,8 @@ function relinkToExportPaths (doc, exportLinks) {
         newAnchoredRectangle.anchoredObjectSettings.properties = group.anchoredObjectSettings.properties;
       } else {
         spread.place(new File(exportPath), [x,y], doc.layers[0]);
+        var unAnchoredRectangle = document.rectangles[document.rectangles.length];
+        unAnchoredRectangle.properties = group.properties;
       }
       group.remove();
     } else {
