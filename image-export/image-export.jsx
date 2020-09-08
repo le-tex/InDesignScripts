@@ -668,6 +668,7 @@ function getFilelinks(doc) {
      * danger zone: relink all images to their respective export paths
      */
     if(image.relinkToExportPaths == true) {
+      writeLog("\nRelinking images with export paths...\n", image.exportDir, image.logFilename);
       relinkToExportPaths(doc, exportLinks);
     }
     alert (exportLinks.length  + " " + panel.finishedMessage);
@@ -972,6 +973,7 @@ function relinkToExportPaths (doc, exportLinks) {
     var exportPath = exportLinks[i].newFilepath;
     var link = doc.links.itemByID(linkId);
     var rectangle = link.parent.parent;
+    writeLog('"' + exportLinks[i].link.name + '" => "' + exportLinks[i].newFilename + '"', image.exportDir, image.logFilename);
     if(exportLinks[i].group){
       var x = exportLinks[i].pageItem.geometricBounds[1];
       var y = exportLinks[i].pageItem.geometricBounds[0];
