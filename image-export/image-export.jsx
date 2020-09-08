@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.8";
+var version = "v1.2.9";
 var doc = app.documents[0];
 /*
  * set language
@@ -976,7 +976,7 @@ function relinkToExportPaths (doc, exportLinks) {
       var x = exportLinks[i].pageItem.geometricBounds[1];
       var y = exportLinks[i].pageItem.geometricBounds[0];
       var group =  doc.groups.itemByID(exportLinks[i].id);
-      var spread = group.parent;
+      var spread = group.parentPage.parent;
       var image = spread.place(new File(exportPath), [x,y], doc.layers[0]);
       group.remove();
     } else {
