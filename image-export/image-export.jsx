@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.9";
+var version = "v1.2.10";
 var doc = app.documents[0];
 /*
  * set language
@@ -973,32 +973,37 @@ function relinkToExportPaths (doc, exportLinks) {
     var exportPath = exportLinks[i].newFilepath;
     var link = doc.links.itemByID(linkId);
     var rectangle = link.parent.parent;
-    writeLog('"' + exportLinks[i].link.name + '" => "' + exportLinks[i].newFilename + '"', image.exportDir, image.logFilename);
+    writeLog('"' + exportLinks[i].link.name + ' (' + rectangle.constructor.name + ') " => "' + exportLinks[i].newFilename + '"', image.exportDir, image.logFilename);
     if(exportLinks[i].group){
-      var x = exportLinks[i].pageItem.geometricBounds[1];
-      var y = exportLinks[i].pageItem.geometricBounds[0];
       var group =  doc.groups.itemByID(exportLinks[i].id);
+      writeLog(' GroupSRT!!! ' + group.constructor.name + '"', image.exportDir, image.logFilename);
       var spread = group.parentPage.parent;
-      // check if group is anchored?
       if(group.parent.constructor.name == "Character"){
+        writeLog(' Group is anchored', image.exportDir, image.logFilename);
         var character = group.parent;
         var newAnchoredRectangle = character.insertionPoints[-1].rectangles.add();
         newAnchoredRectangle.place(new File(exportPath));
         newAnchoredRectangle.properties = group.properties;
         newAnchoredRectangle.anchoredObjectSettings.properties = group.anchoredObjectSettings.properties;
       } else {
+        writeLog(' Group is not anchored', image.exportDir, image.logFilename);
+        var x = exportLinks[i].pageItem.geometricBounds[1];
+        var y = exportLinks[i].pageItem.geometricBounds[0];
         spread.place(new File(exportPath), [x,y], doc.layers[0]);
         var unAnchoredRectangle = document.rectangles[document.rectangles.length];
         unAnchoredRectangle.properties = group.properties;
       }
-      group.remove();
+      rectangle.remove();
     } else {
       // relink to export path
       link.relink(exportPath);
       // fit content to frame, necessary because export crops, flips, etc
-      rectangle.fit(FitOptions.CONTENT_TO_FRAME);
+      if(rectangle.constructor.name != "Polygon"){
+        rectangle.fit(FitOptions.CONTENT_TO_FRAME);
+      }
     }
   }
+
 }
 function splitStringToArray (string, index) {
   var tokens = [];
