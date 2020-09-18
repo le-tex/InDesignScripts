@@ -549,10 +549,14 @@ function getFilelinks(doc) {
           rectangleCopy = rectangle.duplicate( [originalBounds[1], originalBounds[0]] , [0, 0] );
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
-          rectangleCopy = cropRectangleToPage(rectangleCopy);
+          if(image.cropImageToPage && exceedsPage){
+            rectangleCopy = cropRectangleToPage(rectangleCopy);
+          }
           rectangle.textWrapPreferences.textWrapMode = textWrapMode;
-          // setting strokeTint to 0 is more robust. Setting strokeWeight to 0 adds sometimes a stroke
-          rectangleCopy.strokeTint = image.removeRectangleStroke ? 0 : rectangle.strokeTint;
+          if(image.removeRectangleStroke && (rectangle.strokeWeight > 0)){
+            // setting strokeTint to 0 is more robust. Setting strokeWeight to 0 adds sometimes a stroke
+            rectangleCopy.strokeTint = image.removeRectangleStroke ? 0 : rectangle.strokeTint;
+          }
         }
         var objectExportOptions = rectangle.objectExportOptions;
         // use format override in objectExportOptions if active. Check InDesign version because the property changed.
