@@ -13,7 +13,7 @@
  */
 #target indesign;
 
-version = "v1.0.1";
+version = "v1.0.2";
 
 lang = {
     pre: app.locale == 1279477613 ? 1 : 0 // en = 0, de = 1
@@ -65,6 +65,7 @@ function chapters_to_idml (thisbook, chapters, dir) {
     if (myFolder.fullName.match(/^\/\w\//g)) myFolderPath = "/" + myFolder.fullName.substr(1, 1) + ":" + myFolder.fullName.slice(2,); // A) Netzlaufwerk (z.B. "/i/indesign")
     else if (myFolder.fullName.match(/^~/g)) myFolderPath = "/" + myFolder.fsName.replace(/\\/g, "/"); // B) Nutzerverzeichnis (z.B. "~/Desktop/...")
     else myFolderPath = myFolder.fullName; // C) Serverpfad (z.B. "//Rennratte/indesign/...")
+    myFolderPath = myFolderPath.replace(/[%&,; \(\)]/g, '_');
     myDocList += "<collection stable=\"true\" xml:base=\"file:" + myFolderPath + "/\">\r";
     var p_list = progress_list (create_list (chapters), panel.exportMsg);
     for (var i = 0; i < chapters.length; i++){
