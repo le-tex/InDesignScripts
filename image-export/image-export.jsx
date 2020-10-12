@@ -890,10 +890,12 @@ function writeLog(message, dir, filename){
   if (!write_file.exists) {
     write_file = new File(path);
   }
+  d = new Date();
+  var timestr = "[" + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + "] "
   write_file.open('a', undefined, undefined);
   write_file.encoding = "UTF-8";
   write_file.lineFeed = "Unix";
-  write_file.writeln(message);
+  write_file.writeln(timestr + message);  
   write_file.close();
 }
 function clearLog(dir, filename){
