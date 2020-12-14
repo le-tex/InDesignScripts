@@ -494,6 +494,7 @@ function getFilelinks(doc) {
     if(isValidLink(link)){
       var rectangle = link.parent.parent;
       var linkname = link.name;
+      var altText = (rectangle.objectExportOptions.altText().length > 0) ? rectangle.objectExportOptions.altText() : metadata.description;
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
         // use always the filename of the first graphic to avoid duplicates
@@ -615,7 +616,7 @@ function getFilelinks(doc) {
           originalBounds:originalBounds,
           group:rectangle.constructor.name == "Group",
           id:rectangle.id,
-          metadata:metadata
+          altText:altText
         }
         exportLinks.push(linkObject);
         writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
@@ -671,8 +672,9 @@ function getFilelinks(doc) {
       }
       // insert label with new file link for postprocessing
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
-      if(exportLinks[i].metadata.description.length > 0){
-        exportLinks[i].pageItem.insertLabel(image.pageItemAltText, exportLinks[i].metadata.description);
+      alert(exportLinks[i].altText);
+      if(exportLinks[i].altText.length > 0){
+        exportLinks[i].pageItem.insertLabel(image.pageItemAltText, exportLinks[i].altText);
       }
     }
     progressBar.close();
