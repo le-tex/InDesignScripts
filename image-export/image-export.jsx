@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.12";
+var version = "v1.3.0";
 var doc = app.documents[0];
 /*
  * set language
@@ -47,6 +47,7 @@ image = {
   exportQuality:parseInt(getConfigValue("letex:exportQuality", "2")[0], 10),
   exportFormat:["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
   pageItemLabel:"letex:fileName",
+  pageItemAltText:"letex:altText",
   logFilename:"export.log"
 }
 function getConfigValue(label, defaultValue) {
@@ -488,6 +489,7 @@ function getFilelinks(doc) {
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     var index = i;
+    var metadata = (link.linkXmp != undefined) ? link.linkXmp : null;
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link)){
       var rectangle = link.parent.parent;
@@ -612,7 +614,8 @@ function getFilelinks(doc) {
           exceedsPage:exceedsPage,
           originalBounds:originalBounds,
           group:rectangle.constructor.name == "Group",
-          id:rectangle.id
+          id:rectangle.id,
+          metadata:metadata
         }
         exportLinks.push(linkObject);
         writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
@@ -657,7 +660,6 @@ function getFilelinks(doc) {
       app.pngExportPreferences.transparentBackground = image.pngTransparency;
       app.pngExportPreferences.simulateOverprint = true;
       app.pngExportPreferences.useDocumentBleeds = true;
-
       progressBar.hit("export " + exportLinks[i].newFilename, i);
       if((image.cropImageToPage && exportLinks[i].exceedsPage)
          || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
@@ -669,6 +671,9 @@ function getFilelinks(doc) {
       }
       // insert label with new file link for postprocessing
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
+      if(exportLinks[i].metadata.description.length > 0){
+        exportLinks[i].pageItem.insertLabel(image.pageItemAltText, exportLinks[i].metadata.description);
+      }
     }
     progressBar.close();
 
@@ -875,11 +880,13 @@ function deleteLabel(doc, deleteAllLabels, deleteOnlyGroupLabels){
        || ( deleteOnlyGroupLabels == true && rectangle.parent.constructor.name == "Group" )
       ) {
       rectangle.insertLabel(image.pageItemLabel, '');
+      rectangle.insertLabel(image.pageItemAltText, '');
     }
   }
   for (var i = 0; i < doc.groups.length; i++) {
     var group = doc.groups[i];
     group.insertLabel(image.pageItemLabel, '');
+    group.insertLabel(image.pageItemAltText, '');
   }
 }
 // simple logging
