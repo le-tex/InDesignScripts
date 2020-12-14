@@ -672,7 +672,6 @@ function getFilelinks(doc) {
       }
       // insert label with new file link for postprocessing
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
-      alert(exportLinks[i].altText);
       if(exportLinks[i].altText.length > 0){
         exportLinks[i].pageItem.insertLabel(image.pageItemAltText, exportLinks[i].altText);
       }
