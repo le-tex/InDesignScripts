@@ -1,5 +1,5 @@
 options = {
-  labelNames:['letex:fileName', 'px:bildFileName', 'px:Foot2EndnoteHyperlink']
+  labelNames:['letex:fileName', 'letex:altText', 'px:bildFileName', 'px:Foot2EndnoteHyperlink']
 }
 
 main();
