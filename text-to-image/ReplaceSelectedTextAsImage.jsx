@@ -1,6 +1,8 @@
 #target indesign
 // ReplaceSelectedTextAsImage.jsx
 // written by Philipp Glatza, le-tex publishing services GmbH
+// version 0.9.3 (2021-01-18)
+//  - remove any list number/label from paragraph
 // version 0.9.2 (2020-12-15)
 //  - better support for text in table cells
 // version 0.9.1 (2020-06-10)
@@ -22,6 +24,7 @@ if(selection) {
     random = Math.floor(Math.random()*Math.floor(d / 1000)),
     strFilename = strImageFilenamePrefix + selection.parentTextFrames[0].parentPage.name + '_' + random + '.png';
   selection.duplicate(LocationOptions.AT_BEGINNING, myTf.insertionPoints.item(0));
+  myTf.paragraphs[0].bulletsAndNumberingListType = ListType.NO_LIST
   myTf.textFramePreferences.useNoLineBreaksForAutoSizing = true
   myTf.textFramePreferences.autoSizingType = AutoSizingTypeEnum.HEIGHT_AND_WIDTH
   myTf.fit (FitOptions.FRAME_TO_CONTENT);
