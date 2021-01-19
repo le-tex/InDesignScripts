@@ -22,7 +22,17 @@ if(selection) {
   var myTf = selection.insertionPoints.lastItem().textFrames.add({geometricBounds:[0, 0, 1, 1 ]});
   var d  = new Date(),
     random = Math.floor(Math.random()*Math.floor(d / 1000)),
-    strFilename = strImageFilenamePrefix + selection.parentTextFrames[0].parentPage.name + '_' + random + '.png';
+    strFilename = strImageFilenamePrefix + selection.parentTextFrames[0].parentPage.name + '_' + random + '.png'
+    intStartPosNormalized = 0
+    intEndPosNormalized = -1;
+  if(selection.insertionPoints.itemByRange(0, 1).contents.toString().match(/^\s/g)) {
+    intStartPosNormalized = 1;
+  }
+  if(selection.insertionPoints.itemByRange(-2, -1).contents.toString().match(/\s$/g)) {
+    intEndPosNormalized = -2;
+  }
+  selection.insertionPoints.itemByRange(intStartPosNormalized, intEndPosNormalized).select()
+  selection = app.selection[0];
   selection.duplicate(LocationOptions.AT_BEGINNING, myTf.insertionPoints.item(0));
   for(p = 0, ps = myTf.paragraphs.length; p < ps; p++) {
     myTf.paragraphs[p].bulletsAndNumberingListType = ListType.NO_LIST
