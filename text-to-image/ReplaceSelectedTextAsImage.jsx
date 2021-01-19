@@ -24,7 +24,12 @@ if(selection) {
     random = Math.floor(Math.random()*Math.floor(d / 1000)),
     strFilename = strImageFilenamePrefix + selection.parentTextFrames[0].parentPage.name + '_' + random + '.png';
   selection.duplicate(LocationOptions.AT_BEGINNING, myTf.insertionPoints.item(0));
-  myTf.paragraphs[0].bulletsAndNumberingListType = ListType.NO_LIST
+  for(p = 0, ps = myTf.paragraphs.length; p < ps; p++) {
+    myTf.paragraphs[p].bulletsAndNumberingListType = ListType.NO_LIST
+    myTf.paragraphs[p].firstLineIndent = 0
+    myTf.paragraphs[p].leftIndent = 0
+    myTf.paragraphs[p].lastLineIndent = 0
+  }
   myTf.textFramePreferences.useNoLineBreaksForAutoSizing = true
   myTf.textFramePreferences.autoSizingType = AutoSizingTypeEnum.HEIGHT_AND_WIDTH
   myTf.fit (FitOptions.FRAME_TO_CONTENT);
