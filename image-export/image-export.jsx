@@ -488,7 +488,7 @@ function getFilelinks(doc) {
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     var index = i;
-    var metadata = (link.linkXmp !== undefined) ? link.linkXmp : null;
+    var metadata = (link.linkXmp.isValid && link.linkXmp !== undefined) ? link.linkXmp.properties : null;
     var extension = link.name.split(".").pop().toLowerCase();
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link)){
@@ -496,8 +496,9 @@ function getFilelinks(doc) {
       var linkname = link.name;
       var altText = "";
       // probably ID bug, ID crashes while accessing link.linkXmp.description
-      if(extension !== "wmf"){
+      if(metadata.hasOwnProperty("description")){
         altText = (extension !== "wmf" && rectangle.objectExportOptions.altText().length > 0) ? rectangle.objectExportOptions.altText() : metadata.description;
+        //altText = "";
       }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
