@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.0";
+var version = "v1.3.1";
 var doc = app.documents[0];
 /*
  * set language
@@ -484,17 +484,21 @@ function getFilelinks(doc) {
       + currentDate.getMinutes() + ':' 
       + currentDate.getSeconds();
   writeLog("le-tex image-export " + version + "\nstarted at " + dateTime + "\n", image.exportDir, image.logFilename);
-  
   // iterate over file links
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
     var index = i;
-    var metadata = (link.linkXmp != undefined) ? link.linkXmp : null;
+    var metadata = (link.linkXmp !== undefined) ? link.linkXmp : null;
+    var extension = link.name.split(".").pop().toLowerCase();
     writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link)){
       var rectangle = link.parent.parent;
       var linkname = link.name;
-      var altText = (rectangle.objectExportOptions.altText().length > 0) ? rectangle.objectExportOptions.altText() : metadata.description;
+      var altText = "";
+      // probably ID bug, ID crashes while accessing link.linkXmp.description
+      if(extension !== "wmf"){
+        altText = (extension !== "wmf" && rectangle.objectExportOptions.altText().length > 0) ? rectangle.objectExportOptions.altText() : metadata.description;
+      }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
         // use always the filename of the first graphic to avoid duplicates
