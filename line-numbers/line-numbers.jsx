@@ -282,6 +282,8 @@ function addNumbers(options) {
     // .. to text frame
     } else if(app.selection[0] && app.selection[0].constructor.name == "TextFrame") {
         var scope = addNumbersToTextFrame(doc, app.selection[0], options);
+    } else if(app.selection[0] && app.selection[0].hasOwnProperty("parentTextFrames") &&  app.selection[0].parentTextFrames.length == 1 ) {
+        var scope = addNumbersToTextFrame(doc, app.selection[0].parentTextFrames[0], options);
     } else {
         return alert("No Text Frame selected.");
     }
