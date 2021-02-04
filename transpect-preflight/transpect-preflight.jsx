@@ -1,6 +1,6 @@
 ﻿#targetengine'foo';
 
-// bbc_PreExportCheck.jsx | bbc
+// transpect-preflight.jsx
 // Valentina Horsch
 
 // Blendet alle bedingten Texte bis auf myAllowedConditions aus.
