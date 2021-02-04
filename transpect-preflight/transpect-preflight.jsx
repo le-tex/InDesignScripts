@@ -5,7 +5,7 @@
 
 // Blendet alle bedingten Texte bis auf myAllowedConditions aus.
 // Gleicht alle namen von Absatz-, Zeichen-, Tabellen-, Zellen- und Objektformaten mit native-names einer cssa.xml (Speicherort wie Skript) ab. 
-// Gibt Liste mit allen verwendeten und nicht in der cssa.xml gefunden Formaten aus
+// Shows list of all styles that are not stored in the list of permitted formats (cssa.xml)
 
 // ------------------------------ main ------------------------------   
 
