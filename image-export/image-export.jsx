@@ -976,7 +976,7 @@ function hasDuplicates(link, docLinks, index) {
       var equalShearAngle = rectangle.absoluteShearAngle == nextRectangle.absoluteShearAngle;
       var equalHorizontalScale = rectangle.absoluteHorizontalScale == nextRectangle.absoluteHorizontalScale;
       var equalVerticalScale = rectangle.absoluteVerticalScale == nextRectangle.absoluteVerticalScale;
-      var inGroup = rectangle.parent.constructor.name == "Group";
+      var inGroup = (rectangle.parent.constructor.name == "Group") == (nextRectangle.parent.constructor.name == "Group");
       // note: either objectExportOptions are not active, then we safely ignore them or we
       // check if they are active for the two images
       var objectExportOptionsActive = !image.objectExportOptions || isObjectExportOptionActive(rectangle.objectExportOptions) == isObjectExportOptionActive(nextRectangle.objectExportOptions);
