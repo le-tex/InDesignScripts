@@ -40,19 +40,14 @@ function main(){
     alert ("Error:\n" + e);
   }
 }
-
 function deleteLabel(doc){
-  for (var i = 0; i < doc.links.length; i++) {
-    var link = doc.links[i];
-    var rectangle = link.parent.parent;
-    for (j = 0; j < options.labelNames.length; ++j) {
-      rectangle.insertLabel(options.labelNames[j], '');
-    }
-  }
-  for (var i = 0; i < doc.groups.length; i++) {
-    var group = doc.groups[i];
-    for (j = 0; j < options.labelNames.length; ++j) {
-      group.insertLabel(options.labelNames[j], '');
+  var allPageItems = doc.allPageItems;
+  for (var i = 0; i < doc.allPageItems.length; i++) {
+    var obj = doc.allPageItems[i];
+    if(obj.constructor.name == 'Group' || obj.constructor.name == 'Rectangle'){
+      for (var j = 0; j < options.labelNames.length; ++j) {
+        obj.insertLabel(options.labelNames[j], '');
+      }
     }
   }
   alert('OK');
