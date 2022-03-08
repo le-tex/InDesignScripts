@@ -472,7 +472,7 @@ function getFilelinks(doc) {
   doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
   // delete filename labels, if option is set
   if(image.overrideExportFilenames == true || image.exportGroupsAsSingleImage == true){
-    deleteLabel(doc);
+    deleteLabel(doc, image.overrideExportFilenames, image.exportGroupsAsSingleImage);
   }
   // clear log
   clearLog(image.exportDir, image.logFilename);
@@ -878,16 +878,21 @@ function getDefaultExportPath() {
   return exportPath
 }
 // delete all image file labels 
-function deleteLabel(doc){
+function deleteLabel(doc, deleteAllLabels, deleteOnlyGroupLabels){
   var allPageItems = doc.allPageItems;
+  var labelNames = [image.pageItemLabel, image.pageItemAltText];
   for (var i = 0; i < doc.allPageItems.length; i++) {
     var obj = doc.allPageItems[i];
-    if(obj.constructor.name == 'Group' || obj.constructor.name == 'Rectangle'){
-      for (var j = 0; j < options.labelNames.length; ++j) {
-        obj.insertLabel(options.labelNames[j], '');
+    if(deleteOnlyGroupLabels == true && obj.constructor.name == 'Group'){
+      for (var j = 0; j < labelNames.length ; ++j) {
+        obj.insertLabel(labelNames[j], '');
+      }
+    } else if (deleteAllLabels == true && (obj.constructor.name == 'Group' || obj.constructor.name == 'Rectangle')) {
+      for (var j = 0; j < labelNames.length ; ++j) {
+        obj.insertLabel(labelNames[j], '');
       }
     }
-  }
+  }  
 }
 // simple logging
 function writeLog(message, dir, filename){

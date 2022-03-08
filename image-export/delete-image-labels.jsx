@@ -42,7 +42,7 @@ function main(){
 }
 function deleteLabel(doc){
   var allPageItems = doc.allPageItems;
-  for (var i = 0; i < doc.allPageItems.length; i++) {
+  for (var i = 0; i < allPageItems.length; i++) {
     var obj = doc.allPageItems[i];
     if(obj.constructor.name == 'Group' || obj.constructor.name == 'Rectangle'){
       for (var j = 0; j < options.labelNames.length; ++j) {
