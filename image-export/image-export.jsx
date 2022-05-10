@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.3";
+var version = "v1.3.4";
 var doc = app.documents[0];
 /*
  * set language
@@ -668,7 +668,7 @@ function getFilelinks(doc) {
       app.pngExportPreferences.useDocumentBleeds = true;
       progressBar.hit("export " + exportLinks[i].newFilename, i);
       if((image.cropImageToPage && exportLinks[i].exceedsPage)
-         || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
+         || (image.removeRectangleStroke)
         ){
         exportLinks[i].rectangleCopy.exportFile(exportFormat, exportLinks[i].newFilepath);
         exportLinks[i].rectangleCopy.remove();
