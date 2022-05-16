@@ -667,9 +667,7 @@ function getFilelinks(doc) {
       app.pngExportPreferences.simulateOverprint = true;
       app.pngExportPreferences.useDocumentBleeds = true;
       progressBar.hit("export " + exportLinks[i].newFilename, i);
-      if((image.cropImageToPage && exportLinks[i].exceedsPage)
-         || (image.removeRectangleStroke)
-        ){
+      if(exportLinks[i].rectangleCopy != null){
         exportLinks[i].rectangleCopy.exportFile(exportFormat, exportLinks[i].newFilepath);
         exportLinks[i].rectangleCopy.remove();
       } else {
