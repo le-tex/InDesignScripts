@@ -13,7 +13,7 @@
  */
 #target indesign;
 
-version = "v1.0.2";
+version = "v1.0.3";
 
 lang = {
     pre: app.locale == 1279477613 ? 1 : 0 // en = 0, de = 1
@@ -70,10 +70,17 @@ function chapters_to_idml (thisbook, chapters, dir) {
       try{
         p_list[i].text = '+';
         var myDoc = app.open (chapters[i], false);
+        var firstPage = myDoc.pages.firstItem().name;
+        var lastPage = myDoc.pages.lastItem().name;
+        var pageCount = myDoc.pages.length;
         f = new File (myFolderName + "\\" + chapters[i].name.replace(/indd$/, 'idml'));
         myDoc.exportFile(ExportFormat.INDESIGN_MARKUP, f, false);
         myDoc.close(SaveOptions.NO);
-        myDocList += "	<doc href=\"" + chapters[i].name.replace(/indd$/, 'idml') + "\"/>\r";
+        myDocList += "  <doc href=\"" + chapters[i].name.replace(/indd$/, 'idml') + "\" "
+                          + "first-page=\"" + firstPage + "\" "
+                          + "last-page=\"" + lastPage + "\" "
+                          + "page-count=\"" + pageCount + "\""
+                          + "\/>\r";
       } catch(e) {
         alert(e);
       }
