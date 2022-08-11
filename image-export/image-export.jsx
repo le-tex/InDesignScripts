@@ -460,6 +460,7 @@ function selectedRadiobutton (rbuttons){
   }
 }
 function getFilelinks(doc) {
+  doc.insertLabel('le-tex:image-export-script-version', version);
   var rulerOrigin = doc.viewPreferences.rulerOrigin;
   var measurementUnit = app.scriptPreferences.measurementUnit;
   var docLinks = linksToSortedArray(doc.links);
@@ -687,7 +688,6 @@ function getFilelinks(doc) {
       writeLog("\nRelinking images with export paths...\n", image.exportDir, image.logFilename);
       relinkToExportPaths(doc, exportLinks);
     }
-    doc.insertLabel('le-tex:image-export-script-version', version)
     alert (exportLinks.length  + " " + panel.finishedMessage);
     writeLog("\nFinished! Exported " + exportLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for further details.", image.exportDir, image.logFilename);
     doc.save();
