@@ -460,7 +460,7 @@ function selectedRadiobutton (rbuttons){
   }
 }
 function getFilelinks(doc) {
-  doc.insertLabel('le-tex:image-export-script-version', version);
+  doc.insertLabel('letex:image-export-script-version', version);
   var rulerOrigin = doc.viewPreferences.rulerOrigin;
   var measurementUnit = app.scriptPreferences.measurementUnit;
   var docLinks = linksToSortedArray(doc.links);
