@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.4";
+var version = "v1.3.5";
 var doc = app.documents[0];
 /*
  * set language
@@ -680,7 +680,6 @@ function getFilelinks(doc) {
       }
     }
     progressBar.close();
-
     /*
      * danger zone: relink all images to their respective export paths
      */
@@ -688,6 +687,7 @@ function getFilelinks(doc) {
       writeLog("\nRelinking images with export paths...\n", image.exportDir, image.logFilename);
       relinkToExportPaths(doc, exportLinks);
     }
+    doc.insertLabel('le-tex:image-export-script-version', version)
     alert (exportLinks.length  + " " + panel.finishedMessage);
     writeLog("\nFinished! Exported " + exportLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for further details.", image.exportDir, image.logFilename);
     doc.save();
