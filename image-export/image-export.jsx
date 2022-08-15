@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.5";
+var version = "v1.3.6";
 var doc = app.documents[0];
 /*
  * set language
@@ -37,6 +37,7 @@ image = {
   objectExportDensityFactor:parseInt(getConfigValue("letex:objectExportDensityFactor", "1")[0], 10) - 1,
   overrideExportFilenames:getConfigValue("letex:overrideExportFilenames", "false")[0] == "true",
   exportFilenameSchema:getConfigValue("letex:exportFilenameSchema", "img_###")[0],
+  exportFilenameGroupSuffix:getConfigValue("letex:exportFilenameGroupSuffix", "_group")[0],
   renameExportFilenames:getConfigValue("letex:renameExportFilenames", "false")[0] == "true",
   exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
   relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
@@ -325,9 +326,15 @@ function drawWindow() {
   exportFilenameSchemaInput.enabled = image.renameExportFilenames;
   exportFilenameSchemaInput.preferredSize.width = 255;
   exportFilenameSchemaInput.text = image.exportFilenameSchema;
+  var exportFilenameGroupSuffixInput = panelFilenameOptions.add("edittext");
+  panelFilenameOptions.alignment = "left";
+  exportFilenameGroupSuffixInput.enabled = image.renameExportFilenames;
+  exportFilenameGroupSuffixInput.preferredSize.width = 255;
+  exportFilenameGroupSuffixInput.text = image.exportFilenameGroupSuffix;
   renameExportFilenamesCheckbox.onClick = function(){
     exportFilenameSchemaInputActive = renameExportFilenamesCheckbox.value == true;
     exportFilenameSchemaInput.enabled = overrideExportFilenamesCheckbox.value = exportFilenameSchemaInputActive;
+    exportFilenameGroupSuffixInput.enabled = overrideExportFilenamesCheckbox.value = exportFilenameSchemaInputActive;
   };
   var panelMiscellaneousOptions = tabAdvanced.add("panel", undefined, panel.miscellaneousOptionsTitle)
   panelMiscellaneousOptions.alignChildren = "left";
@@ -416,6 +423,7 @@ function drawWindow() {
     image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
     image.renameExportFilenames = renameExportFilenamesCheckbox.value;
     image.exportFilenameSchema = exportFilenameSchemaInput.text
+    image.exportFilenameGroupSuffix = exportFilenameGroupSuffixInput.text;
     image.pngTransparency = pngTransparencyGroupCheckbox.value;
     image.cropImageToPage = cropImageToPageCheckbox.value;
     image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
@@ -441,6 +449,7 @@ function drawWindow() {
     doc.insertLabel("letex:overrideExportFilenames", String(overrideExportFilenamesCheckbox.value));
     doc.insertLabel("letex:renameExportFilenames", String(renameExportFilenamesCheckbox.value));
     doc.insertLabel("letex:exportFilenameSchema", String(exportFilenameSchemaInput.text));
+    doc.insertLabel("letex:exportFilenameGroupSuffix", String(exportFilenameGroupSuffixInput.text));
     doc.insertLabel("letex:pngTransparency", String(pngTransparencyGroupCheckbox.value));
     doc.insertLabel("letex:cropImageToPage", String(cropImageToPageCheckbox.value));
     doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
@@ -597,7 +606,7 @@ function getFilelinks(doc) {
         var newFilename;
         var duplicates = hasDuplicates(link, docLinks, i);
         if( rectangle.constructor.name == "Group" ){
-          newFilename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? renameFile(basename, localFormat, false) : renameFile(getBasename(linkname) + "_group", localFormat, false);
+          newFilename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? renameFile(basename, localFormat, false) : renameFile(getBasename(linkname) + image.exportFilenameGroupSuffix, localFormat, false);
        } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
           newFilename = renameFile(basename, localFormat, true);
         } else {
