@@ -1,6 +1,8 @@
 #target indesign
 // ReplaceSelectedTextAsImage.jsx
 // written by Philipp Glatza, le-tex publishing services GmbH
+// version 0.9.4 (2022-09-07)
+//  - remove the created textframe, if not already removed
 // version 0.9.3 (2021-01-18)
 //  - remove any list number/label from paragraph
 // version 0.9.2 (2020-12-15)
