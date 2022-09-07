@@ -61,6 +61,7 @@ if(selection) {
   myRect.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION;
   myRect.anchoredObjectSettings.anchorYoffset = 0;
   selection.remove()
+  try{myTf.remove()}catch(e){}
 
   // search next MathTools cstyle
   if(searchNextMathToolsFormat) {
