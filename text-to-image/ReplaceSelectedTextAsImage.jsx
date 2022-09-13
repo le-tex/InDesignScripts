@@ -1,6 +1,8 @@
 #target indesign
 // ReplaceSelectedTextAsImage.jsx
 // written by Philipp Glatza, le-tex publishing services GmbH
+// version 0.9.5 (2022-09-13)
+//  - apply 'None' object style to created Rectangle
 // version 0.9.4 (2022-09-07)
 //  - remove the created textframe, if not already removed
 // version 0.9.3 (2021-01-18)
@@ -59,7 +61,8 @@ if(selection) {
     myRect.place (File(Folder.myDocuments+'/' + strFilename));
     myRect.geometricBounds = myBounds;
   }
-  myRect.fit (FitOptions.CONTENT_TO_FRAME);
+  myRect.applyObjectStyle(app.activeDocument.objectStyles.itemByName('$ID/[None]'))
+  myRect.fit(FitOptions.CONTENT_TO_FRAME);
   myRect.anchoredObjectSettings.anchoredPosition = AnchorPosition.INLINE_POSITION;
   myRect.anchoredObjectSettings.anchorYoffset = 0;
   selection.remove()
