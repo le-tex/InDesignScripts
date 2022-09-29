@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.6";
+var version = "v1.3.7";
 var doc = app.documents[0];
 /*
  * set language
@@ -40,6 +40,7 @@ image = {
   exportFilenameGroupSuffix:getConfigValue("letex:exportFilenameGroupSuffix", "_group")[0],
   renameExportFilenames:getConfigValue("letex:renameExportFilenames", "false")[0] == "true",
   exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
+  exportFromMasterPages:getConfigValue("letex:exportFromMasterPages", "false")[0] == "true",
   relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
   exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
   cropImageToPage:getConfigValue("letex:cropImageToPage", "true")[0] == "true",
@@ -89,6 +90,7 @@ panel = {
   exportFilenameSchemaTitle:["Filename", "Dateiname"][lang.pre],
   pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
   exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
+  exportFromMasterPagesTitle:["Export images from master pages", "Bilder von Musterseiten exportieren"][lang.pre],
   relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
   exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
   relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
@@ -354,6 +356,8 @@ function drawWindow() {
   removeRectangleStrokeCheckbox.value = image.removeRectangleStroke;
   var exportFromHiddenLayersCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromHiddenLayersTitle);
   exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
+  var exportFromMasterPagesCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromMasterPagesTitle);
+  exportFromMasterPagesCheckbox.value = image.exportFromMasterPages;
   var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
   relinkToExportPathsCheckbox.value = image.relinkToExportPaths;
   relinkToExportPathsCheckbox.onClick = function(){
@@ -427,6 +431,7 @@ function drawWindow() {
     image.pngTransparency = pngTransparencyGroupCheckbox.value;
     image.cropImageToPage = cropImageToPageCheckbox.value;
     image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
+    image.exportFromMasterPages = exportFromMasterPagesCheckbox.value;
     image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
     image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
     image.removeRectangleStroke = removeRectangleStrokeCheckbox.value;
@@ -746,6 +751,9 @@ function isValidLink (link) {
       return false;
     } else if(link.parent.constructor.name == 'Story'){
       writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
+      return false;
+    } else if(image.exportFromMasterPages == false) {
+      writeLog('=> INFO: image is on master page and not exported.', image.exportDir, image.logFilename);
       return false;
     } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
       writeLog('=> INFO: part of image group.', image.exportDir, image.logFilename);
