@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.7";
+var version = "v1.3.8";
 var doc = app.documents[0];
 /*
  * set language
@@ -752,7 +752,7 @@ function isValidLink (link) {
     } else if(link.parent.constructor.name == 'Story'){
       writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
       return false;
-    } else if(image.exportFromMasterPages == false) {
+    } else if(image.exportFromMasterPages == false && rectangle.parent.constructor.name == 'MasterSpread') {
       writeLog('=> INFO: image is on master page and not exported.', image.exportDir, image.logFilename);
       return false;
     } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
