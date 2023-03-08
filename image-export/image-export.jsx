@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.4.0";
+var version = "v1.4.1";
 var doc = app.documents[0];
 /*
  * set language
@@ -541,16 +541,14 @@ function getFilelinks(doc) {
       var anchorXoffset = (anchored) ? anchoredObjectSettings.anchorXoffset : null;
       var anchorYoffset = (anchored) ? anchoredObjectSettings.anchorYoffset : null;
       var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
-      // create rectangle duplicate
-      var rectangleCopy = rectangle.duplicate( [originalBounds[1], originalBounds[0]] , [0, 0] );
-      var rectangleCopyBounds = rectangle.geometricBounds;
+      var rectangleBounds = rectangle.geometricBounds;
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       var pageXEndOffset = (oddPage) ? parentPage.bounds[3] : parentPage.bounds[3] / 2
       // offsets y1, x1, y2, x2 (top, left, bottom, right)
-      var exceedsPage = rectangleCopyBounds[0] < 0
-                     || rectangleCopyBounds[1] < 0
-                     || rectangleCopyBounds[2] > parentPage.bounds[2]
-                     || rectangleCopyBounds[3] > pageXEndOffset
+      var exceedsPage = rectangleBounds[0] < 0
+                     || rectangleBounds[1] < 0
+                     || rectangleBounds[2] > parentPage.bounds[2]
+                     || rectangleBounds[3] > pageXEndOffset
       writeLog(  "page: " + parentPage.name
                + "\nshear angle: "    + shearAngle
                + "\nrotation angle: " + rotationAngle
@@ -564,10 +562,10 @@ function getFilelinks(doc) {
                + ", x2: " + originalBounds[3]
                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
                + "\nexceeds page:"
-               + "\n  top:     " + (rectangleCopyBounds[0] < 0)
-               + "\n  left:    " + (rectangleCopyBounds[1] < 0)
-               + "\n  bottom:  " + (rectangleCopyBounds[2] > parentPage.bounds[2])
-               + "\n  right:   " + (rectangleCopyBounds[3] > pageXEndOffset)
+               + "\n  top:     " + (rectangleBounds[0] < 0)
+               + "\n  left:    " + (rectangleBounds[1] < 0)
+               + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+               + "\n  right:   " + (rectangleBounds[3] > pageXEndOffset)
                + "\ntext wrap mode: "  + textWrapMode
                , image.exportDir, image.logFilename);
       // ignore images in overset text and rectangles with zero width or height
@@ -579,10 +577,12 @@ function getFilelinks(doc) {
         /* since cropping works not well with anchored images, we
          * create a duplicate of the rectangle where the cropping is applied
          */ 
-        //var rectangleCopy = null;
+        var rectangleCopy = null;
         if((image.cropImageToPage && exceedsPage)
            || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
           ){
+          // create rectangle duplicate
+          rectangleCopy = rectangle.duplicate([originalBounds[1], originalBounds[0]], [0, 0]);
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
           // copy rotation angle
