@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.4.1";
+var version = "v1.4.2";
 var doc = app.documents[0];
 /*
  * set language
@@ -484,7 +484,7 @@ function getFilelinks(doc) {
   var imageGroupIds = [];
   var imageGroupIterator = 0;
   app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
-  doc.viewPreferences.rulerOrigin = RulerOrigin.PAGE_ORIGIN;
+  doc.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
   // delete filename labels, if option is set
   if(image.overrideExportFilenames == true || image.exportGroupsAsSingleImage == true){
     deleteLabel(doc, image.overrideExportFilenames, image.exportGroupsAsSingleImage);
@@ -530,7 +530,6 @@ function getFilelinks(doc) {
       }
       rectangle = disableLocks(rectangle);
       var parentPage = (rectangle.parentPage != null) ? rectangle.parentPage : "null";
-      var oddPage = (parentPage.index % 2 == 0 ) ? true : false;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
       var originalBounds = rectangle.geometricBounds;
@@ -543,29 +542,25 @@ function getFilelinks(doc) {
       var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
       var rectangleBounds = rectangle.geometricBounds;
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
-      var pageXEndOffset = (oddPage) ? parentPage.bounds[3] : parentPage.bounds[3] / 2
       // offsets y1, x1, y2, x2 (top, left, bottom, right)
-      var exceedsPage = rectangleBounds[0] < 0
-                     || rectangleBounds[1] < 0
+      var exceedsPage = rectangleBounds[0] < parentPage.bounds[0]
+                     || rectangleBounds[1] < parentPage.bounds[1]
                      || rectangleBounds[2] > parentPage.bounds[2]
-                     || rectangleBounds[3] > pageXEndOffset
+                     || rectangleBounds[3] > parentPage.bounds[3]
       writeLog(  "page: " + parentPage.name
                + "\nshear angle: "    + shearAngle
                + "\nrotation angle: " + rotationAngle
-               + "\npage bounds y1: " + parentPage.bounds[0]
-               + ", x1: " + parentPage.bounds[1]
-               + " / y2: " + parentPage.bounds[2]
-               + ", x2: " + parentPage.bounds[3]
-               + "\nrect bounds y1: " + originalBounds[0]
-               + ", x1: " + originalBounds[1]
-               + " / y2: " + originalBounds[2]
-               + ", x2: " + originalBounds[3]
+               + "\n  page / rectangle"
+               + "\n  y1: " + parentPage.bounds[0] + " / " + rectangleBounds[0]
+               + "\n  x1: " + parentPage.bounds[1] + " / " + rectangleBounds[1]
+               + "\n  y2: " + parentPage.bounds[2] + " / " + rectangleBounds[2]
+               + "\n  x2: " + parentPage.bounds[3] + " / " + rectangleBounds[3]
                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
                + "\nexceeds page:"
-               + "\n  top:     " + (rectangleBounds[0] < 0)
-               + "\n  left:    " + (rectangleBounds[1] < 0)
+               + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+               + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
                + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
-               + "\n  right:   " + (rectangleBounds[3] > pageXEndOffset)
+               + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3])
                + "\ntext wrap mode: "  + textWrapMode
                , image.exportDir, image.logFilename);
       // ignore images in overset text and rectangles with zero width or height
@@ -844,45 +839,35 @@ function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
 function cropRectangleToPage (rectangle){  
   var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rectangle.parentPage;
+  var pageSide = page.side.toString();
   // release anchors to avoid displaced images. we need to restore the anchor later
   if(rectangle.parent.constructor.name == "Character"){
     rectangle.anchoredObjectSettings.releaseAnchoredObject();
   }
   // page is null if the object is on the pasteboard
   if(page != null){
-    writeLog( "Cropping rectangle to page bounds!\nrect bounds / page bounds:"
-             + "\ny1: " + bounds[0] + " / " + page.bounds[0]
-             + "\nx1: " + bounds[1] + " / " + page.bounds[1]
-             + "\ny2: " + bounds[2] + " / " + page.bounds[2]
-             + "\nx2: " + bounds[3] + " / " + page.bounds[3]
-             , image.exportDir, image.logFilename);
     // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
     // iterate over each corner and fit them into page
     var newBounds = [];
     for(var i = 0; i <= 3; i++) {
-      // y1 (top-left)
-      if(i == 0 && bounds[i] < page.bounds[i]){
+      // y1, x1, y2, x2 (top, left, bottom, right)
+      // top
+      if(       i == 0 && bounds[i] < page.bounds[i]){
         newBounds[i] = page.bounds[i];
-      // y2 (bottom-right)
+      // left  
+      } else if(i == 1 && bounds[i] < page.bounds[i]){
+        newBounds[i] = page.bounds[i];
+      // bottom
       } else if(i == 2 && bounds[i] > page.bounds[i]){
         newBounds[i] = page.bounds[i];
-      // x1 (top-left)
-      } else if(i == 1 && bounds[i] < page.bounds[i] && page.side.toString() != "RIGHT_HAND"){
+      // right
+      } else if(i == 3 && bounds[i] > page.bounds[i]){
         newBounds[i] = page.bounds[i];
-      // x2 (bottom-right), first page
-      } else if(i == 3 && bounds[i] > page.bounds[i] 
-                && page.side.toString() != "LEFT_HAND"
-                && page.index == 0){
-        newBounds[i] = page.bounds[i];
-      // x2 (bottom-right), not first page, page width is doubled
-      } else if(i == 3 && bounds[i] > (page.bounds[i] / 2)
-                && page.side.toString() != "LEFT_HAND"
-                && page.index != 0){
-        newBounds[i] = (page.bounds[i] / 2);
       } else {
-        newBounds[i] = bounds[i];
+        newBounds[i] = bounds[i];        
       }
     }
+    writeLog( "cropped bounds:" + newBounds, image.exportDir, image.logFilename);
     // assign new bounds
     rectangle.geometricBounds = newBounds;
   }
