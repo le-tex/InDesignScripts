@@ -550,7 +550,7 @@ function getFilelinks(doc) {
       writeLog(  "page: " + parentPage.name
                + "\nshear angle: "    + shearAngle
                + "\nrotation angle: " + rotationAngle
-               + "\n  page / rectangle"
+               + "\ndimensions page / rectangle"
                + "\n  y1: " + parentPage.bounds[0] + " / " + rectangleBounds[0]
                + "\n  x1: " + parentPage.bounds[1] + " / " + rectangleBounds[1]
                + "\n  y2: " + parentPage.bounds[2] + " / " + rectangleBounds[2]
