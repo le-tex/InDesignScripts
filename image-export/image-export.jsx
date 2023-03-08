@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.8";
+var version = "v1.4.0";
 var doc = app.documents[0];
 /*
  * set language
@@ -505,7 +505,10 @@ function getFilelinks(doc) {
     var index = i;
     var metadata = (link.linkXmp.isValid && link.linkXmp !== undefined) ? link.linkXmp.properties : null;
     var extension = link.name.split(".").pop().toLowerCase();
-    writeLog("\n" + link.name + "\n" + link.filePath, image.exportDir, image.logFilename);
+    writeLog("(" + i + ") ------------------------------------------------------------------------------------------\n"
+             + link.name
+             + "\n"
+             + link.filePath, image.exportDir, image.logFilename);
     if(isValidLink(link)){
       var rectangle = link.parent.parent;
       var linkname = link.name;
@@ -526,37 +529,47 @@ function getFilelinks(doc) {
         }
       }
       rectangle = disableLocks(rectangle);
-      parentPage = (rectangle.parentPage != null) ? rectangle.parentPage.name : "null";
+      var parentPage = (rectangle.parentPage != null) ? rectangle.parentPage : "null";
+      var oddPage = (parentPage.index % 2 == 0 ) ? true : false;
       // restore the frame of anchored objects which overlaps the page
       // after running cropRectangleToPage()
       var originalBounds = rectangle.geometricBounds;
       var rotationAngle = rectangle.rotationAngle;
       var shearAngle = rectangle.absoluteShearAngle;
-      var anchored = rectangle.parent.constructor.name == "Character";
-      var anchorXoffset = (anchored) ? rectangle.anchoredObjectSettings.anchorXoffset : null;
-      var anchorYoffset = (anchored) ? rectangle.anchoredObjectSettings.anchorYoffset : null;
+      var anchored = (rectangle.parent.constructor.name == "Group") ? rectangle.parent.parent.constructor.name == "Character" : rectangle.parent.constructor.name == "Character";
+    var anchoredObjectSettings = (rectangle.parent.constructor.name == "Group" && anchored) ? rectangle.parent.anchoredObjectSettings : rectangle.anchoredObjectSettings;
+      var anchorXoffset = (anchored) ? anchoredObjectSettings.anchorXoffset : null;
+      var anchorYoffset = (anchored) ? anchoredObjectSettings.anchorYoffset : null;
       var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
-      writeLog(  "page: " + parentPage
-                 + "\nshear angle: "    + shearAngle
-                 + "\nrotation angle: " + rotationAngle
-                 + "\ny1: " + originalBounds[0]
-                 + ", x1: " + originalBounds[1]
-                 + ", y2: " + originalBounds[2]
-                 + ", x2: " + originalBounds[3]
-                 + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
-                 + "\ntext wrap mode: "  + textWrapMode
-                 , image.exportDir, image.logFilename);
+      // create rectangle duplicate
+      var rectangleCopy = rectangle.duplicate( [originalBounds[1], originalBounds[0]] , [0, 0] );
+      var rectangleCopyBounds = rectangle.geometricBounds;
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
+      var pageXEndOffset = (oddPage) ? parentPage.bounds[3] : parentPage.bounds[3] / 2
       // offsets y1, x1, y2, x2 (top, left, bottom, right)
-      var boundOffsets = [originalBounds[0] - rectangle.parentPage.bounds[0], 
-                          originalBounds[1] - rectangle.parentPage.bounds[1], 
-                          originalBounds[2] - rectangle.parentPage.bounds[2],
-                          originalBounds[3] - rectangle.parentPage.bounds[3]];
-      var absoluteAccuracy = 5; // in px
-      var exceedsPage = boundOffsets[0] < (0 - absoluteAccuracy)
-                     || boundOffsets[1] < (0 - absoluteAccuracy)
-                     || boundOffsets[2] > absoluteAccuracy
-                     || boundOffsets[3] > absoluteAccuracy
+      var exceedsPage = rectangleCopyBounds[0] < 0
+                     || rectangleCopyBounds[1] < 0
+                     || rectangleCopyBounds[2] > parentPage.bounds[2]
+                     || rectangleCopyBounds[3] > pageXEndOffset
+      writeLog(  "page: " + parentPage.name
+               + "\nshear angle: "    + shearAngle
+               + "\nrotation angle: " + rotationAngle
+               + "\npage bounds y1: " + parentPage.bounds[0]
+               + ", x1: " + parentPage.bounds[1]
+               + " / y2: " + parentPage.bounds[2]
+               + ", x2: " + parentPage.bounds[3]
+               + "\nrect bounds y1: " + originalBounds[0]
+               + ", x1: " + originalBounds[1]
+               + " / y2: " + originalBounds[2]
+               + ", x2: " + originalBounds[3]
+               + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+               + "\nexceeds page:"
+               + "\n  top:     " + (rectangleCopyBounds[0] < 0)
+               + "\n  left:    " + (rectangleCopyBounds[1] < 0)
+               + "\n  bottom:  " + (rectangleCopyBounds[2] > parentPage.bounds[2])
+               + "\n  right:   " + (rectangleCopyBounds[3] > pageXEndOffset)
+               + "\ntext wrap mode: "  + textWrapMode
+               , image.exportDir, image.logFilename);
       // ignore images in overset text and rectangles with zero width or height
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
@@ -566,14 +579,12 @@ function getFilelinks(doc) {
         /* since cropping works not well with anchored images, we
          * create a duplicate of the rectangle where the cropping is applied
          */ 
-        var rectangleCopy = null;
+        //var rectangleCopy = null;
         if((image.cropImageToPage && exceedsPage)
            || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
           ){
           // disable text wrap temporarily, otherwise duplicate will be suppressed
           rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
-          // create duplicate of image
-          rectangleCopy = rectangle.duplicate( [originalBounds[1], originalBounds[0]] , [0, 0] );
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           if(image.cropImageToPage && exceedsPage){
