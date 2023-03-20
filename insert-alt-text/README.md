@@ -21,9 +21,8 @@ inserted into the Object Export Options of the rectangle.
 
 ```xml
 <ObjectExportOption AltTextSourceType="SourceCustom" CustomAltText="Rainbow shows up over Leipzig.">
-	<Properties>
-		<AltMetadataProperty NamespacePrefix="$ID/" PropertyPath="$ID/" />
-	  <ActualMetadataProperty NamespacePrefix="$ID/" PropertyPath="$ID/" />
+  <Properties>
+    <AltMetadataProperty NamespacePrefix="$ID/" PropertyPath="$ID/" />
   </Properties>
 </ObjectExportOption>
 ```
@@ -31,11 +30,11 @@ inserted into the Object Export Options of the rectangle.
 Additionally, a `letex:alt-text` label is inserted:
 
 ```xml
-<Rectangle Self="u10d" ContentType="GraphicType" StoryTitle="$ID/" ParentInterfaceChangeCount="" TargetInterfaceChangeCount="" LastUpdatedInterfaceChangeCount="" OverriddenPageItemProps="" HorizontalLayoutConstraints="FlexibleDimension FixedDimension FlexibleDimension" VerticalLayoutConstraints="FlexibleDimension FixedDimension FlexibleDimension" GradientFillStart="0 0" GradientFillLength="0" GradientFillAngle="0" GradientStrokeStart="0 0" GradientStrokeLength="0" GradientStrokeAngle="0" ItemLayer="ucb" Locked="false" LocalDisplaySetting="Default" GradientFillHiliteLength="0" GradientFillHiliteAngle="0" GradientStrokeHiliteLength="0" GradientStrokeHiliteAngle="0" AppliedObjectStyle="ObjectStyle/$ID/[None]" Visible="true" Name="$ID/" ItemTransform="1 0 0 1 1422.8070866141732 844.3858267716536">
+<Rectangle>
   <Properties>
-	  <Label>
-		  <KeyValuePair Key="letex:altText" Value="hier steht der zweite Alternativtext" />
-		</Label>
+    <Label>
+      <KeyValuePair Key="letex:altText" Value="hier steht der zweite Alternativtext" />
+    </Label>
     <!-- (...) -->
   </Properties>
 </Rectangle>
