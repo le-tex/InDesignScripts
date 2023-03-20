@@ -33,7 +33,7 @@ Additionally, a `letex:alt-text` label is inserted:
 <Rectangle>
   <Properties>
     <Label>
-      <KeyValuePair Key="letex:altText" Value="hier steht der zweite Alternativtext" />
+      <KeyValuePair Key="letex:altText" Value="Rainbow shows up over Leipzig." />
     </Label>
     <!-- (...) -->
   </Properties>
