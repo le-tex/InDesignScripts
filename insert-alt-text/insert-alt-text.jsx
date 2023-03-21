@@ -24,6 +24,7 @@ options = {
   exportDir:"alt-txt",
   altTextXml:"alt-text.xml",
   label:"letex:altText",
+  filenameLabel:"letex:fileName",
   logFilename:"alt-text.log",
   overrideExistingAltTexts:true
 }
@@ -189,14 +190,21 @@ function prepareAltTexts(doc) {
     var altLinks = [];
     for (var i = 0; i < docLinks.length; i++) {
       var link = docLinks[i];
-      var extension = link.name.split(".").pop().toLowerCase();
       writeLog("(" + i + ") --------------------------------------------------------------------------------\n"
                + link.name
                + "\n"
                + link.filePath, options.exportDir, options.logFilename);
       var rectangle = link.parent.parent;
       var filename = link.name;
-      var altText = String(xml.xpath('/links/link[@name = \'' + filename + '\']/@alt'));
+      var filenameLabel = rectangle.extractLabel(options.filenameLabel);
+      var xpath;
+      if(String(filenameLabel).length > 0) {
+        xpath = '/links/link[@name = \'' + filename + '\' or @name = \'' + filenameLabel + '\']/@alt';
+      } else {
+        xpath = '/links/link[@name = \'' + filename + '\']/@alt';
+      }
+      writeLog(xpath, options.exportDir, options.logFilename);
+      var altText = String(xml.xpath(xpath));
       if(altText.length != 0 ) {
         writeLog('alt: ' + altText, options.exportDir, options.logFilename);
         var objExportOptions = rectangle.objectExportOptions;
