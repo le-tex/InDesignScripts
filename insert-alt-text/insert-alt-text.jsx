@@ -24,7 +24,8 @@ options = {
   exportDir:"alt-txt",
   altTextXml:"alt-text.xml",
   label:"letex:altText",
-  logFilename:"alt-text.log"
+  logFilename:"alt-text.log",
+  overrideExistingAltTexts:true
 }
 /*
  * set panel preferences
@@ -34,10 +35,11 @@ panel = {
   selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
   selectDirMenuTitle:["Choose XML file with alt texts", "XML-Datei mit Alternativtexten auswählen"][lang.pre],
   selectDirOpenFileDialogTitle:["Open XML file with alt texts", "XML-Datei mit Alternativtexten öffnen"][lang.pre],
+  optionsTitle:["Options", "Optionen"][lang.pre],
+  overrideExistingAltTextsTitle:["Override alt texts?", "Alt-Texte überschreiben"][lang.pre],
   buttonOK:"OK",
   buttonCancel:["Cancel", "Abbrechen"][lang.pre],
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
-  noValidLinks:["No valid image links found", "Keine funktionierenden Bildverknüpfungen gefunden."][lang.pre],
   xmlNotFound:["No XML file found", "Keine XML-Datei gefunden!"][lang.pre],
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
   finishedMessage:["Script finished", "Skriptlauf abgeschlossen!"][lang.pre]
@@ -135,8 +137,12 @@ function drawWindow(doc) {
   var panelSelectDirInputPath = panelSelectDir.add("edittext");
   panelSelectDirInputPath.preferredSize.width = 255;
   panelSelectDirInputPath.text = getDefaultExportPath();
-  var panelSelectDirButton = panelSelectDir.add("button", undefined, panel.selectDirButtonTitle);  
+  var panelSelectDirButton = panelSelectDir.add("button", undefined, panel.selectDirButtonTitle);
   // buttons OK/Cancel
+  var panelOptions = myWindow.add("panel", undefined, panel.optionsTitle);
+  panelOptions.alignChildren = "left";
+  var overrideExistingAltTexts = panelOptions.add("checkbox", undefined, panel.overrideExistingAltTextsTitle);
+  overrideExistingAltTexts.value = options.overrideExistingAltTexts;
   var panelButtonGroup = myWindow.add("group");
   panelButtonGroup.orientation = "row";
   var buttonOK = panelButtonGroup.add("button", undefined, panel.buttonOK, {name: "ok"});
@@ -152,6 +158,7 @@ function drawWindow(doc) {
     //overwrite values with form input
     options.exportDir = Folder(getDefaultExportPath() + '/' + options.exportDir);
     options.altTextXml = File(panelSelectDirInputPath.text);
+    options.overrideExistingAltTexts = overrideExistingAltTexts.value;
     myWindow.close(1);
     prepareAltTexts(doc);
   }
@@ -200,14 +207,12 @@ function prepareAltTexts(doc) {
             altText:altText
           }
           altLinks.push(altLinkObject);
-          //altLinkObject.rectangle.insertLabel(options.label, altText);
-          //link.parent.parent.objectExportOptions.customAltText = 'hurz';
         } else {
           writeLog('WARNING: no alt text found!', options.exportDir, options.logFilename);
         }
       }
 	    else {
-		   alert (panel.noValidLinks);
+        writeLog('WARNING: link is not valid!', options.exportDir, options.logFilename);
 	   }	
     }
     insertAltTexts(altLinks);
@@ -221,9 +226,14 @@ function prepareAltTexts(doc) {
 }
 function insertAltTexts(altLinks){
   for (i = 0; i < altLinks.length; i++) {
-    altLinks[i].rectangle.insertLabel(options.label, altLinks[i].altText);
-    altLinks[i].rectangle.objectExportOptions.altTextSourceType = SourceType.SOURCE_CUSTOM;
-    altLinks[i].rectangle.objectExportOptions.customAltText = altLinks[i].altText;
+    if(options.overrideExistingAltTexts == true || String(altLinks[i].rectangle.objectExportOptions.customAltText).length == 0) {
+      altLinks[i].rectangle.insertLabel(options.label, altLinks[i].altText);
+      altLinks[i].rectangle.objectExportOptions.altTextSourceType = SourceType.SOURCE_CUSTOM;
+      altLinks[i].rectangle.objectExportOptions.customAltText = altLinks[i].altText;
+    } else {
+      altLinks[i].rectangle.insertLabel(options.label, altLinks[i].rectangle.objectExportOptions.customAltText);
+      writeLog('WARNING: alt text found but not overriden!', options.exportDir, options.logFilename);
+    }
   }
 }
 // check if image is missing or embedded
