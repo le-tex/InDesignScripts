@@ -218,8 +218,8 @@ function prepareAltTexts(doc) {
         writeLog('WARNING: no alt text found!', options.exportDir, options.logFilename);
       }
     }
-    insertAltTexts(altLinks);
-    alert (altLinks.length  + " " + panel.finishedMessage);
+    var counter = insertAltTexts(altLinks);
+    alert (counter  + " " + panel.finishedMessage);
     writeLog("\n===============================================================================================\nFinished! Inserted alt links for " + altLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for further details.", options.exportDir, options.logFilename);
     xmlFile.close();
     doc.save();
@@ -228,16 +228,19 @@ function prepareAltTexts(doc) {
   }
 }
 function insertAltTexts(altLinks){
+  var counter = 0;
   for (i = 0; i < altLinks.length; i++) {
     if(options.overrideExistingAltTexts == true || String(altLinks[i].rectangle.objectExportOptions.customAltText).length == 0) {
       altLinks[i].rectangle.insertLabel(options.label, altLinks[i].altText);
       altLinks[i].rectangle.objectExportOptions.altTextSourceType = SourceType.SOURCE_CUSTOM;
       altLinks[i].rectangle.objectExportOptions.customAltText = altLinks[i].altText;
+      counter++;
     } else {
       altLinks[i].rectangle.insertLabel(options.label, altLinks[i].rectangle.objectExportOptions.customAltText);
       writeLog('WARNING: alt text found but not overriden!', options.exportDir, options.logFilename);
     }
   }
+  return counter;
 }
 // get path relative to indesign file location
 function getDefaultExportPath() {
