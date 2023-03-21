@@ -42,7 +42,7 @@ panel = {
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
   xmlNotFound:["No XML file found", "Keine XML-Datei gefunden!"][lang.pre],
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
-  finishedMessage:["Script finished", "Skriptlauf abgeschlossen!"][lang.pre]
+  finishedMessage:["Alt texts inserted", "Alt-Texte eingefügt!"][lang.pre]
 }
 /*
  * start
@@ -194,26 +194,21 @@ function prepareAltTexts(doc) {
                + link.name
                + "\n"
                + link.filePath, options.exportDir, options.logFilename);
-      if(isValidLink(link)) {
-        var rectangle = link.parent.parent;
-        var filename = link.name;
-        var altText = String(xml.xpath('/links/link[@name = \'' + filename + '\']/@alt'));
-        if(altText.length != 0 ) {
-          writeLog('alt: ' + altText, options.exportDir, options.logFilename);
-          var objExportOptions = rectangle.objectExportOptions;
-          altLinkObject = {
-            rectangle:rectangle,
-            filename:filename,
-            altText:altText
-          }
-          altLinks.push(altLinkObject);
-        } else {
-          writeLog('WARNING: no alt text found!', options.exportDir, options.logFilename);
+      var rectangle = link.parent.parent;
+      var filename = link.name;
+      var altText = String(xml.xpath('/links/link[@name = \'' + filename + '\']/@alt'));
+      if(altText.length != 0 ) {
+        writeLog('alt: ' + altText, options.exportDir, options.logFilename);
+        var objExportOptions = rectangle.objectExportOptions;
+        altLinkObject = {
+          rectangle:rectangle,
+          filename:filename,
+          altText:altText
         }
+        altLinks.push(altLinkObject);
+      } else {
+        writeLog('WARNING: no alt text found!', options.exportDir, options.logFilename);
       }
-	    else {
-        writeLog('WARNING: link is not valid!', options.exportDir, options.logFilename);
-	   }	
     }
     insertAltTexts(altLinks);
     alert (altLinks.length  + " " + panel.finishedMessage);
@@ -234,36 +229,6 @@ function insertAltTexts(altLinks){
       altLinks[i].rectangle.insertLabel(options.label, altLinks[i].rectangle.objectExportOptions.customAltText);
       writeLog('WARNING: alt text found but not overriden!', options.exportDir, options.logFilename);
     }
-  }
-}
-// check if image is missing or embedded
-function isValidLink (link) {
-  var rectangle = link.parent.parent;
-  try {
-    // script would crash when geometricBounds not available, e.g. image is placed on overset text
-    var bounds = rectangle.geometricBounds;
-    if(rectangle.hasOwnProperty("parentPage") && rectangle.parentPage == null){
-      writeLog('=> FAILED: image is on pasteboard', options.exportDir, options.logFilename);
-      return false;
-    } else {
-      switch (link.status) {
-      case LinkStatus.LINK_MISSING:
-        writeLog('=> FAILED: image file is missing.', image.exportDir, options.logFilename);
-        return false; break;
-      case LinkStatus.LINK_EMBEDDED:
-        writeLog('=> FAILED: embedded image.', options.exportDir, options.logFilename);
-        return false; break;
-      default:
-        if(link != null) {
-          return true
-        } else {
-          return false
-        }
-      }
-    }
-  } catch (e) {
-    writeLog('=> FAILED: image is placed in overset text', options.exportDir, options.logFilename);
-    return false;
   }
 }
 // get path relative to indesign file location
