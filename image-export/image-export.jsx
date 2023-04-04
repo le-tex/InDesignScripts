@@ -41,6 +41,7 @@ image = {
   renameExportFilenames:getConfigValue("letex:renameExportFilenames", "false")[0] == "true",
   exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
   exportFromMasterPages:getConfigValue("letex:exportFromMasterPages", "false")[0] == "true",
+  exportFromPasteboard:getConfigValue("letex:exportFromPasteboard", "false")[0] == "true",
   relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
   exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
   cropImageToPage:getConfigValue("letex:cropImageToPage", "true")[0] == "true",
@@ -91,6 +92,7 @@ panel = {
   pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
   exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
   exportFromMasterPagesTitle:["Export images from master pages", "Bilder von Musterseiten exportieren"][lang.pre],
+  exportFromPasteboardTitle:["Export images from pasteboard", "Bilder von Montagefläche exportieren"][lang.pre],
   relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
   exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
   relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
@@ -358,6 +360,8 @@ function drawWindow() {
   exportFromHiddenLayersCheckbox.value = image.exportFromHiddenLayers;
   var exportFromMasterPagesCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromMasterPagesTitle);
   exportFromMasterPagesCheckbox.value = image.exportFromMasterPages;
+  var exportFromPasteboardCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportFromPasteboardTitle);
+  exportFromPasteboardCheckbox.value = image.exportFromPasteboard;
   var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
   relinkToExportPathsCheckbox.value = image.relinkToExportPaths;
   relinkToExportPathsCheckbox.onClick = function(){
@@ -432,6 +436,7 @@ function drawWindow() {
     image.cropImageToPage = cropImageToPageCheckbox.value;
     image.exportFromHiddenLayers = exportFromHiddenLayersCheckbox.value;
     image.exportFromMasterPages = exportFromMasterPagesCheckbox.value;
+    image.exportFromPasteboard = exportFromPasteboardCheckbox.value;
     image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
     image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
     image.removeRectangleStroke = removeRectangleStrokeCheckbox.value;
@@ -458,6 +463,8 @@ function drawWindow() {
     doc.insertLabel("letex:pngTransparency", String(pngTransparencyGroupCheckbox.value));
     doc.insertLabel("letex:cropImageToPage", String(cropImageToPageCheckbox.value));
     doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
+    doc.insertLabel("letex:exportFromMasterPages", String(exportFromMasterPagesCheckbox.value));
+    doc.insertLabel("letex:exportFromPasteboard", String(exportFromPasteboardCheckbox.value));
     doc.insertLabel("letex:relinkToExportPaths", String(relinkToExportPathsCheckbox.value));
     doc.insertLabel("letex:exportGroupsAsSingleImage", String(exportGroupsAsSingleImageCheckbox.value));
     doc.insertLabel("letex:removeRectangleStroke", String(removeRectangleStrokeCheckbox.value));
@@ -536,33 +543,49 @@ function getFilelinks(doc) {
       var rotationAngle = rectangle.rotationAngle;
       var shearAngle = rectangle.absoluteShearAngle;
       var anchored = (rectangle.parent.constructor.name == "Group") ? rectangle.parent.parent.constructor.name == "Character" : rectangle.parent.constructor.name == "Character";
-    var anchoredObjectSettings = (rectangle.parent.constructor.name == "Group" && anchored) ? rectangle.parent.anchoredObjectSettings : rectangle.anchoredObjectSettings;
+      var anchoredObjectSettings = (rectangle.parent.constructor.name == "Group" && anchored) ? rectangle.parent.anchoredObjectSettings : rectangle.anchoredObjectSettings;
       var anchorXoffset = (anchored) ? anchoredObjectSettings.anchorXoffset : null;
       var anchorYoffset = (anchored) ? anchoredObjectSettings.anchorYoffset : null;
       var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
       var rectangleBounds = rectangle.geometricBounds;
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
       // offsets y1, x1, y2, x2 (top, left, bottom, right)
-      var exceedsPage = rectangleBounds[0] < parentPage.bounds[0]
-                     || rectangleBounds[1] < parentPage.bounds[1]
-                     || rectangleBounds[2] > parentPage.bounds[2]
-                     || rectangleBounds[3] > parentPage.bounds[3]
-      writeLog(  "page: " + parentPage.name
-               + "\nshear angle: "    + shearAngle
-               + "\nrotation angle: " + rotationAngle
-               + "\ndimensions page / rectangle"
-               + "\n  y1: " + parentPage.bounds[0] + " / " + rectangleBounds[0]
-               + "\n  x1: " + parentPage.bounds[1] + " / " + rectangleBounds[1]
-               + "\n  y2: " + parentPage.bounds[2] + " / " + rectangleBounds[2]
-               + "\n  x2: " + parentPage.bounds[3] + " / " + rectangleBounds[3]
-               + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
-               + "\nexceeds page:"
-               + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
-               + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
-               + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
-               + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3])
-               + "\ntext wrap mode: "  + textWrapMode
-               , image.exportDir, image.logFilename);
+      var exceedsPage;
+      if(image.exportFromPasteboard == true && rectangle.parentPage == null){
+        exceedsPage = false;
+        writeLog(  "page: " + parentPage.name
+                   + "\nshear angle: "    + shearAngle
+                   + "\nrotation angle: " + rotationAngle
+                   + "\ndimensions page / rectangle"
+                   + "\n  y1: " + rectangleBounds[0]
+                   + "\n  x1: " + rectangleBounds[1]
+                   + "\n  y2: " + rectangleBounds[2]
+                   + "\n  x2: " + rectangleBounds[3]
+                   + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                   + "\ntext wrap mode: "  + textWrapMode
+                   , image.exportDir, image.logFilename);
+      } else {
+        exceedsPage = rectangleBounds[0] < parentPage.bounds[0]
+                   || rectangleBounds[1] < parentPage.bounds[1]
+                   || rectangleBounds[2] > parentPage.bounds[2]
+                   || rectangleBounds[3] > parentPage.bounds[3];
+        writeLog(  "page: " + parentPage.name
+                   + "\nshear angle: "    + shearAngle
+                   + "\nrotation angle: " + rotationAngle
+                   + "\ndimensions page / rectangle"
+                   + "\n  y1: " + parentPage.bounds[0] + " / " + rectangleBounds[0]
+                   + "\n  x1: " + parentPage.bounds[1] + " / " + rectangleBounds[1]
+                   + "\n  y2: " + parentPage.bounds[2] + " / " + rectangleBounds[2]
+                   + "\n  x2: " + parentPage.bounds[3] + " / " + rectangleBounds[3]
+                   + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                   + "\nexceeds page:"
+                   + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+                   + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
+                   + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+                   + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3])
+                   + "\ntext wrap mode: "  + textWrapMode
+                   , image.exportDir, image.logFilename);
+      }
       // ignore images in overset text and rectangles with zero width or height
       if(exportFromHiddenLayers
          && originalBounds[0] - originalBounds[2] != 0
@@ -752,7 +775,7 @@ function isValidLink (link) {
   try {
     // script would crash when geometricBounds not available, e.g. image is placed on overset text
     var bounds = rectangle.geometricBounds;
-    if(rectangle.hasOwnProperty("parentPage") && rectangle.parentPage == null){
+    if(rectangle.hasOwnProperty("parentPage") && rectangle.parentPage == null && image.exportFromPasteboard == false){
       writeLog('=> FAILED: image is on pasteboard', image.exportDir, image.logFilename);
       return false;
     } else if(link.parent.constructor.name == 'Story'){
