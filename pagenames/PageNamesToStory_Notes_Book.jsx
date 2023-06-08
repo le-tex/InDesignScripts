@@ -57,7 +57,8 @@ function main(){
                         while (myFrame != null) {
                             var myPage = myFrame.parentPage;
                             // Wenn Textabschnitt sich nicht auf Montagefläche ...
-                            if(myPage != null && myFrame.constructor.name == "TextFrame" && myFrame.insertionPoints.length > 0) {
+                            if(myPage != null && (myFrame.constructor.name == "TextFrame" 
+                                                           || myFrame.constructor.name == "EndnoteTextFrame") && myFrame.insertionPoints.length > 0) {
                                 // PageEnd
                                 // Ist Rahmen auf anderer Seite? ... Wenn ja, dann PageEnd-Tag setzen
                                 if(myPage != myOldPage) {
@@ -82,7 +83,7 @@ function main(){
                                 }
                                 // PageStart
                                 // Ist vorheriger Rahmen auf anderer Seite? ... Wenn ja, dann PageStart-Tag setzen
-                                if (checkPrevFrame(myFrame, myPage)) {
+                                if (checkPrevFrame(myFrame, myPage) && myFrame.contents != "") {
                                     var myFirstContent = myPageStartTag + "_" + myPage.name;
                                     var myFirstIP = myFrame.insertionPoints.firstItem();
                                     var myOldFirstIP = myFirstIP; // IP merken, da er sich bei evtl. Umbruchveränderungen verschiebt
