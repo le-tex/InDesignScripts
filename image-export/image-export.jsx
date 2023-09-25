@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.4.2";
+var version = "v1.4.3";
 var doc = app.documents[0];
 /*
  * set language
@@ -46,6 +46,7 @@ image = {
   exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
   cropImageToPage:getConfigValue("letex:cropImageToPage", "true")[0] == "true",
   removeRectangleStroke:getConfigValue("letex:removeRectangleStroke", "false")[0] == "true",
+  insertAltTextsfromXMP:getConfigValue("letex:insertAltTextsfromXMP", "false")[0] == "true",
   exportDir:"export",
   exportQuality:parseInt(getConfigValue("letex:exportQuality", "2")[0], 10),
   exportFormat:["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
@@ -95,6 +96,7 @@ panel = {
   exportFromPasteboardTitle:["Export images from pasteboard", "Bilder von Montagefläche exportieren"][lang.pre],
   relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
   exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
+  insertAltTextsfromXMPTitle:["Insert Alt texts from image metadata", "Alternativtexte aus Bildmetadaten einfügen"][lang.pre],
   relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
   removeRectangleStrokeTitle:["Remove Stroke", "Rahmen entfernen"][lang.pre],
   maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
@@ -371,6 +373,8 @@ function drawWindow() {
   }
   var exportGroupsAsSingleImageCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.exportGroupsAsSingleImageTitle);
   exportGroupsAsSingleImageCheckbox.value = image.exportGroupsAsSingleImage;
+  var insertAltTextsfromXMPCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.insertAltTextsfromXMPTitle);
+  insertAltTextsfromXMPCheckbox.value = image.insertAltTextsfromXMP;
   /*
    * Info Tab
    */
@@ -440,6 +444,7 @@ function drawWindow() {
     image.relinkToExportPaths = relinkToExportPathsCheckbox.value;
     image.exportGroupsAsSingleImage = exportGroupsAsSingleImageCheckbox.value;
     image.removeRectangleStroke = removeRectangleStrokeCheckbox.value;
+    image.insertAltTextsfromXMP = insertAltTextsfromXMPCheckbox.value;
     myWindow.close(1);
     afterSelectChanged.remove();
     getFilelinks(app.documents[0]);
@@ -468,6 +473,7 @@ function drawWindow() {
     doc.insertLabel("letex:relinkToExportPaths", String(relinkToExportPathsCheckbox.value));
     doc.insertLabel("letex:exportGroupsAsSingleImage", String(exportGroupsAsSingleImageCheckbox.value));
     doc.insertLabel("letex:removeRectangleStroke", String(removeRectangleStrokeCheckbox.value));
+    doc.insertLabel("letex:insertAltTextsfromXMP", String(insertAltTextsfromXMPCheckbox.value));
     afterSelectChanged.remove();
     myWindow.close();
   }
@@ -521,9 +527,15 @@ function getFilelinks(doc) {
       var linkname = link.name;
       var altText = "";
       // probably ID bug, ID crashes while accessing link.linkXmp.description
-      if(metadata.hasOwnProperty("description")){
-        altText = (extension !== "wmf" && rectangle.objectExportOptions.altText().length > 0) ? rectangle.objectExportOptions.altText() : metadata.description;
-        //altText = "";
+      if(image.insertAltTextsfromXMP
+         && metadata.hasOwnProperty("description")
+         && extension !== "wmf"
+         && rectangle.objectExportOptions.customAltText.length == 0){
+        altText = metadata.description;
+      } else if(rectangle.objectExportOptions.altText().length > 0){
+        altText = rectangle.objectExportOptions.customAltText;
+      } else {
+        altText = "";
       }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
