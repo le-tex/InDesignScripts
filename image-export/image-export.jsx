@@ -96,7 +96,7 @@ panel = {
   exportFromPasteboardTitle:["Export images from pasteboard", "Bilder von Montagefläche exportieren"][lang.pre],
   relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
   exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
-  insertAltTextsfromXMPTitle:["Insert Alt texts from image metadata", "Alternativtexte aus Bildmetadaten einfügen"][lang.pre],
+  insertAltTextsfromXMPTitle:["Insert alt texts from image metadata", "Alternativtexte aus Bildmetadaten einfügen"][lang.pre],
   relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
   removeRectangleStrokeTitle:["Remove Stroke", "Rahmen entfernen"][lang.pre],
   maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
