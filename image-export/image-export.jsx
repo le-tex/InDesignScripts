@@ -539,9 +539,10 @@ function getFilelinks(doc) {
       }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
+        var group = rectangle.parent;
         // use always the filename of the first graphic to avoid duplicates
-        if(rectangle.parent.rectangles[0].graphics[0].isValid){
-          linkname = rectangle.parent.rectangles[0].graphics[0].itemLink.name;
+        if(group.graphics[0].isValid){
+          linkname = group.graphics[0].itemLink.name;
           rectangle = getTopmostGroup(rectangle);
         } else {
           writeLog("Could not export Group as single image. Group Object is not valid!", image.exportDir, image.logFilename);
