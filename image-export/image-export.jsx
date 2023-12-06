@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.4.4";
+var version = "v1.5.0";
 var doc = app.documents[0];
 /*
  * set language
@@ -562,6 +562,19 @@ function getFilelinks(doc) {
       var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
       var rectangleBounds = rectangle.geometricBounds;
       var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
+      // if an image goes over the page spread, we can't use parentPage because InDesign assumes parentPage is where the larger part of the image is 
+      var leftPage;
+      // we need to get a left page and rule out documents without double-page spreads
+      if(doc.pages[0].side == PageSideOptions.LEFT_HAND){
+        leftPage = doc.pages[0];
+      } else if(doc.pages[1].side == PageSideOptions.LEFT_HAND){
+        leftPage = doc.pages[1];
+      } else {
+        leftPage = null;
+      }
+      var originOnLeftPage = (leftPage != null) ? rectangleBounds[1] < leftPage.bounds[3] : null;
+      var width = rectangleBounds[3] - rectangleBounds[1];
+      var height = rectangleBounds[2] - rectangleBounds[0];
       // offsets y1, x1, y2, x2 (top, left, bottom, right)
       var exceedsPage;
       if(image.exportFromPasteboard == true && rectangle.parentPage == null){
@@ -570,27 +583,56 @@ function getFilelinks(doc) {
                    + "\nshear angle: "    + shearAngle
                    + "\nrotation angle: " + rotationAngle
                    + "\ndimensions page / rectangle"
+                   + "\n width x height: " + width + " x " + height
                    + "\n  y1: " + rectangleBounds[0]
                    + "\n  x1: " + rectangleBounds[1]
                    + "\n  y2: " + rectangleBounds[2]
                    + "\n  x2: " + rectangleBounds[3]
                    + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                   + "\nleft page: " + originOnLeftPage
                    + "\ntext wrap mode: "  + textWrapMode
                    , image.exportDir, image.logFilename);
       } else {
-        exceedsPage = rectangleBounds[0] < parentPage.bounds[0]
-                   || rectangleBounds[1] < parentPage.bounds[1]
-                   || rectangleBounds[2] > parentPage.bounds[2]
-                   || rectangleBounds[3] > parentPage.bounds[3];
-        writeLog(  "page: " + parentPage.name
+        if(originOnLeftPage == true && leftPage != null) {
+          exceedsPage = rectangleBounds[0] < 0
+                     || rectangleBounds[1] < 0
+                     || rectangleBounds[2] > parentPage.bounds[2]
+                     || rectangleBounds[3] > (leftPage.bounds[3] * 2);
+          writeLog("page: " + parentPage.name
                    + "\nshear angle: "    + shearAngle
                    + "\nrotation angle: " + rotationAngle
                    + "\ndimensions page / rectangle"
+                   + "\n width x height: " + width + " x " + height
+                   + "\n  y1: " + parentPage.bounds[0] + " / " + rectangleBounds[0]
+                   + "\n  x1: " + leftPage.bounds[1] + " / " + rectangleBounds[1]
+                   + "\n  y2: " + parentPage.bounds[2] + " / " + rectangleBounds[2]
+                   + "\n  x2: " + leftPage.bounds[3] + " / " + rectangleBounds[3]
+                   + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                   + "\nleft page: " + originOnLeftPage
+                   + "\nexceeds page:"
+                   + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+                   + "\n  left:    " + (rectangleBounds[1] < leftPage.bounds[1])
+                   + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+                   + "\n  right:   " + (rectangleBounds[3] > (leftPage.bounds[3] * 2))
+                   + "\ntext wrap mode: "  + textWrapMode
+                   , image.exportDir, image.logFilename);
+        } else {
+          exceedsPage = rectangleBounds[0] < 0
+                     || rectangleBounds[1] < parentPage.bounds[1]
+                     || rectangleBounds[2] > parentPage.bounds[2]
+                     || rectangleBounds[3] > parentPage.bounds[3];
+        
+          writeLog("page: " + parentPage.name
+                   + "\nshear angle: "    + shearAngle
+                   + "\nrotation angle: " + rotationAngle
+                   + "\ndimensions page / rectangle"
+                   + "\n width x height: " + width + " x " + height
                    + "\n  y1: " + parentPage.bounds[0] + " / " + rectangleBounds[0]
                    + "\n  x1: " + parentPage.bounds[1] + " / " + rectangleBounds[1]
                    + "\n  y2: " + parentPage.bounds[2] + " / " + rectangleBounds[2]
                    + "\n  x2: " + parentPage.bounds[3] + " / " + rectangleBounds[3]
                    + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                   + "\nleft page: " + originOnLeftPage
                    + "\nexceeds page:"
                    + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
                    + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
@@ -598,6 +640,7 @@ function getFilelinks(doc) {
                    + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3])
                    + "\ntext wrap mode: "  + textWrapMode
                    , image.exportDir, image.logFilename);
+        }
       }
       // ignore images in overset text and rectangles with zero width or height
       if(exportFromHiddenLayers
@@ -619,7 +662,7 @@ function getFilelinks(doc) {
           // copy rotation angle
           rectangleCopy.rotationAngle = rectangle.rotationAngle;
           if(image.cropImageToPage && exceedsPage){
-            rectangleCopy = cropRectangleToPage(rectangleCopy);
+            rectangleCopy = cropRectangleToPage(rectangleCopy, originOnLeftPage, leftPage);
           }
           rectangle.textWrapPreferences.textWrapMode = textWrapMode;
           if(image.removeRectangleStroke && (rectangle.strokeWeight > 0)){
@@ -872,7 +915,7 @@ function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
   }
 }
 // crop a rectangle to page bleeds
-function cropRectangleToPage (rectangle){  
+function cropRectangleToPage (rectangle, originOnLeftPage, leftPage){
   var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var page = rectangle.parentPage;
   var pageSide = page.side.toString();
@@ -890,14 +933,20 @@ function cropRectangleToPage (rectangle){
       // top
       if(       i == 0 && bounds[i] < page.bounds[i]){
         newBounds[i] = page.bounds[i];
-      // left  
-      } else if(i == 1 && bounds[i] < page.bounds[i]){
+      // left, left Page  
+      } else if(originOnLeftPage == true && i == 1 && bounds[i] < leftPage.bounds[i]){
+        newBounds[i] = leftPage.bounds[i];
+      // left, single page or right page
+      } else if(originOnLeftPage == false && i == 1 && bounds[i] < page.bounds[i]){
         newBounds[i] = page.bounds[i];
       // bottom
       } else if(i == 2 && bounds[i] > page.bounds[i]){
         newBounds[i] = page.bounds[i];
-      // right
-      } else if(i == 3 && bounds[i] > page.bounds[i]){
+      // right, left page
+      } else if(originOnLeftPage == true && i == 3 && bounds[i] > (leftPage.bounds[i]) * 2){
+        newBounds[i] = leftPage.bounds[i] * 2;
+      // right, single page or right page 
+      } else if(originOnLeftPage == false && i == 3 && bounds[i] > page.bounds[i]){
         newBounds[i] = page.bounds[i];
       } else {
         newBounds[i] = bounds[i];        
@@ -1072,7 +1121,6 @@ function relinkToExportPaths (doc, exportLinks) {
       }
     }
   }
-
 }
 function splitStringToArray (string, index) {
   var tokens = [];
