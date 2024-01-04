@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.5.0";
+var version = "v1.5.1";
 var doc = app.documents[0];
 /*
  * set language
@@ -539,14 +539,8 @@ function getFilelinks(doc) {
       }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
-        var group = rectangle.parent;
-        // use always the filename of the first graphic to avoid duplicates
-        if(group.graphics[0].isValid){
-          linkname = group.graphics[0].itemLink.name;
-          rectangle = getTopmostGroup(rectangle);
-        } else {
-          writeLog("Could not export Group as single image. Group Object is not valid!", image.exportDir, image.logFilename);
-        }
+        rectangle = getTopmostGroup(rectangle);
+        linkname = getLinkNameForGroup(rectangle);
       }
       rectangle = disableLocks(rectangle);
       var parentPage = (rectangle.parentPage != null) ? rectangle.parentPage : "null";
@@ -1136,6 +1130,16 @@ function getTopmostGroup(rectangle){
     p = p.parent;
   }
   return p;
+}
+function getLinkNameForGroup(group) {
+  var rectangles = group.rectangles;
+  var link;
+  for (var i = 0; i < rectangles.length; i++) {
+      if (rectangles[i].graphics[0].isValid) {
+        link = rectangles[i].graphics[0].itemLink.name;
+      }
+    }
+  return link;
 }
 // disable lock since this prevents images to be exported
 // note that just the group itself has a lock state, not their children
