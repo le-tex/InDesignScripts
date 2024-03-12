@@ -10,7 +10,7 @@
  *
  */
 jsExtensions();
-var version = "v1.0.0";
+var version = "v1.1.0";
 /*
  * set language
  */
@@ -21,9 +21,10 @@ var lang = {
  * options object
  */
 options = {
-  exportDir:"alt-txt",
+  exportDir:"export",
   altTextXml:"alt-text.xml",
-  label:"letex:altText",
+  altLabel:"letex:altText",
+  artifactLabel:"letex:artifact",
   filenameLabel:"letex:fileName",
   logFilename:"alt-text.log",
   overrideExistingAltTexts:true
@@ -199,19 +200,28 @@ function prepareAltTexts(doc) {
       var filenameLabel = rectangle.extractLabel(options.filenameLabel);
       var xpath;
       if(String(filenameLabel).length > 0) {
-        xpath = '/links/link[@name = \'' + filename + '\' or @name = \'' + filenameLabel + '\']/@alt';
+        xpath = '/links/link[@name = \'' + filename + '\' or @name = \'' + filenameLabel + '\']';
       } else {
-        xpath = '/links/link[@name = \'' + filename + '\']/@alt';
+        xpath = '/links/link[@name = \'' + filename + '\']';
       }
       writeLog(xpath, options.exportDir, options.logFilename);
-      var altText = String(xml.xpath(xpath));
-      if(altText.length != 0 ) {
+      var altText = String(xml.xpath(xpath + '/@alt'));
+      var artifact = String(xml.xpath(xpath + '/@artifact'));
+      if (altText.length != 0) {
         writeLog('alt: ' + altText, options.exportDir, options.logFilename);
-        var objExportOptions = rectangle.objectExportOptions;
         altLinkObject = {
           rectangle:rectangle,
           filename:filename,
           altText:altText
+        }
+        altLinks.push(altLinkObject);
+      } else if (artifact == 'true') {
+        writeLog('artifact: ' + artifact, options.exportDir, options.logFilename);
+        altLinkObject = {
+          rectangle:rectangle,
+          filename:filename,
+          altText:"",
+          artifact:"true"
         }
         altLinks.push(altLinkObject);
       } else {
@@ -231,13 +241,18 @@ function insertAltTexts(altLinks){
   var counter = 0;
   for (i = 0; i < altLinks.length; i++) {
     if(options.overrideExistingAltTexts == true || String(altLinks[i].rectangle.objectExportOptions.customAltText).length == 0) {
-      altLinks[i].rectangle.insertLabel(options.label, altLinks[i].altText);
+      altLinks[i].rectangle.insertLabel(options.altLabel, altLinks[i].altText);
       altLinks[i].rectangle.objectExportOptions.altTextSourceType = SourceType.SOURCE_CUSTOM;
       altLinks[i].rectangle.objectExportOptions.customAltText = altLinks[i].altText;
       counter++;
     } else {
-      altLinks[i].rectangle.insertLabel(options.label, altLinks[i].rectangle.objectExportOptions.customAltText);
+      altLinks[i].rectangle.insertLabel(options.altLabel, altLinks[i].rectangle.objectExportOptions.customAltText);
       writeLog('WARNING: alt text found but not overriden!', options.exportDir, options.logFilename);
+    }
+    if(altLinks[i].artifact == "true") {
+      altLinks[i].rectangle.insertLabel(options.altLabel, "");
+      altLinks[i].rectangle.insertLabel(options.artifactLabel, altLinks[i].artifact);
+      altLinks[i].rectangle.objectExportOptions.applyTagType = TagType.TAG_ARTIFACT;
     }
   }
   return counter;
