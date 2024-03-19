@@ -561,7 +561,7 @@ function getFilelinks(doc) {
       // we need to get a left page and rule out documents without double-page spreads
       if(doc.pages[0].side == PageSideOptions.LEFT_HAND){
         leftPage = doc.pages[0];
-      } else if(doc.pages[1].side == PageSideOptions.LEFT_HAND){
+      } else if(doc.pages.length > 1 && doc.pages[1].side == PageSideOptions.LEFT_HAND){
         leftPage = doc.pages[1];
       } else {
         leftPage = null;
