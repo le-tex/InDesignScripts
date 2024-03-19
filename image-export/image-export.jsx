@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.5.2";
+var version = "v1.6.0";
 var doc = app.documents[0];
 /*
  * set language
@@ -582,7 +582,9 @@ function getFilelinks(doc) {
                + "\n  x2: " + rectangleBounds[3]
                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
                + "\nleft page: " + originOnLeftPage
-               + "\ntext wrap mode: "  + textWrapMode,
+               + "\ntext wrap mode: " + textWrapMode
+               + "\nvisible bounds: " + rectangle.visibleBounds
+               ,
                image.exportDir, image.logFilename);
       if(image.exportFromPasteboard == true && rectangle.parentPage == null){
         exceedsPage = false;
@@ -1043,10 +1045,20 @@ function hasDuplicates(link, docLinks, index) {
       var equalHorizontalScale = rectangle.absoluteHorizontalScale == nextRectangle.absoluteHorizontalScale;
       var equalVerticalScale = rectangle.absoluteVerticalScale == nextRectangle.absoluteVerticalScale;
       var inGroup = (rectangle.parent.constructor.name == "Group") == (nextRectangle.parent.constructor.name == "Group");
+      var visibleBoundsEqual = rectangle.visibleBounds == nextRectangle.visibleBounds;
       // note: either objectExportOptions are not active, then we safely ignore them or we
       // check if they are active for the two images
       var objectExportOptionsActive = !image.objectExportOptions || isObjectExportOptionActive(rectangle.objectExportOptions) == isObjectExportOptionActive(nextRectangle.objectExportOptions);
-      result.push(equalFlip && equalRotationAngle && equalWidth && equalHeight && equalShearAngle && equalHorizontalScale && equalVerticalScale && inGroup && objectExportOptionsActive);
+      result.push(equalFlip 
+        && equalRotationAngle 
+        && equalWidth 
+        && equalHeight
+        && equalShearAngle 
+        && equalHorizontalScale 
+        && equalVerticalScale 
+        && inGroup 
+        && objectExportOptionsActive
+        && visibleBoundsEqual);
     }
     i++;
   }
