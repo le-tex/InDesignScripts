@@ -583,7 +583,10 @@ function getFilelinks(doc) {
                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
                + "\nleft page: " + originOnLeftPage
                + "\ntext wrap mode: " + textWrapMode
-               + "\nvisible bounds: " + rectangle.visibleBounds
+               + "\ncrop top: " + rectangle.frameFittingOptions.topCrop
+               + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
+               + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
+               + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop
                ,
                image.exportDir, image.logFilename);
       if(image.exportFromPasteboard == true && rectangle.parentPage == null){
@@ -1045,20 +1048,27 @@ function hasDuplicates(link, docLinks, index) {
       var equalHorizontalScale = rectangle.absoluteHorizontalScale == nextRectangle.absoluteHorizontalScale;
       var equalVerticalScale = rectangle.absoluteVerticalScale == nextRectangle.absoluteVerticalScale;
       var inGroup = (rectangle.parent.constructor.name == "Group") == (nextRectangle.parent.constructor.name == "Group");
-      var visibleBoundsEqual = rectangle.visibleBounds == nextRectangle.visibleBounds;
+      var topCropEqual = rectangle.frameFittingOptions.topCrop == nextRectangle.frameFittingOptions.topCrop;
+      var leftCropEqual = rectangle.frameFittingOptions.leftCrop == nextRectangle.frameFittingOptions.leftCrop;
+      var bottomCropEqual = rectangle.frameFittingOptions.bottomCrop == nextRectangle.frameFittingOptions.bottomCrop;
+      var rightCropEqual = rectangle.frameFittingOptions.rightCrop == nextRectangle.frameFittingOptions.rightCrop;
       // note: either objectExportOptions are not active, then we safely ignore them or we
       // check if they are active for the two images
       var objectExportOptionsActive = !image.objectExportOptions || isObjectExportOptionActive(rectangle.objectExportOptions) == isObjectExportOptionActive(nextRectangle.objectExportOptions);
-      result.push(equalFlip 
-        && equalRotationAngle 
-        && equalWidth 
-        && equalHeight
-        && equalShearAngle 
-        && equalHorizontalScale 
-        && equalVerticalScale 
-        && inGroup 
-        && objectExportOptionsActive
-        && visibleBoundsEqual);
+      result.push(   equalFlip 
+                  && equalRotationAngle 
+                  && equalWidth 
+                  && equalHeight
+                  && equalShearAngle 
+                  && equalHorizontalScale 
+                  && equalVerticalScale 
+                  && inGroup 
+                  && objectExportOptionsActive
+                  && topCropEqual
+                  && leftCropEqual
+                  && bottomCropEqual
+                  && rightCropEqual
+                  );
     }
     i++;
   }
