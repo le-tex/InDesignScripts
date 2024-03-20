@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.6.1";
+var version = "v1.6.2";
 var doc = app.documents[0];
 /*
  * set language
@@ -320,7 +320,6 @@ function drawWindow() {
   var objectExportOptionsDensity = panelObjectExportOptions.add("group");
   var objectExportOptionsDensityDropdown = objectExportOptionsDensity.add("dropdownlist", undefined, image.objectExportDensityFactorValues);
   objectExportOptionsDensityDropdown.selection = image.objectExportDensityFactor;
-  var resolutionFactor = objectExportOptionsDensity.add("statictext", undefined, panel.objectExportDensityFactorTitle);
   var panelFilenameOptions = tabAdvanced.add("panel", undefined, panel.panelFilenameOptionsTitle);
   panelFilenameOptions.alignChildren = "left";
   var overrideExportFilenames = panelFilenameOptions.add("group");
@@ -513,11 +512,12 @@ function getFilelinks(doc) {
       + currentDate.getSeconds();
   writeLog("le-tex image-export " + version + "\nstarted at " + dateTime + "\n", image.exportDir, image.logFilename);
   // iterate over file links
+  var counter = 0;
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
-    var index = i;
     var metadata = (link.linkXmp.isValid && link.linkXmp !== undefined) ? link.linkXmp.properties : null;
     var extension = link.name.split(".").pop().toLowerCase();
+    counter = counter + 1;
     writeLog("(" + i + ") ------------------------------------------------------------------------------------------\n"
              + link.name
              + "\n"
@@ -526,6 +526,7 @@ function getFilelinks(doc) {
       var rectangle = link.parent.parent;
       var linkname = link.name;
       var altText = "";
+      var toBeExported = true;
       // probably ID bug, ID crashes while accessing link.linkXmp.description
       if(image.insertAltTextsfromXMP
          && metadata.hasOwnProperty("description")
@@ -541,169 +542,180 @@ function getFilelinks(doc) {
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
         rectangle = getTopmostGroup(rectangle);
         linkname = getLinkNameForGroup(rectangle);
-      }
-      rectangle = disableLocks(rectangle);
-      var parentPage = (rectangle.parentPage != null) ? rectangle.parentPage : "null";
-      // restore the frame of anchored objects which overlaps the page
-      // after running cropRectangleToPage()
-      var originalBounds = rectangle.geometricBounds;
-      var rotationAngle = rectangle.rotationAngle;
-      var shearAngle = rectangle.absoluteShearAngle;
-      var anchored = (rectangle.parent.constructor.name == "Group") ? rectangle.parent.parent.constructor.name == "Character" : rectangle.parent.constructor.name == "Character";
-      var anchoredObjectSettings = (rectangle.parent.constructor.name == "Group" && anchored) ? rectangle.parent.anchoredObjectSettings : rectangle.anchoredObjectSettings;
-      var anchorXoffset = (anchored) ? anchoredObjectSettings.anchorXoffset : null;
-      var anchorYoffset = (anchored) ? anchoredObjectSettings.anchorYoffset : null;
-      var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
-      var rectangleBounds = rectangle.geometricBounds;
-      var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
-      // if an image goes over the page spread, we can't use parentPage because InDesign assumes parentPage is where the larger part of the image is 
-      var leftPage;
-      // we need to get a left page and rule out documents without double-page spreads
-      if(doc.pages[0].side == PageSideOptions.LEFT_HAND){
-        leftPage = doc.pages[0];
-      } else if(doc.pages.length > 1 && doc.pages[1].side == PageSideOptions.LEFT_HAND){
-        leftPage = doc.pages[1];
-      } else {
-        leftPage = null;
-      }
-      var originOnLeftPage = (leftPage != null) ? rectangleBounds[1] < leftPage.bounds[3] : null;
-      var width = rectangleBounds[3] - rectangleBounds[1];
-      var height = rectangleBounds[2] - rectangleBounds[0];
-      // offsets y1, x1, y2, x2 (top, left, bottom, right)
-      var exceedsPage;
-      writeLog(  "page: " + parentPage.name
-               + "\nshear angle: "    + shearAngle
-               + "\nrotation angle: " + rotationAngle
-               + "\ndimensions page / rectangle"
-               + "\n width x height: " + width + " x " + height
-               + "\n  y1: " + rectangleBounds[0]
-               + "\n  x1: " + rectangleBounds[1]
-               + "\n  y2: " + rectangleBounds[2]
-               + "\n  x2: " + rectangleBounds[3]
-               + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
-               + "\nleft page: " + originOnLeftPage
-               + "\ntext wrap mode: " + textWrapMode,
-               image.exportDir, image.logFilename);
-      if(rectangle.hasOwnProperty("frameFittingOptions")){
-        writeLog(  "\ncrop top: " + rectangle.frameFittingOptions.topCrop
-                 + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
-                 + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
-                 + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop, image.exportDir, image.logFilename);
-      }    
-      if(image.exportFromPasteboard == true && rectangle.parentPage == null){
-        exceedsPage = false;
-      } else {
-        if(originOnLeftPage == true && leftPage != null) {
-          exceedsPage = rectangleBounds[0] < 0
-                     || rectangleBounds[1] < 0
-                     || rectangleBounds[2] > parentPage.bounds[2]
-                     || rectangleBounds[3] > (leftPage.bounds[3] * 2);
-          writeLog("exceeds page:"
-                   + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
-                   + "\n  left:    " + (rectangleBounds[1] < leftPage.bounds[1])
-                   + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
-                   + "\n  right:   " + (rectangleBounds[3] > (leftPage.bounds[3] * 2)),
-                   image.exportDir, image.logFilename);
-        } else {
-          exceedsPage = rectangleBounds[0] < 0
-                     || rectangleBounds[1] < parentPage.bounds[1]
-                     || rectangleBounds[2] > parentPage.bounds[2]
-                     || rectangleBounds[3] > parentPage.bounds[3];
-        
-          writeLog("exceeds page:"
-                   + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
-                   + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
-                   + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
-                   + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3]),                   
-                   image.exportDir, image.logFilename);
+        if(linkname != link.name) {
+          counter = counter - 1;
+          toBeExported = false;
         }
       }
-      writeLog("exportFromHiddenLayers: " + exportFromHiddenLayers, image.exportDir, image.logFilename);
-      // ignore images in overset text and rectangles with zero width or height
-      if(exportFromHiddenLayers
-         && originalBounds[0] - originalBounds[2] != 0
-         && originalBounds[1] - originalBounds[3] != 0
-        ){
-        if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
-        /* since cropping works not well with anchored images, we
-         * create a duplicate of the rectangle where the cropping is applied
-         */ 
-        var rectangleCopy = null;
-        if((image.cropImageToPage && exceedsPage)
-           || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
+      if(toBeExported){
+        rectangle = disableLocks(rectangle);
+        var parentPage = (rectangle.parentPage != null) ? rectangle.parentPage : "null";
+        // restore the frame of anchored objects which overlaps the page
+        // after running cropRectangleToPage()
+        var originalBounds = rectangle.geometricBounds;
+        var rotationAngle = rectangle.rotationAngle;
+        var shearAngle = rectangle.absoluteShearAngle;
+        var anchored = (rectangle.parent.constructor.name == "Group") ? rectangle.parent.parent.constructor.name == "Character" : rectangle.parent.constructor.name == "Character";
+        var anchoredObjectSettings = (rectangle.parent.constructor.name == "Group" && anchored) ? rectangle.parent.anchoredObjectSettings : rectangle.anchoredObjectSettings;
+        var anchorXoffset = (anchored) ? anchoredObjectSettings.anchorXoffset : null;
+        var anchorYoffset = (anchored) ? anchoredObjectSettings.anchorYoffset : null;
+        var textWrapMode = rectangle.textWrapPreferences.textWrapMode;
+        var rectangleBounds = rectangle.geometricBounds;
+        var exportFromHiddenLayers = rectangle.itemLayer.visible ? true : image.exportFromHiddenLayers;
+        // if an image goes over the page spread, we can't use parentPage because InDesign assumes parentPage is where the larger part of the image is 
+        var leftPage;
+        // we need to get a left page and rule out documents without double-page spreads
+        if(doc.pages[0].side == PageSideOptions.LEFT_HAND){
+          leftPage = doc.pages[0];
+        } else if(doc.pages.length > 1 && doc.pages[1].side == PageSideOptions.LEFT_HAND){
+          leftPage = doc.pages[1];
+        } else {
+          leftPage = null;
+        }
+        var originOnLeftPage = (leftPage != null) ? rectangleBounds[1] < leftPage.bounds[3] : null;
+        var width = rectangleBounds[3] - rectangleBounds[1];
+        var height = rectangleBounds[2] - rectangleBounds[0];
+        // offsets y1, x1, y2, x2 (top, left, bottom, right)
+        var exceedsPage;
+        writeLog(  "page: " + parentPage.name
+                + "\nshear angle: "    + shearAngle
+                + "\nrotation angle: " + rotationAngle
+                + "\ndimensions page / rectangle"
+                + "\n width x height: " + width + " x " + height
+                + "\n  y1: " + rectangleBounds[0]
+                + "\n  x1: " + rectangleBounds[1]
+                + "\n  y2: " + rectangleBounds[2]
+                + "\n  x2: " + rectangleBounds[3]
+                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+                + "\nleft page: " + originOnLeftPage
+                + "\ntext wrap mode: " + textWrapMode,
+                image.exportDir, image.logFilename);
+        if(rectangle.hasOwnProperty("frameFittingOptions")){
+          writeLog(  "\ncrop top: " + rectangle.frameFittingOptions.topCrop
+                  + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
+                  + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
+                  + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop, image.exportDir, image.logFilename);
+        }    
+        if(image.exportFromPasteboard == true && rectangle.parentPage == null){
+          exceedsPage = false;
+        } else {
+          if(originOnLeftPage == true && leftPage != null) {
+            exceedsPage = rectangleBounds[0] < 0
+                      || rectangleBounds[1] < 0
+                      || rectangleBounds[2] > parentPage.bounds[2]
+                      || rectangleBounds[3] > (leftPage.bounds[3] * 2);
+            writeLog("exceeds page:"
+                    + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+                    + "\n  left:    " + (rectangleBounds[1] < leftPage.bounds[1])
+                    + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+                    + "\n  right:   " + (rectangleBounds[3] > (leftPage.bounds[3] * 2)),
+                    image.exportDir, image.logFilename);
+          } else {
+            exceedsPage = rectangleBounds[0] < 0
+                      || rectangleBounds[1] < parentPage.bounds[1]
+                      || rectangleBounds[2] > parentPage.bounds[2]
+                      || rectangleBounds[3] > parentPage.bounds[3];
+          
+            writeLog("exceeds page:"
+                    + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+                    + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
+                    + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+                    + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3]),                   
+                    image.exportDir, image.logFilename);
+          }
+        }
+        writeLog("exportFromHiddenLayers: " + exportFromHiddenLayers, image.exportDir, image.logFilename);
+        // ignore images in overset text and rectangles with zero width or height
+        if(exportFromHiddenLayers
+          && originalBounds[0] - originalBounds[2] != 0
+          && originalBounds[1] - originalBounds[3] != 0
           ){
-          // create rectangle duplicate
-          rectangleCopy = rectangle.duplicate([originalBounds[1], originalBounds[0]], [0, 0]);
-          // disable text wrap temporarily, otherwise duplicate will be suppressed
-          rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
-          // copy rotation angle
-          rectangleCopy.rotationAngle = rectangle.rotationAngle;
-          if(image.cropImageToPage && exceedsPage){
-            rectangleCopy = cropRectangleToPage(rectangleCopy, originOnLeftPage, leftPage);
+          if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
+          /* since cropping works not well with anchored images, we
+          * create a duplicate of the rectangle where the cropping is applied
+          */ 
+          var rectangleCopy = null;
+          if((image.cropImageToPage && exceedsPage)
+            || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
+            ){
+            // create rectangle duplicate
+            rectangleCopy = rectangle.duplicate([originalBounds[1], originalBounds[0]], [0, 0]);
+            // disable text wrap temporarily, otherwise duplicate will be suppressed
+            rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
+            // copy rotation angle
+            rectangleCopy.rotationAngle = rectangle.rotationAngle;
+            if(image.cropImageToPage && exceedsPage){
+              rectangleCopy = cropRectangleToPage(rectangleCopy, originOnLeftPage, leftPage);
+            }
+            rectangle.textWrapPreferences.textWrapMode = textWrapMode;
+            if(image.removeRectangleStroke && (rectangle.strokeWeight > 0)){
+              // setting strokeTint to 0 is more robust. Setting strokeWeight to 0 adds sometimes a stroke
+              rectangleCopy.strokeTint = image.removeRectangleStroke ? 0 : rectangle.strokeTint;
+            }
           }
-          rectangle.textWrapPreferences.textWrapMode = textWrapMode;
-          if(image.removeRectangleStroke && (rectangle.strokeWeight > 0)){
-            // setting strokeTint to 0 is more robust. Setting strokeWeight to 0 adds sometimes a stroke
-            rectangleCopy.strokeTint = image.removeRectangleStroke ? 0 : rectangle.strokeTint;
+          var objectExportOptions = rectangle.objectExportOptions;
+          // use format override in objectExportOptions if active. Check InDesign version because the property changed.
+          var customImageConversion = isObjectExportOptionActive(objectExportOptions);
+          var overrideBool = image.objectExportOptions && customImageConversion;
+          var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString().replace(/^JPEG/g, "JPG") : image.exportFormat;
+          var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
+          var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution, image.baseDPI);
+          var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
+          var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
+          /*
+          * set export filename
+          */
+          var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
+          var basename;
+          var toBeExported = true;
+          if (image.renameExportFilenames == true) {
+            var imgNumber = pad( counter, image.exportFilenameSchema.split("#").length - 1);
+            basename = image.exportFilenameSchema.replace("#", imgNumber).replace(/#/g, "");
           }
-        }
-        var objectExportOptions = rectangle.objectExportOptions;
-        // use format override in objectExportOptions if active. Check InDesign version because the property changed.
-        var customImageConversion = isObjectExportOptionActive(objectExportOptions);
-        var overrideBool = image.objectExportOptions && customImageConversion;
-        var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString().replace(/^JPEG/g, "JPG") : image.exportFormat;
-        var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
-        var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution, image.baseDPI);
-        var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
-        var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
-        /*
-         * set export filename
-         */
-        var filenameLabel = rectangle.extractLabel(image.pageItemLabel);
-        var basename;
-	      if (image.renameExportFilenames == true) {
-          var counter = pad( index + 1, image.exportFilenameSchema.split("#").length - 1);
-          basename = image.exportFilenameSchema.replace("#", counter).replace(/#/g, "");
-	      }
-        else if (filenameLabel.length > 0 && image.overrideExportFilenames == false) {
-          basename = getBasename(filenameLabel);
+          else if (filenameLabel.length > 0 && image.overrideExportFilenames == false) {
+            basename = getBasename(filenameLabel);
+          } else {
+            basename = getBasename(linkname);
+          }
+          var newFilename;
+          var duplicates = hasDuplicates(link, docLinks, i);
+          if( rectangle.constructor.name == "Group" ){
+            newFilename = renameFile(basename + image.exportFilenameGroupSuffix, localFormat, false);
+        } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
+            newFilename = renameFile(basename, localFormat, true);
+          } else {
+            newFilename = renameFile(basename, localFormat, false);
+          }
+          uniqueBasenames.push(getBasename(newFilename));
+          /*
+          * construct link object
+          */
+          linkObject = {
+            link:link,
+            pageItem:rectangle,
+            format:localFormat,
+            quality:localQuality,
+            density:normalizedDensity,
+            newFilename:newFilename,
+            newFilepath:File(image.exportDir + "/" + newFilename),
+            objectExportOptions:objectExportOptions,
+            anchored:anchored,
+            rectangleCopy:rectangleCopy,
+            exceedsPage:exceedsPage,
+            originalBounds:originalBounds,
+            group:rectangle.constructor.name == "Group",
+            id:rectangle.id,
+            altText:altText
+          }
+          if(toBeExported){
+            exportLinks.push(linkObject);
+            writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
+          } else {
+            writeLog("=> skipped (reason: part of a group)", image.exportDir, image.logFilename);
+          }
         } else {
-          basename = getBasename(linkname);
+          missingLinks.push(linkname);
         }
-        var newFilename;
-        var duplicates = hasDuplicates(link, docLinks, i);
-        if( rectangle.constructor.name == "Group" ){
-          newFilename = (filenameLabel.length > 0 && image.overrideExportFilenames == false) ? renameFile(basename, localFormat, false) : renameFile(getBasename(linkname) + image.exportFilenameGroupSuffix, localFormat, false);
-       } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
-          newFilename = renameFile(basename, localFormat, true);
-        } else {
-          newFilename = renameFile(basename, localFormat, false);
-        }
-        uniqueBasenames.push(getBasename(newFilename));
-        /*
-         * construct link object
-         */
-        linkObject = {
-          link:link,
-          pageItem:rectangle,
-          format:localFormat,
-          quality:localQuality,
-          density:normalizedDensity,
-          newFilename:newFilename,
-          newFilepath:File(image.exportDir + "/" + newFilename),
-          objectExportOptions:objectExportOptions,
-          anchored:anchored,
-          rectangleCopy:rectangleCopy,
-          exceedsPage:exceedsPage,
-          originalBounds:originalBounds,
-          group:rectangle.constructor.name == "Group",
-          id:rectangle.id,
-          altText:altText
-        }
-        exportLinks.push(linkObject);
-        writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
-      } else {
-        missingLinks.push(linkname);
       }
     }
   }
