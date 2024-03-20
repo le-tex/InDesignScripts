@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.6.0";
+var version = "v1.6.1";
 var doc = app.documents[0];
 /*
  * set language
@@ -582,13 +582,14 @@ function getFilelinks(doc) {
                + "\n  x2: " + rectangleBounds[3]
                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
                + "\nleft page: " + originOnLeftPage
-               + "\ntext wrap mode: " + textWrapMode
-               + "\ncrop top: " + rectangle.frameFittingOptions.topCrop
-               + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
-               + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
-               + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop
-               ,
+               + "\ntext wrap mode: " + textWrapMode,
                image.exportDir, image.logFilename);
+      if(rectangle.hasOwnProperty("frameFittingOptions")){
+        writeLog(  "\ncrop top: " + rectangle.frameFittingOptions.topCrop
+                 + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
+                 + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
+                 + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop, image.exportDir, image.logFilename);
+      }    
       if(image.exportFromPasteboard == true && rectangle.parentPage == null){
         exceedsPage = false;
       } else {
