@@ -4,7 +4,7 @@ A script for Adobe InDesign to insert alt texts from an XML source.
 
 ##  Requirements
 
-You need an XML file with this structure:
+You need an XML file with this structure. You can use the script as well to create a blank template including the links in the InDesign document:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
