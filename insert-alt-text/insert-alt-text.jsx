@@ -35,6 +35,7 @@ options = {
 panel = {
   title:["le-tex – Insert Alt Text", "le-tex – Alternativtexte einfügen"][lang.pre],
   selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
+  generateAltXMLTitle:["Create XML file", "XML-Datei erstellen"][lang.pre],
   selectDirMenuTitle:["Choose XML file with alt texts", "XML-Datei mit Alternativtexten auswählen"][lang.pre],
   selectDirOpenFileDialogTitle:["Open XML file with alt texts", "XML-Datei mit Alternativtexten öffnen"][lang.pre],
   optionsTitle:["Options", "Optionen"][lang.pre],
@@ -44,6 +45,7 @@ panel = {
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
   xmlNotFound:["No XML file found", "Keine XML-Datei gefunden!"][lang.pre],
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
+  generateAltXMLFinishedMsg:["Empty alt text XML file created", "Leere Alt-Text-XML-Datei erstellt"][lang.pre],
   finishedMessage:["Alt texts inserted", "Alt-Texte eingefügt!"][lang.pre]
 }
 /*
@@ -139,7 +141,10 @@ function drawWindow(doc) {
   var panelSelectDirInputPath = panelSelectDir.add("edittext");
   panelSelectDirInputPath.preferredSize.width = 255;
   panelSelectDirInputPath.text = getDefaultExportPath();
-  var panelSelectDirButton = panelSelectDir.add("button", undefined, panel.selectDirButtonTitle);
+  var panelSelectDirButtonGroup = panelSelectDir.add("group");
+  panelSelectDirButtonGroup.alignChildren = "left";
+  var panelSelectDirButton = panelSelectDirButtonGroup.add("button", undefined, panel.selectDirButtonTitle);
+  var generateAltXMLButton = panelSelectDirButtonGroup.add("button", undefined, panel.generateAltXMLTitle);
   // buttons OK/Cancel
   var panelOptions = myWindow.add("panel", undefined, panel.optionsTitle);
   panelOptions.alignChildren = "left";
@@ -155,6 +160,11 @@ function drawWindow(doc) {
     if (result) {
       panelSelectDirInputPath.text = result;
     }
+  }
+  generateAltXMLButton.onClick  = function() {
+    options.altTextXml = File(panelSelectDirInputPath.text + "/alt-text.xml");
+    myWindow.close(1);
+    generateAltXML(doc);
   }
   buttonOK.onClick = function (){
     //overwrite values with form input
@@ -256,6 +266,27 @@ function insertAltTexts(altLinks){
     }
   }
   return counter;
+}
+function generateAltXML(doc){
+  var myAltXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r<links>\r";
+  var docLinks = doc.links;
+  for (var i = 0; i < docLinks.length; i++) {
+    var link = docLinks[i];
+    var rectangle = link.parent.parent;
+    var filename = link.name;
+    var filenameLabel = rectangle.extractLabel(options.filenameLabel);
+    var nameAtt = filenameLabel.length > 0 ? filenameLabel : filename;
+    var altAtt = String(rectangle.objectExportOptions.customAltText).length > 0 ? rectangle.objectExportOptions.customAltText : "";
+    myAltXML += "  <link name=\"" + nameAtt + "\" "
+                      + "alt=\"" + altAtt + "\"/>\r";
+  }
+  myAltXML += "</links>"
+  myTargetFile = new File(options.altTextXml);
+    myTargetFile.encoding = "UTF-8";
+    myTargetFile.open('w');
+    myTargetFile.write(myAltXML);
+    myTargetFile.close();    
+    alert(panel.generateAltXMLFinishedMsg + ": " + options.altTextXml + ".");
 }
 // get path relative to indesign file location
 function getDefaultExportPath() {
