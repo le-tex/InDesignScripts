@@ -10,7 +10,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.0";
+var version = "v1.2.1";
 /*
  * set language
  */
@@ -277,8 +277,13 @@ function generateAltXML(doc){
     var filenameLabel = rectangle.extractLabel(options.filenameLabel);
     var nameAtt = filenameLabel.length > 0 ? filenameLabel : filename;
     var altAtt = String(rectangle.objectExportOptions.customAltText).length > 0 ? rectangle.objectExportOptions.customAltText : "";
-    myAltXML += "  <link name=\"" + nameAtt + "\" "
-                      + "alt=\"" + altAtt + "\"/>\r";
+    var isArtifact = rectangle.objectExportOptions.applyTagType == TagType.TAG_ARTIFACT;
+    myAltXML += "  <link name=\"" + nameAtt + "\""
+                      + " alt=\"" + altAtt + "\"";
+    if(isArtifact){
+      myAltXML += " artifact=\"true\"";
+    }
+    myAltXML +=  "/>\r";
   }
   myAltXML += "</links>"
   myTargetFile = new File(options.altTextXml);
