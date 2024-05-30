@@ -1,6 +1,8 @@
 #target indesign
 // ReplaceSelectedTextAsImage.jsx
 // written by Philipp Glatza, le-tex publishing services GmbH
+// version 0.9.6 (2024-05-30)
+//  - exclude last char if selected: CR (U+0013)
 // version 0.9.5 (2022-09-13)
 //  - apply 'None' object style to created Rectangle
 // version 0.9.4 (2022-09-07)
@@ -23,6 +25,11 @@ var searchNextMathToolsFormat = false; // values: true or false: when 'true', ju
 myDoc = app.activeDocument;
 selection = app.selection[0];
 if(selection) {
+  // last char is a paragraph break  
+  if(selection.contents.charCodeAt(selection.length -1 )  == 13 ) {
+    selection.insertionPoints.itemByRange(0, -2).select()
+    selection = app.selection[0];
+  }
   var myTf = selection.insertionPoints.lastItem().textFrames.add({geometricBounds:[0, 0, 1, 1 ]});
   var d  = new Date(),
     random = Math.floor(Math.random()*Math.floor(d / 1000)),
