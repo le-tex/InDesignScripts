@@ -24,7 +24,7 @@ var searchNextMathToolsFormat = false; // values: true or false: when 'true', ju
 
 myDoc = app.activeDocument;
 selection = app.selection[0];
-if(selection.length) {
+if(selection && selection.length) {
   // last char is a paragraph break  
   if(selection.contents.charCodeAt(selection.length -1 )  == 13 ) {
     selection.insertionPoints.itemByRange(0, -2).select()
