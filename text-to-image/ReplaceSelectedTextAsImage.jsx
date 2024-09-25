@@ -2,7 +2,7 @@
 // ReplaceSelectedTextAsImage.jsx
 // written by Philipp Glatza, le-tex publishing services GmbH
 // version 0.9.7 (2024-09-25)
-//  - truncated chars fix: turn off auto-resize for the textframe before and add extra (white)space to the right 
+//  - truncated chars fix: turn off auto-resize for the textframe before export and add extra (white)space to the right 
 // version 0.9.6 (2024-05-30)
 //  - exclude last char if selected: CR (U+0013)
 // version 0.9.5 (2022-09-13)
