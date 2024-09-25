@@ -1,6 +1,8 @@
 #target indesign
 // ReplaceSelectedTextAsImage.jsx
 // written by Philipp Glatza, le-tex publishing services GmbH
+// version 0.9.7 (2024-09-25)
+//  - truncated chars fix: turn off auto-resize for the textframe before and add extra (white)space to the right 
 // version 0.9.6 (2024-05-30)
 //  - exclude last char if selected: CR (U+0013)
 // version 0.9.5 (2022-09-13)
@@ -56,6 +58,8 @@ if(selection && selection.length) {
   myTf.fit (FitOptions.FRAME_TO_CONTENT);
   var myBounds = myTf.geometricBounds,
          myRect = null;
+  myTf.textFramePreferences.autoSizingType = AutoSizingTypeEnum.OFF
+  myTf.geometricBounds = new Array(myBounds[0],myBounds[1],myBounds[2],myBounds[3] + 1.5)
   myTf.exportFile(ExportFormat.PNG_FORMAT, File(Folder.myDocuments+'/' + strFilename))
   // text in table cell
   if(selection.parent.name.search("^[0-9]+:[0-9]+$") == 0) {
