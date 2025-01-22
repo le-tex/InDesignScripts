@@ -27,7 +27,8 @@ options = {
   artifactLabel:"letex:artifact",
   filenameLabel:"letex:fileName",
   logFilename:"alt-text.log",
-  overrideExistingAltTexts:true
+  overrideExistingAltTexts:true,
+  ignoreFileExtension:false
 }
 /*
  * set panel preferences
@@ -40,6 +41,7 @@ panel = {
   selectDirOpenFileDialogTitle:["Open XML file with alt texts", "XML-Datei mit Alternativtexten öffnen"][lang.pre],
   optionsTitle:["Options", "Optionen"][lang.pre],
   overrideExistingAltTextsTitle:["Override alt texts?", "Alt-Texte überschreiben"][lang.pre],
+  ignoreFileExtensionTitle:["IgnoreFileExtension", "Dateiendung ignorieren"][lang.pre],
   buttonOK:"OK",
   buttonCancel:["Cancel", "Abbrechen"][lang.pre],
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
@@ -150,6 +152,8 @@ function drawWindow(doc) {
   panelOptions.alignChildren = "left";
   var overrideExistingAltTexts = panelOptions.add("checkbox", undefined, panel.overrideExistingAltTextsTitle);
   overrideExistingAltTexts.value = options.overrideExistingAltTexts;
+  var ignoreFileExtension = panelOptions.add("checkbox", undefined, panel.ignoreFileExtensionTitle);
+  ignoreFileExtension.value = options.ignoreFileExtension;
   var panelButtonGroup = myWindow.add("group");
   panelButtonGroup.orientation = "row";
   var buttonOK = panelButtonGroup.add("button", undefined, panel.buttonOK, {name: "ok"});
@@ -171,6 +175,7 @@ function drawWindow(doc) {
     options.exportDir = Folder(getDefaultExportPath() + '/' + options.exportDir);
     options.altTextXml = File(panelSelectDirInputPath.text);
     options.overrideExistingAltTexts = overrideExistingAltTexts.value;
+    options.ignoreFileExtension = ignoreFileExtension.value
     myWindow.close(1);
     prepareAltTexts(doc);
   }
@@ -207,14 +212,17 @@ function prepareAltTexts(doc) {
                + link.filePath, options.exportDir, options.logFilename);
       var rectangle = link.parent.parent;
       var filename = link.name;
+      var basename = filename.split('.').slice(0, -1).join('.')
       var filenameLabel = rectangle.extractLabel(options.filenameLabel);
       var xpath;
       if(String(filenameLabel).length > 0) {
         xpath = '/links/link[@name = \'' + filename + '\' or @name = \'' + filenameLabel + '\']';
+      } else if(options.ignoreFileExtension) {
+        xpath = '/links/link[starts-with(@name, \'' + basename + '\')]';
       } else {
         xpath = '/links/link[@name = \'' + filename + '\']';
       }
-      writeLog(xpath, options.exportDir, options.logFilename);
+      writeLog('XPath: ' + xpath, options.exportDir, options.logFilename);
       var altText = String(xml.xpath(xpath + '/@alt'));
       var artifact = String(xml.xpath(xpath + '/@artifact'));
       if (altText.length != 0) {
