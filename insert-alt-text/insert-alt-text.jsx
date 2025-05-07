@@ -10,7 +10,7 @@
  *
  */
 jsExtensions();
-var version = "v1.2.2";
+var version = "v1.3.0";
 /*
  * set language
  */
@@ -28,7 +28,8 @@ options = {
   filenameLabel:"letex:fileName",
   logFilename:"alt-text.log",
   overrideExistingAltTexts:true,
-  ignoreFileExtension:false
+  ignoreFileExtension:false,
+  treatGroupAsSingleImage:false
 }
 /*
  * set panel preferences
@@ -42,6 +43,7 @@ panel = {
   optionsTitle:["Options", "Optionen"][lang.pre],
   overrideExistingAltTextsTitle:["Override alt texts?", "Alt-Texte überschreiben"][lang.pre],
   ignoreFileExtensionTitle:["IgnoreFileExtension", "Dateiendung ignorieren"][lang.pre],
+  treatGroupAsSingleImageTitle:["Image group as single image", "Bildgruppe als Einzelbild behandeln"][lang.pre],
   buttonOK:"OK",
   buttonCancel:["Cancel", "Abbrechen"][lang.pre],
   lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre],
@@ -154,6 +156,8 @@ function drawWindow(doc) {
   overrideExistingAltTexts.value = options.overrideExistingAltTexts;
   var ignoreFileExtension = panelOptions.add("checkbox", undefined, panel.ignoreFileExtensionTitle);
   ignoreFileExtension.value = options.ignoreFileExtension;
+  var treatGroupAsSingleImage = panelOptions.add("checkbox", undefined, panel.treatGroupAsSingleImageTitle);
+  treatGroupAsSingleImage.value = options.treatGroupAsSingleImage;
   var panelButtonGroup = myWindow.add("group");
   panelButtonGroup.orientation = "row";
   var buttonOK = panelButtonGroup.add("button", undefined, panel.buttonOK, {name: "ok"});
@@ -167,6 +171,7 @@ function drawWindow(doc) {
   }
   generateAltXMLButton.onClick  = function() {
     options.altTextXml = File(panelSelectDirInputPath.text + "/alt-text.xml");
+    options.treatGroupAsSingleImage = treatGroupAsSingleImage.value;
     myWindow.close(1);
     generateAltXML(doc);
   }
@@ -175,7 +180,8 @@ function drawWindow(doc) {
     options.exportDir = Folder(getDefaultExportPath() + '/' + options.exportDir);
     options.altTextXml = File(panelSelectDirInputPath.text);
     options.overrideExistingAltTexts = overrideExistingAltTexts.value;
-    options.ignoreFileExtension = ignoreFileExtension.value
+    options.ignoreFileExtension = ignoreFileExtension.value;
+    options.treatGroupAsSingleImage = treatGroupAsSingleImage.value;
     myWindow.close(1);
     prepareAltTexts(doc);
   }
@@ -204,6 +210,7 @@ function prepareAltTexts(doc) {
     // iterate over file links
     var docLinks = doc.links;
     var altLinks = [];
+    var penalty = 0;
     for (var i = 0; i < docLinks.length; i++) {
       var link = docLinks[i];
       writeLog("(" + i + ") --------------------------------------------------------------------------------\n"
@@ -212,6 +219,15 @@ function prepareAltTexts(doc) {
                + link.filePath, options.exportDir, options.logFilename);
       var rectangle = link.parent.parent;
       var filename = link.name;
+      var toBeExported = true;
+      if(rectangle.parent.constructor.name == "Group" && options.treatGroupAsSingleImage){
+        rectangle = getTopmostGroup(rectangle);
+        filename = getLinkNameForGroup(rectangle);
+        if(filename != link.name) {
+          toBeExported = false;
+          penalty++;
+        }
+      }
       var basename = filename.split('.').slice(0, -1).join('.')
       var filenameLabel = rectangle.extractLabel(options.filenameLabel);
       var xpath;
@@ -225,7 +241,7 @@ function prepareAltTexts(doc) {
       writeLog('XPath: ' + xpath, options.exportDir, options.logFilename);
       var altText = String(xml.xpath(xpath + '/@alt'));
       var artifact = String(xml.xpath(xpath + '/@artifact'));
-      if (altText.length != 0) {
+      if (altText.length != 0 && toBeExported) {
         writeLog('alt: ' + altText, options.exportDir, options.logFilename);
         altLinkObject = {
           rectangle:rectangle,
@@ -233,7 +249,7 @@ function prepareAltTexts(doc) {
           altText:altText
         }
         altLinks.push(altLinkObject);
-      } else if (artifact == 'true') {
+      } else if (artifact == 'true' && toBeExported) {
         writeLog('artifact: ' + artifact, options.exportDir, options.logFilename);
         altLinkObject = {
           rectangle:rectangle,
@@ -242,12 +258,14 @@ function prepareAltTexts(doc) {
           artifact:"true"
         }
         altLinks.push(altLinkObject);
+      } else if (!toBeExported) {
+        writeLog('INFO: part of group that is already processed!', options.exportDir, options.logFilename);
       } else {
         writeLog('WARNING: no alt text found!', options.exportDir, options.logFilename);
       }
     }
-    var counter = insertAltTexts(altLinks);
-    alert (counter  + " " + panel.finishedMessage);
+    var counter = insertAltTexts(altLinks, penalty);
+    alert (counter + " " + panel.finishedMessage);
     writeLog("\n===============================================================================================\nFinished! Inserted alt links for " + altLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for further details.", options.exportDir, options.logFilename);
     xmlFile.close();
     doc.save();
@@ -255,8 +273,8 @@ function prepareAltTexts(doc) {
     alert(panel.xmlNotFound);
   }
 }
-function insertAltTexts(altLinks){
-  var counter = 0;
+function insertAltTexts(altLinks, penalty){
+  var counter = 0 - penalty;
   for (i = 0; i < altLinks.length; i++) {
     if(options.overrideExistingAltTexts == true || String(altLinks[i].rectangle.objectExportOptions.customAltText).length == 0) {
       altLinks[i].rectangle.insertLabel(options.altLabel, altLinks[i].altText);
@@ -282,16 +300,22 @@ function generateAltXML(doc){
     var link = docLinks[i];
     var rectangle = link.parent.parent;
     var filename = link.name;
+    if(rectangle.parent.constructor.name == "Group" && options.treatGroupAsSingleImage){
+      rectangle = getTopmostGroup(rectangle);
+      filename = getLinkNameForGroup(rectangle);
+    }
     var filenameLabel = rectangle.extractLabel(options.filenameLabel);
     var nameAtt = filenameLabel.length > 0 ? filenameLabel : filename;
     var altAtt = String(rectangle.objectExportOptions.customAltText).length > 0 ? rectangle.objectExportOptions.customAltText : "";
     var isArtifact = rectangle.objectExportOptions.applyTagType == TagType.TAG_ARTIFACT;
-    myAltXML += "  <link name=\"" + nameAtt + "\""
-                      + " alt=\"" + altAtt + "\"";
-    if(isArtifact){
-      myAltXML += " artifact=\"true\"";
+    if((!options.treatGroupAsSingleImage || filename == link.name)){
+      myAltXML += "  <link name=\"" + nameAtt + "\""
+                        + " alt=\"" + altAtt + "\"";
+      if(isArtifact){
+        myAltXML += " artifact=\"true\"";
+      }
+      myAltXML +=  "/>\r";
     }
-    myAltXML +=  "/>\r";
   }
   myAltXML += "</links>"
   myTargetFile = new File(options.altTextXml);
@@ -337,4 +361,21 @@ function clearLog(dir, filename){
   if (del_file.exists) {
     del_file.remove();
   }
+}
+function getTopmostGroup(rectangle){
+  var p = rectangle.parent;
+  while(p.parent.constructor.name == "Group"){
+    p = p.parent;
+  }
+  return p;
+}
+function getLinkNameForGroup(group) {
+  var graphics = group.allGraphics;
+  var link;
+  for (var i = 0; i < graphics.length; i++) {
+    if (graphics[i].isValid) {
+      link = graphics[i].itemLink.name;
+    }
+  }
+  return link;
 }
