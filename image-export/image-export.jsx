@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.6.2";
+var version = "v1.7.0";
 var doc = app.documents[0];
 /*
  * set language
@@ -52,6 +52,7 @@ image = {
   exportFormat:["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
   pageItemLabel:"letex:fileName",
   pageItemAltText:"letex:altText",
+  XMPAltText:"letex:altTextFromXMP",
   logFilename:"export.log"
 }
 function getConfigValue(label, defaultValue) {
@@ -526,17 +527,17 @@ function getFilelinks(doc) {
       var rectangle = link.parent.parent;
       var linkname = link.name;
       var altText = "";
+      var altTextFromXMP = "";
       var toBeExported = true;
       // probably ID bug, ID crashes while accessing link.linkXmp.description
       if(image.insertAltTextsfromXMP
          && metadata.hasOwnProperty("description")
          && extension !== "wmf"
          && rectangle.objectExportOptions.customAltText.length == 0){
-        altText = metadata.description;
-      } else if(rectangle.objectExportOptions.altText().length > 0){
+         altTextFromXMP = metadata.description;
+      } 
+      if (rectangle.objectExportOptions.altText().length > 0){
         altText = rectangle.objectExportOptions.customAltText;
-      } else {
-        altText = "";
       }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
@@ -705,7 +706,8 @@ function getFilelinks(doc) {
             originalBounds:originalBounds,
             group:rectangle.constructor.name == "Group",
             id:rectangle.id,
-            altText:altText
+            altText:altText,
+            altTextFromXMP:altTextFromXMP
           }
           if(toBeExported){
             exportLinks.push(linkObject);
@@ -766,6 +768,10 @@ function getFilelinks(doc) {
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
       if(exportLinks[i].altText.length > 0){
         exportLinks[i].pageItem.insertLabel(image.pageItemAltText, exportLinks[i].altText);
+      }
+      // separate label for XMP alt texts
+      if(exportLinks[i].altTextFromXMP.length > 0){
+        exportLinks[i].pageItem.insertLabel(image.XMPAltText, exportLinks[i].altTextFromXMP)
       }
     }
     progressBar.close();
