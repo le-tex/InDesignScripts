@@ -240,7 +240,7 @@ function prepareAltTexts(doc) {
       }
       writeLog('XPath: ' + xpath, options.exportDir, options.logFilename);
       // get alt text from XML, use only first match to avoid duplicates
-      var altText = String(xml.xpath(xpath + '/@alt')[0]);
+      var altText = String(xml.xpath(xpath + '[1]/@alt'));
       var artifact = String(xml.xpath(xpath + '/@artifact'));
       if (altText.length != 0 && toBeExported) {
         writeLog('alt: ' + altText, options.exportDir, options.logFilename);
@@ -381,3 +381,4 @@ function getLinkNameForGroup(group) {
   return link;
 
 }
+
