@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.7.0";
+var version = "v1.7.1";
 var doc = app.documents[0];
 /*
  * set language
@@ -646,7 +646,7 @@ function getFilelinks(doc) {
             // copy rotation angle
             rectangleCopy.rotationAngle = rectangle.rotationAngle;
             if(image.cropImageToPage && exceedsPage){
-              rectangleCopy = cropRectangleToPage(rectangleCopy, originOnLeftPage, leftPage);
+              rectangleCopy = cropRectangleToPage(rectangleCopy, originOnLeftPage, leftPage, parentPage);
             }
             rectangle.textWrapPreferences.textWrapMode = textWrapMode;
             if(image.removeRectangleStroke && (rectangle.strokeWeight > 0)){
@@ -910,9 +910,8 @@ function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
   }
 }
 // crop a rectangle to page bleeds
-function cropRectangleToPage (rectangle, originOnLeftPage, leftPage){
+function cropRectangleToPage (rectangle, originOnLeftPage, leftPage, page){
   var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
-  var page = rectangle.parentPage;
   var pageSide = page.side.toString();
   // release anchors to avoid displaced images. we need to restore the anchor later
   if(rectangle.parent.constructor.name == "Character"){
