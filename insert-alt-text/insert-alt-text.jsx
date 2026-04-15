@@ -10,7 +10,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.1";
+var version = "v1.3.2";
 /*
  * set language
  */
@@ -203,10 +203,16 @@ function prepareAltTexts(doc) {
         + currentDate.getMinutes() + ':' 
         + currentDate.getSeconds();
     writeLog("le-tex insert-alt-text " + version + "\nstarted at " + dateTime + "\n", options.exportDir, options.logFilename);
+    var xmlFile;
+    var xml;
     // open XML file
-    var xmlFile = File(options.altTextXml);
-    xmlFile.open("r");
-    var xml = XML(xmlFile.read());
+    try {
+      xmlFile = File(options.altTextXml);
+      xmlFile.open("r");
+      xml = XML(xmlFile.read());  
+    } catch (e) {
+      alert(e);
+    }
     // iterate over file links
     var docLinks = doc.links;
     var altLinks = [];
