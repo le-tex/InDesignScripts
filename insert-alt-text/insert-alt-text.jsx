@@ -10,7 +10,7 @@
  *
  */
 jsExtensions();
-var version = "v1.3.0";
+var version = "v1.3.1";
 /*
  * set language
  */
@@ -240,7 +240,7 @@ function prepareAltTexts(doc) {
       }
       writeLog('XPath: ' + xpath, options.exportDir, options.logFilename);
       // get alt text from XML, use only first match to avoid duplicates
-      var altText = String(xml.xpath(xpath + '[1]/@alt'));
+      var altText = decodeXml(String(xml.xpath(xpath + '[1]/@alt')));
       var artifact = String(xml.xpath(xpath + '/@artifact'));
       if (altText.length != 0 && toBeExported) {
         writeLog('alt: ' + altText, options.exportDir, options.logFilename);
@@ -379,6 +379,15 @@ function getLinkNameForGroup(group) {
     }
   }
   return link;
-
 }
-
+function decodeXml(s) {
+  return s.replace(/&(amp|lt|gt|quot|apos);/g, function(m) {
+    return {
+      'amp': '&',
+      'lt': '<',
+      'gt': '>',
+      'quot': '"',
+      'apos': "'"
+    }[m.slice(1, -1)];
+  });
+}
