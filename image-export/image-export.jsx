@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.7.1";
+var version = "v1.7.2";
 var doc = app.documents[0];
 /*
  * set language
@@ -1045,6 +1045,7 @@ function isFormatOverrideActive(searchFormat){
 // compare two links if they have equal dimensions
 function hasDuplicates(link, docLinks, index) {
   var rectangle = link.parent.parent;
+  var graphic = rectangle.graphics[0];
   var nextLink;
   var result = [];
   var i = 0;
@@ -1053,13 +1054,20 @@ function hasDuplicates(link, docLinks, index) {
     // check whether link names match. The index var is used to prevent that an image is compared with itself.
     if( link.name == nextLink.name && i != index && isValidLink(nextLink)) {
       var nextRectangle = nextLink.parent.parent;
+      var nextGraphic = nextRectangle.graphics[0];
       // InDesign calculates widths and heights not precisely, so we have to round them
       var rectangleWidth = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1]) * 100) / 100;
       var rectangleHeight = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100) / 100;
       var nextRectangleWidth = Math.round((nextRectangle.geometricBounds[3] - nextRectangle.geometricBounds[1]) * 100) / 100;
       var nextRectangleHeight = Math.round((nextRectangle.geometricBounds[2] - nextRectangle.geometricBounds[0]) * 100) / 100;
+      var offsetY = rectangle.geometricBounds[0] - graphic.geometricBounds[0];
+      var offsetX = rectangle.geometricBounds[1] - graphic.geometricBounds[1];
+      var nextOffsetY = nextRectangle.geometricBounds[0] - nextGraphic.geometricBounds[0];
+      var nextOffsetX = nextRectangle.geometricBounds[1] - nextGraphic.geometricBounds[1];
       var equalWidth  = rectangleWidth == nextRectangleWidth;
       var equalHeight = rectangleHeight == nextRectangleHeight;
+      var equalOffsetY = offsetY == nextOffsetY;
+      var equalOffsetX = offsetX == nextOffsetX;
       var equalFlip = rectangle.absoluteFlip == nextRectangle.absoluteFlip;
       var equalRotationAngle = rectangle.absoluteRotationAngle == nextRectangle.absoluteRotationAngle;
       var equalShearAngle = rectangle.absoluteShearAngle == nextRectangle.absoluteShearAngle;
@@ -1077,6 +1085,8 @@ function hasDuplicates(link, docLinks, index) {
                   && equalRotationAngle 
                   && equalWidth 
                   && equalHeight
+                  && equalOffsetY
+                  && equalOffsetX
                   && equalShearAngle 
                   && equalHorizontalScale 
                   && equalVerticalScale 
