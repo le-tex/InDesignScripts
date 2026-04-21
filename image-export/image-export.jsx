@@ -14,7 +14,7 @@
  *
  */
 jsExtensions();
-var version = "v1.7.2";
+var version = "v1.7.3";
 var doc = app.documents[0];
 /*
  * set language
@@ -538,6 +538,13 @@ function getFilelinks(doc) {
       } 
       if (rectangle.objectExportOptions.altText().length > 0){
         altText = rectangle.objectExportOptions.customAltText;
+      }
+      // ID sometimes fails to export a EPS correctly and takes only the preview image. We use the highest quality.
+      if (extension = "eps") {
+        rectangle.graphics[0].localDisplaySetting = DisplaySettingOptions.HIGH_QUALITY;
+        rectangle.allGraphics[0].localDisplaySetting = DisplaySettingOptions.HIGH_QUALITY;
+        rectangle.allGraphics[0].clearObjectStyleOverrides();
+        rectangle.allGraphics[0].clearTransformations ();
       }
       // if a group should be exported as single image, replace rectangle with group object
       if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
