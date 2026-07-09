@@ -11,10 +11,23 @@
  * comes with a limited feature set.
  *
  * Authors: Gregor Fellenz (twitter: @grefel), Martin Kraetke (@mkraetke)
+ * Editors: Ronald Weller, Claude, Codex
+ *
+ * Known issues / TODO:
+ *  - panel.infoCharacters is [40] (array); used both as `characters` value and
+ *    as a number in splitStringToArray() arithmetic. Likely should be 40.
+ *  - renameExportFilenames onClick chains assignment into
+ *    overrideExportFilenamesCheckbox.value; may unintentionally toggle override.
+ *  - objectExportDensityFactor is a dropdown index on load but stored as text
+ *    (multiplier) on OK; works via coercion but is semantically inconsistent.
+ *  - altText() detects any effective alt text (may be XMP), but customAltText
+ *    is stored; if source is not "Custom", an empty string is assigned.
+ *  - getLinkNameForGroup() returns the last valid graphic's link name, not the
+ *    first; verify this matches the intended group naming.
  *
  */
 jsExtensions();
-var version = "v1.7.4";
+var version = "v1.7.5";
 var doc = app.documents[0];
 /*
  * set language
@@ -25,38 +38,40 @@ var lang = {
 /*
  * image options object
  */
-image = {
-  minExportDPI:1,
-  maxExportDPI:2400,
-  exportDPI:parseInt(getConfigValue("letex:exportDPI", "144")[0], 10),
-  baseDPI:72,
-  maxResolution:parseInt(getConfigValue("letex:maxResolution", "4000000")[0], 10),
-  pngTransparency:getConfigValue("letex:pngTransparency", "true")[0] == "true",
-  objectExportOptions:getConfigValue("letex:objectExportOptions", "true")[0] == "true",
-  objectExportDensityFactorValues:[1, 2, 3, 4],
-  objectExportDensityFactor:parseInt(getConfigValue("letex:objectExportDensityFactor", "1")[0], 10) - 1,
-  overrideExportFilenames:getConfigValue("letex:overrideExportFilenames", "false")[0] == "true",
-  exportFilenameSchema:getConfigValue("letex:exportFilenameSchema", "img_###")[0],
-  exportFilenameGroupSuffix:getConfigValue("letex:exportFilenameGroupSuffix", "_group")[0],
-  renameExportFilenames:getConfigValue("letex:renameExportFilenames", "false")[0] == "true",
-  exportFromHiddenLayers:getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
-  exportFromMasterPages:getConfigValue("letex:exportFromMasterPages", "false")[0] == "true",
-  exportFromPasteboard:getConfigValue("letex:exportFromPasteboard", "false")[0] == "true",
-  relinkToExportPaths:getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
-  exportGroupsAsSingleImage:getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
-  cropImageToPage:getConfigValue("letex:cropImageToPage", "true")[0] == "true",
-  removeRectangleStroke:getConfigValue("letex:removeRectangleStroke", "false")[0] == "true",
-  insertAltTextsfromXMP:getConfigValue("letex:insertAltTextsfromXMP", "false")[0] == "true",
-  exportDir:"export",
-  exportQuality:parseInt(getConfigValue("letex:exportQuality", "2")[0], 10),
-  exportFormat:["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
-  pageItemLabel:"letex:fileName",
-  pageItemAltText:"letex:altText",
-  XMPAltText:"letex:altTextFromXMP",
-  logFilename:"export.log"
+var image = {
+  minExportDPI: 1,
+  maxExportDPI: 2400,
+  exportDPI: parseInt(getConfigValue("letex:exportDPI", "144")[0], 10),
+  baseDPI: 72,
+  maxResolution: parseInt(getConfigValue("letex:maxResolution", "4000000")[0], 10),
+  maxExportWidth: parseInt(getConfigValue("letex:maxExportWidth", "1600")[0], 10),
+  maxExportHeight: parseInt(getConfigValue("letex:maxExportHeight", "2300")[0], 10),
+  pngTransparency: getConfigValue("letex:pngTransparency", "true")[0] == "true",
+  objectExportOptions: getConfigValue("letex:objectExportOptions", "true")[0] == "true",
+  objectExportDensityFactorValues: [1, 2, 3, 4],
+  objectExportDensityFactor: parseInt(getConfigValue("letex:objectExportDensityFactor", "1")[0], 10) - 1,
+  overrideExportFilenames: getConfigValue("letex:overrideExportFilenames", "false")[0] == "true",
+  exportFilenameSchema: getConfigValue("letex:exportFilenameSchema", "img_###")[0],
+  exportFilenameGroupSuffix: getConfigValue("letex:exportFilenameGroupSuffix", "_group")[0],
+  renameExportFilenames: getConfigValue("letex:renameExportFilenames", "false")[0] == "true",
+  exportFromHiddenLayers: getConfigValue("letex:exportFromHiddenLayers", "false")[0] == "true",
+  exportFromMasterPages: getConfigValue("letex:exportFromMasterPages", "false")[0] == "true",
+  exportFromPasteboard: getConfigValue("letex:exportFromPasteboard", "false")[0] == "true",
+  relinkToExportPaths: getConfigValue("letex:relinkToExportPaths", "false")[0] == "true",
+  exportGroupsAsSingleImage: getConfigValue("letex:exportGroupsAsSingleImage", "false")[0] == "true",
+  cropImageToPage: getConfigValue("letex:cropImageToPage", "true")[0] == "true",
+  removeRectangleStroke: getConfigValue("letex:removeRectangleStroke", "false")[0] == "true",
+  insertAltTextsfromXMP: getConfigValue("letex:insertAltTextsfromXMP", "false")[0] == "true",
+  exportDir: "export",
+  exportQuality: parseInt(getConfigValue("letex:exportQuality", "2")[0], 10),
+  exportFormat: ["JPG", "PNG"].indexOf(getConfigValue("letex:exportFormat", "JPG")[0]), // 0 = JPG | 1 = PNG
+  pageItemLabel: "letex:fileName",
+  pageItemAltText: "letex:altText",
+  XMPAltText: "letex:altTextFromXMP",
+  logFilename: "export.log"
 }
 function getConfigValue(label, defaultValue) {
-  var value = [doc.extractLabel(label), defaultValue].filter( function(text) {
+  var value = [doc.extractLabel(label), defaultValue].filter(function (text) {
     return text != ""
   })
   return value;
@@ -64,65 +79,67 @@ function getConfigValue(label, defaultValue) {
 /*
  * image options object
  */
-imageInfo = {
-  filename:null,
-  format:null,
-  width:null,
-  height:null,
-  anchorPos:null,
+var imageInfo = {
+  filename: null,
+  format: null,
+  width: null,
+  height: null,
+  anchorPos: null,
 }
 /*
  * set panel preferences
  */
-panel = {
-  title:["le-tex – Export Images", "le-tex – Bilder exportieren"][lang.pre],
-  tabGeneralTitle:["General", "Allgemein"][lang.pre],
-  tabAdvancedTitle:["Advanced", "Erweitert"][lang.pre],
-  tabInfoTitle:["Info", "Informationen"][lang.pre],
-  densityTitle:["Density (ppi)", "Auflösung (ppi)"][lang.pre],
-  qualityTitle:["Quality", "Qualität"][lang.pre],
-  qualityValues:[["max", "high", "medium", "low"], ["Maximum", "Hoch", "Mittel", "Niedrig"]][lang.pre],
-  formatTitle:"Format",
-  formatValues:["JPG", "PNG"],
-  formatDescriptionPNG:["for line art and text", "Für Strichzeichnungen und Text"][lang.pre],
-  formatDescriptionJPEG:["for photographs and gradients", "für Fotos und Verläufe"][lang.pre],
-  objectExportOptionsTitle:["Object export options", "Objektexportoptionen"][lang.pre],
-  objectExportDensityFactorTitle:["Density Multiplier", "Multiplikator Auflösung"][lang.pre],
-  overrideExportFilenamesTitle:["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
-  renameExportFilenamesTitle:["Rename Export Filenames (# for numbering)", "Exportierte Dateien umbenennen (# für Nummer)"][lang.pre],
-  exportFilenameSchemaTitle:["Filename", "Dateiname"][lang.pre],
-  pngTransparencyTitle:["PNG Transparency", "PNG Transparenz"][lang.pre],
-  exportFromHiddenLayersTitle:["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
-  exportFromMasterPagesTitle:["Export images from master pages", "Bilder von Musterseiten exportieren"][lang.pre],
-  exportFromPasteboardTitle:["Export images from pasteboard", "Bilder von Montagefläche exportieren"][lang.pre],
-  relinkToExportPathsTitle:["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
-  exportGroupsAsSingleImageTitle:["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
-  insertAltTextsfromXMPTitle:["Insert alt texts from image metadata", "Alternativtexte aus Bildmetadaten einfügen"][lang.pre],
-  relinkToExportPathsWarning:["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
-  removeRectangleStrokeTitle:["Remove Stroke", "Rahmen entfernen"][lang.pre],
-  maxResolutionTitle:["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
-  selectDirButtonTitle:["Choose", "Auswählen"][lang.pre],
-  selectDirMenuTitle:["Choose a directory", "Verzeichnis auswählen"][lang.pre],
-  panelFilenameOptionsTitle:["Filenames", "Dateinamen"][lang.pre],
-  miscellaneousOptionsTitle:["Miscellaneous Options", "Sonstige Optionen"][lang.pre],
-  infoCharacters:[40],
-  infoFilename:["Filename", "Dateiname"][lang.pre],
-  infoWidth:["width", "Breite"][lang.pre],
-  infoHeight:["height", "Höhe"][lang.pre],
-  cropImageToPageTitle:["Crop image to page margins", "Bild auf Seite beschneiden"][lang.pre],
-  infoAnchorPosTitle:["Anchor Position", "Verankerungsposition"][lang.pre],
-  infoAnchorPos:[["above line", "anchored", "inline position"], ["Über Zeile", "Benutzerdefiniert", "Eingebunden"]][lang.pre],
-  infoNoImage:["No image selected.", "Kein Bild ausgewählt."][lang.pre],
-  progressBarTitle:["export Images", "Bilder exportieren"][lang.pre],
-  noValidLinks:["No valid links found.", "Keine Bild-Verknüpfungen gefunden"][lang.pre],
-  finishedMessage:["images exported.", "Bilder exportiert."][lang.pre],
-  buttonOK:"OK",
-  buttonCancel:["Cancel", "Abbrechen"][lang.pre],
-  buttonSaveSettings:["Save Config", "Konfiguration speichern"][lang.pre],
-  errorMissingImage:["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
-  errorEmbeddedImage:["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
-  promptMissingImages:["images cannot be exported. Proceed?","Bilder können nicht exportiert werden. Fortfahren?"][lang.pre],
-  lockedLayerWarning:["All layers with images must be unlocked.","Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre]
+var panel = {
+  title: ["le-tex – Export Images", "le-tex – Bilder exportieren"][lang.pre],
+  tabGeneralTitle: ["General", "Allgemein"][lang.pre],
+  tabAdvancedTitle: ["Advanced", "Erweitert"][lang.pre],
+  tabInfoTitle: ["Info", "Informationen"][lang.pre],
+  densityTitle: ["Density (ppi)", "Auflösung (ppi)"][lang.pre],
+  qualityTitle: ["Quality", "Qualität"][lang.pre],
+  qualityValues: [["max", "high", "medium", "low"], ["Maximum", "Hoch", "Mittel", "Niedrig"]][lang.pre],
+  formatTitle: "Format",
+  formatValues: ["JPG", "PNG"],
+  formatDescriptionPNG: ["for line art and text", "Für Strichzeichnungen und Text"][lang.pre],
+  formatDescriptionJPEG: ["for photographs and gradients", "für Fotos und Verläufe"][lang.pre],
+  objectExportOptionsTitle: ["Object export options", "Objektexportoptionen"][lang.pre],
+  objectExportDensityFactorTitle: ["Density Multiplier", "Multiplikator Auflösung"][lang.pre],
+  overrideExportFilenamesTitle: ["Override embedded export filenames", "Eingebettete Export-Dateinamen überschreiben"][lang.pre],
+  renameExportFilenamesTitle: ["Rename Export Filenames (# for numbering)", "Exportierte Dateien umbenennen (# für Nummer)"][lang.pre],
+  exportFilenameSchemaTitle: ["Filename", "Dateiname"][lang.pre],
+  pngTransparencyTitle: ["PNG Transparency", "PNG Transparenz"][lang.pre],
+  exportFromHiddenLayersTitle: ["Export images from hidden layers", "Bilder von versteckten Ebenen exportieren"][lang.pre],
+  exportFromMasterPagesTitle: ["Export images from master pages", "Bilder von Musterseiten exportieren"][lang.pre],
+  exportFromPasteboardTitle: ["Export images from pasteboard", "Bilder von Montagefläche exportieren"][lang.pre],
+  relinkToExportPathsTitle: ["Relink to export path", "Verknüpfung zu Exportpfad ändern"][lang.pre],
+  exportGroupsAsSingleImageTitle: ["Export grouped images as single image", "Gruppierte Bilder als einzelnes Bild exportieren"][lang.pre],
+  insertAltTextsfromXMPTitle: ["Insert alt texts from image metadata", "Alternativtexte aus Bildmetadaten einfügen"][lang.pre],
+  relinkToExportPathsWarning: ["Warning! Each link will be replaced with its export path.", "Warnung! Jede Verknüpfung wird durch ihren Exportpfad ersetzt."][lang.pre],
+  removeRectangleStrokeTitle: ["Remove Stroke", "Rahmen entfernen"][lang.pre],
+  maxResolutionTitle: ["Max Resolution (px)", "Maximale Auflösung (px)"][lang.pre],
+  maxExportWidthTitle: ["Max Width (px, 0 = off)", "Maximale Breite (px, 0 = aus)"][lang.pre],
+  maxExportHeightTitle: ["Max Height (px, 0 = off)", "Maximale Höhe (px, 0 = aus)"][lang.pre],
+  selectDirButtonTitle: ["Choose", "Auswählen"][lang.pre],
+  selectDirMenuTitle: ["Choose a directory", "Verzeichnis auswählen"][lang.pre],
+  panelFilenameOptionsTitle: ["Filenames", "Dateinamen"][lang.pre],
+  miscellaneousOptionsTitle: ["Miscellaneous Options", "Sonstige Optionen"][lang.pre],
+  infoCharacters: [40],
+  infoFilename: ["Filename", "Dateiname"][lang.pre],
+  infoWidth: ["width", "Breite"][lang.pre],
+  infoHeight: ["height", "Höhe"][lang.pre],
+  cropImageToPageTitle: ["Crop image to page margins", "Bild auf Seite beschneiden"][lang.pre],
+  infoAnchorPosTitle: ["Anchor Position", "Verankerungsposition"][lang.pre],
+  infoAnchorPos: [["above line", "anchored", "inline position"], ["Über Zeile", "Benutzerdefiniert", "Eingebunden"]][lang.pre],
+  infoNoImage: ["No image selected.", "Kein Bild ausgewählt."][lang.pre],
+  progressBarTitle: ["export Images", "Bilder exportieren"][lang.pre],
+  noValidLinks: ["No valid links found.", "Keine Bild-Verknüpfungen gefunden"][lang.pre],
+  finishedMessage: ["images exported.", "Bilder exportiert."][lang.pre],
+  buttonOK: "OK",
+  buttonCancel: ["Cancel", "Abbrechen"][lang.pre],
+  buttonSaveSettings: ["Save Config", "Konfiguration speichern"][lang.pre],
+  errorMissingImage: ["Warning! Image cannot be found: ", "Warnung! Bild konnte nicht gefunden werden: "][lang.pre],
+  errorEmbeddedImage: ["Warning! Embedded Image cannot be exported: ", "Warnung! Eingebettetes Bild kann nicht exportiert werden: "][lang.pre],
+  promptMissingImages: ["images cannot be exported. Proceed?", "Bilder können nicht exportiert werden. Fortfahren?"][lang.pre],
+  lockedLayerWarning: ["All layers with images must be unlocked.", "Alle Ebenen mit Bildern müssen entsperrt sein."][lang.pre]
 }
 /*
  * start
@@ -131,12 +148,12 @@ main();
 /*
  * main pipeline
  */
-function main(){
+function main() {
   var userLevel = app.scriptPreferences.userInteractionLevel;
-  app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;    
+  app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL;
   // open file dialog and load a document
   if (app.layoutWindows.length == 0) {
-    var file = File.openDialog ("Select a file", "InDesign:*.indd;*.indb;*.idml, InDesign Document:*.indd, InDesign Book:*.indb, InDesign Markup:*.idml", true)
+    var file = File.openDialog("Select a file", "InDesign:*.indd;*.indb;*.idml, InDesign Document:*.indd, InDesign Book:*.indb, InDesign Markup:*.idml", true)
     try {
       app.open(File(file));
     } catch (e) {
@@ -147,11 +164,11 @@ function main(){
   var doc = app.documents[0];
   // check if document is saved
   if ((!doc.saved || doc.modified)) {
-    if ( confirm ("The document needs to be saved.", undefined, "Document not saved.")) {
+    if (confirm("The document needs to be saved.", undefined, "Document not saved.")) {
       try {
         doc = doc.save();
       } catch (e) {
-        alert ("The document couldn't be saved.\n" + e);
+        alert("The document couldn't be saved.\n" + e);
         return;
       }
     } else {
@@ -162,18 +179,17 @@ function main(){
   try {
     exportImages(doc);
   } catch (e) {
-    alert ("Error:\n" + e);
+    alert("Error:\n" + e);
   }
   app.scriptPreferences.userInteractionLevel = userLevel;
 }
 /*
  * add JavaScript extensions
  */
-function jsExtensions(){
+function jsExtensions() {
   // indexOf
   if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(elt /*, from*/)
-    {
+    Array.prototype.indexOf = function (elt /*, from*/) {
       var len = this.length;
 
       var from = Number(arguments[1]) || 0;
@@ -186,7 +202,7 @@ function jsExtensions(){
 
       for (; from < len; from++) {
         if (from in this &&
-            this[from] === elt)
+          this[from] === elt)
           return from;
       }
       return -1;
@@ -194,7 +210,7 @@ function jsExtensions(){
   }
   // find
   if (!Array.prototype.find) {
-    Array.prototype.find = function(predicate) {
+    Array.prototype.find = function (predicate) {
       'use strict';
       if (this == null) {
         throw new TypeError('Array.prototype.find called on null or undefined');
@@ -218,44 +234,44 @@ function jsExtensions(){
   }
   // filter
   if (!Array.prototype.filter) {
-    Array.prototype.filter = function(func, thisArg) {
+    Array.prototype.filter = function (func, thisArg) {
       'use strict';
-      if ( ! ((typeof func === 'Function' || typeof func === 'function') && this) )
+      if (!((typeof func === 'Function' || typeof func === 'function') && this))
         throw new TypeError();
-      
+
       var len = this.length >>> 0,
-          res = new Array(len), // preallocate array
-          t = this, c = 0, i = -1;
+        res = new Array(len), // preallocate array
+        t = this, c = 0, i = -1;
       if (thisArg === undefined) {
-        while (++i !== len){
+        while (++i !== len) {
           // checks to see if the key was set
-          if (i in this){
-            if (func(t[i], i, t)){
+          if (i in this) {
+            if (func(t[i], i, t)) {
               res[c++] = t[i];
             }
           }
         }
       }
-      else{
-        while (++i !== len){
+      else {
+        while (++i !== len) {
           // checks to see if the key was set
-          if (i in this){
-            if (func.call(thisArg, t[i], i, t)){
+          if (i in this) {
+            if (func.call(thisArg, t[i], i, t)) {
               res[c++] = t[i];
             }
           }
         }
       }
-      
+
       res.length = c; // shrink down array to proper size
       return res;
     }
   }
 }
-function exportImages(doc){
-  try{
+function exportImages(doc) {
+  try {
     drawWindow() == 1
-  } catch(e){
+  } catch (e) {
     alert(e);
   }
 }
@@ -266,41 +282,50 @@ function drawWindow() {
   //var myWindow = new Window("dialog", panel.title, undefined, {resizable:true});
   var myWindow = new Window("palette", panel.title + " " + version, undefined);
   myWindow.orientation = "column";
-  myWindow.alignChildren ="fill";
+  myWindow.alignChildren = "fill";
   var tpanel = myWindow.add("tabbedpanel");
   tpanel.alignChildren = "fill";
   /*
    * General Tab
    */
-  var tabGeneral = tpanel.add ("tab", undefined, panel.tabGeneralTitle);
+  var tabGeneral = tpanel.add("tab", undefined, panel.tabGeneralTitle);
   tabGeneral.alignChildren = "fill";
   var panelSelectDir = tabGeneral.add("panel", undefined, panel.selectDirMenuTitle);
   panelSelectDir.alignChildren = "left";
   var panelSelectDirInputPath = panelSelectDir.add("edittext");
   panelSelectDirInputPath.preferredSize.width = 255;
   panelSelectDirInputPath.text = getDefaultExportPath();
-  var panelSelectDirButton = panelSelectDir.add("button", undefined, panel.selectDirButtonTitle);  
+  var panelSelectDirButton = panelSelectDir.add("button", undefined, panel.selectDirButtonTitle);
   var panelQuality = tabGeneral.add("panel", undefined, panel.qualityTitle);
   panelQuality.orientation = "column";
   panelQuality.alignChildren = "left";
   var panelQualityRadiobuttons = panelQuality.add("group");
   panelQualityRadiobuttons.orientation = "row";
-  for (i = 0; i < panel.qualityValues.length; i++) {
-    panelQualityRadiobuttons.add ("radiobutton", undefined, (panel.qualityValues[i]));
+  for (var i = 0; i < panel.qualityValues.length; i++) {
+    panelQualityRadiobuttons.add("radiobutton", undefined, (panel.qualityValues[i]));
   }
-  panelQualityRadiobuttons.children[image.exportQuality].value =true;
-  var densityGroup = panelQuality.add("group");  
-  var densityInputDPI = densityGroup.add ("edittext", undefined, image.exportDPI);
+  panelQualityRadiobuttons.children[image.exportQuality].value = true;
+  var densityGroup = panelQuality.add("group");
+  var densityInputDPI = densityGroup.add("edittext", undefined, image.exportDPI);
   densityInputDPI.characters = 4;
   var densitySliderDPI = densityGroup.add("slider", undefined, image.exportDPI, image.minExportDPI, image.maxExportDPI);
-  densityGroup.add ("statictext", undefined, panel.densityTitle);
+  densityGroup.add("statictext", undefined, panel.densityTitle);
   // synchronize slider and input field
   var outDPI
-  densitySliderDPI.onChanging = function () { densityInputDPI.text   = densitySliderDPI.value; };
-  densityInputDPI.onChanging  = function () { densitySliderDPI.value = densityInputDPI.text };
+  densitySliderDPI.onChanging = function () { densityInputDPI.text = densitySliderDPI.value; };
+  densityInputDPI.onChanging = function () { densitySliderDPI.value = densityInputDPI.text };
   var panelMaxResolutionGroup = panelQuality.add("group");
-  panelMaxResolutionGroup.add("statictext", undefined, panel.maxResolutionTitle);  
+  panelMaxResolutionGroup.add("statictext", undefined, panel.maxResolutionTitle);
   var inputMaxRes = panelMaxResolutionGroup.add("edittext", undefined, image.maxResolution);
+  inputMaxRes.characters = 8;
+  var panelMaxExportWidthGroup = panelQuality.add("group");
+  panelMaxExportWidthGroup.add("statictext", undefined, panel.maxExportWidthTitle);
+  var inputMaxExportWidth = panelMaxExportWidthGroup.add("edittext", undefined, image.maxExportWidth);
+  inputMaxExportWidth.characters = 8;
+  var panelMaxExportHeightGroup = panelQuality.add("group");
+  panelMaxExportHeightGroup.add("statictext", undefined, panel.maxExportHeightTitle);
+  var inputMaxExportHeight = panelMaxExportHeightGroup.add("edittext", undefined, image.maxExportHeight);
+  inputMaxExportHeight.characters = 8;
   var panelFormat = tabGeneral.add("panel", undefined, panel.formatTitle);
   var panelFormatGroup = panelFormat.add("group");
   panelFormat.alignChildren = "left";
@@ -311,7 +336,7 @@ function drawWindow() {
   /*
    * Advanced Tab
    */
-  var tabAdvanced = tpanel.add ("tab", undefined, panel.tabAdvancedTitle);
+  var tabAdvanced = tpanel.add("tab", undefined, panel.tabAdvancedTitle);
   tabAdvanced.alignChildren = "fill";
   var panelObjectExportOptions = tabAdvanced.add("panel", undefined, panel.objectExportOptionsTitle);
   panelObjectExportOptions.alignChildren = "left";
@@ -337,8 +362,8 @@ function drawWindow() {
   exportFilenameGroupSuffixInput.enabled = image.renameExportFilenames;
   exportFilenameGroupSuffixInput.preferredSize.width = 255;
   exportFilenameGroupSuffixInput.text = image.exportFilenameGroupSuffix;
-  renameExportFilenamesCheckbox.onClick = function(){
-    exportFilenameSchemaInputActive = renameExportFilenamesCheckbox.value == true;
+  renameExportFilenamesCheckbox.onClick = function () {
+    var exportFilenameSchemaInputActive = renameExportFilenamesCheckbox.value == true;
     exportFilenameSchemaInput.enabled = overrideExportFilenamesCheckbox.value = exportFilenameSchemaInputActive;
     exportFilenameGroupSuffixInput.enabled = overrideExportFilenamesCheckbox.value = exportFilenameSchemaInputActive;
   };
@@ -349,7 +374,7 @@ function drawWindow() {
   var pngFormatActive = formatDropdown.selection.text == "PNG" || isFormatOverrideActive("PNG");
   pngTransparencyGroupCheckbox.enabled = pngFormatActive;
   // disable checkbox if selected format is not png
-  formatDropdown.onChange = function(){
+  formatDropdown.onChange = function () {
     pngFormatActive = formatDropdown.selection.text == "PNG" || isFormatOverrideActive("PNG");
     pngTransparencyGroupCheckbox.enabled = pngFormatActive;
     formatDropdownDescription.text = pngFormatActive ? panel.formatDescriptionPNG : panel.formatDescriptionJPEG;
@@ -366,8 +391,8 @@ function drawWindow() {
   exportFromPasteboardCheckbox.value = image.exportFromPasteboard;
   var relinkToExportPathsCheckbox = panelMiscellaneousOptions.add("checkbox", undefined, panel.relinkToExportPathsTitle);
   relinkToExportPathsCheckbox.value = image.relinkToExportPaths;
-  relinkToExportPathsCheckbox.onClick = function(){
-    if(relinkToExportPathsCheckbox.value == true) {
+  relinkToExportPathsCheckbox.onClick = function () {
+    if (relinkToExportPathsCheckbox.value == true) {
       alert(panel.relinkToExportPathsWarning)
     }
   }
@@ -378,24 +403,24 @@ function drawWindow() {
   /*
    * Info Tab
    */
-  var tabInfo = tpanel.add ("tab", undefined, panel.tabInfoTitle);
+  var tabInfo = tpanel.add("tab", undefined, panel.tabInfoTitle);
   tabInfo.alignChildren = "left";
-  tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n\n", {multiline:true});
+  tabInfo.iFilename = tabInfo.add("statictext", undefined, panel.infoNoImage + "\n\n", { multiline: true });
   tabInfo.iPosX = tabInfo.add("statictext", undefined, "");
   tabInfo.iPosY = tabInfo.add("statictext", undefined, "");
   tabInfo.iWidth = tabInfo.add("statictext", undefined, "");
   tabInfo.iHeight = tabInfo.add("statictext", undefined, "");
   tabInfo.iPosX.characters = tabInfo.iPosY.characters = tabInfo.iWidth.characters = tabInfo.iHeight.characters = tabInfo.iFilename.characters = panel.infoCharacters;
   // listen to each selection change and update info tab
-  var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function(){
-    if(app.selection[0] != undefined
-       && (["Rectangle", "Group"].indexOf(app.selection[0].constructor.name) >= 0)){
+  var afterSelectChanged = app.addEventListener(Event.AFTER_SELECTION_CHANGED, function () {
+    if (app.selection[0] != undefined
+      && (["Rectangle", "Group"].indexOf(app.selection[0].constructor.name) >= 0)) {
       var rectangle = app.selection[0];
-      outDensity = getMaxDensity(densitySliderDPI.value, rectangle, image.maxResolution, image.baseDPI)
-      width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1])  * 100 / 100 * outDensity / image.baseDPI);
-      height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100 / 100 * outDensity / image.baseDPI);
-      posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
-      posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
+      var outDensity = getMaxDensity(densitySliderDPI.value, rectangle, image.maxResolution, image.baseDPI, image.maxExportWidth, image.maxExportHeight)
+      var width = Math.round((rectangle.geometricBounds[3] - rectangle.geometricBounds[1]) * 100 / 100 * outDensity / image.baseDPI);
+      var height = Math.round((rectangle.geometricBounds[2] - rectangle.geometricBounds[0]) * 100 / 100 * outDensity / image.baseDPI);
+      var posX = Math.round(rectangle.geometricBounds[1] * 100) / 100;
+      var posY = Math.round(rectangle.geometricBounds[0] * 100) / 100;
       var fileNameString = splitStringToArray(rectangle.extractLabel(image.pageItemLabel), panel.infoCharacters).join("\n");
       tabInfo.iFilename.text = panel.infoFilename + ":\n" + fileNameString;
       tabInfo.iPosX.text = "x: " + posX + "px";
@@ -413,23 +438,25 @@ function drawWindow() {
   // buttons OK/Cancel
   var panelButtonGroup = myWindow.add("group");
   panelButtonGroup.orientation = "row";
-  var buttonOK = panelButtonGroup.add("button", undefined, panel.buttonOK, {name: "ok"});
-  var buttonCancel = panelButtonGroup.add("button", undefined, panel.buttonCancel, {name: "cancel"} );
-  var buttonSaveSettings = panelButtonGroup.add("button", undefined, panel.buttonSaveSettings );
+  var buttonOK = panelButtonGroup.add("button", undefined, panel.buttonOK, { name: "ok" });
+  var buttonCancel = panelButtonGroup.add("button", undefined, panel.buttonCancel, { name: "cancel" });
+  var buttonSaveSettings = panelButtonGroup.add("button", undefined, panel.buttonSaveSettings);
   // change text to selected file path
-  panelSelectDirButton.onClick  = function() {
-    var result = Folder.selectDialog ();
+  panelSelectDirButton.onClick = function () {
+    var result = Folder.selectDialog();
     if (result) {
       panelSelectDirInputPath.text = result;
     }
   }
-  buttonOK.onClick = function (){
+  buttonOK.onClick = function () {
     //overwrite values with form input
     image.exportDir = Folder(panelSelectDirInputPath.text);
     image.exportDPI = Number(densityInputDPI.text);
     image.exportQuality = selectedRadiobutton(panelQualityRadiobuttons);
     image.exportFormat = formatDropdown.selection.text;
     image.maxResolution = Number(inputMaxRes.text);
+    image.maxExportWidth = Number(inputMaxExportWidth.text);
+    image.maxExportHeight = Number(inputMaxExportHeight.text);
     image.objectExportOptions = objectExportOptionsCheckbox.value;
     image.objectExportDensityFactor = objectExportOptionsDensityDropdown.selection.text;
     image.overrideExportFilenames = overrideExportFilenamesCheckbox.value;
@@ -447,50 +474,66 @@ function drawWindow() {
     image.insertAltTextsfromXMP = insertAltTextsfromXMPCheckbox.value;
     myWindow.close(1);
     afterSelectChanged.remove();
-    getFilelinks(app.documents[0]);
+    app.doScript(function () {
+      getFilelinks(app.documents[0]);
+    }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Bilder exportiert");
   }
-  buttonCancel.onClick = function() {
+  buttonCancel.onClick = function () {
     afterSelectChanged.remove();
     myWindow.close();
   }
-  buttonSaveSettings.onClick = function() {
-    var doc = app.documents[0];
-    doc.insertLabel("letex:exportDPI", densityInputDPI.text);
-    doc.insertLabel("letex:exportQuality", String(selectedRadiobutton(panelQualityRadiobuttons)));
-    doc.insertLabel("letex:exportFormat", formatDropdown.selection.text);
-    doc.insertLabel("letex:maxResolution", inputMaxRes.text);
-    doc.insertLabel("letex:objectExportOptions", String(objectExportOptionsCheckbox.value));
-    doc.insertLabel("letex:objectExportDensityFactor", objectExportOptionsDensityDropdown.selection.text);
-    doc.insertLabel("letex:overrideExportFilenames", String(overrideExportFilenamesCheckbox.value));
-    doc.insertLabel("letex:renameExportFilenames", String(renameExportFilenamesCheckbox.value));
-    doc.insertLabel("letex:exportFilenameSchema", String(exportFilenameSchemaInput.text));
-    doc.insertLabel("letex:exportFilenameGroupSuffix", String(exportFilenameGroupSuffixInput.text));
-    doc.insertLabel("letex:pngTransparency", String(pngTransparencyGroupCheckbox.value));
-    doc.insertLabel("letex:cropImageToPage", String(cropImageToPageCheckbox.value));
-    doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
-    doc.insertLabel("letex:exportFromMasterPages", String(exportFromMasterPagesCheckbox.value));
-    doc.insertLabel("letex:exportFromPasteboard", String(exportFromPasteboardCheckbox.value));
-    doc.insertLabel("letex:relinkToExportPaths", String(relinkToExportPathsCheckbox.value));
-    doc.insertLabel("letex:exportGroupsAsSingleImage", String(exportGroupsAsSingleImageCheckbox.value));
-    doc.insertLabel("letex:removeRectangleStroke", String(removeRectangleStrokeCheckbox.value));
-    doc.insertLabel("letex:insertAltTextsfromXMP", String(insertAltTextsfromXMPCheckbox.value));
+  buttonSaveSettings.onClick = function () {
+    app.doScript(function () {
+      var doc = app.documents[0];
+      doc.insertLabel("letex:exportDPI", densityInputDPI.text);
+      doc.insertLabel("letex:exportQuality", String(selectedRadiobutton(panelQualityRadiobuttons)));
+      doc.insertLabel("letex:exportFormat", formatDropdown.selection.text);
+      doc.insertLabel("letex:maxResolution", inputMaxRes.text);
+      doc.insertLabel("letex:maxExportWidth", inputMaxExportWidth.text);
+      doc.insertLabel("letex:maxExportHeight", inputMaxExportHeight.text);
+      doc.insertLabel("letex:objectExportOptions", String(objectExportOptionsCheckbox.value));
+      doc.insertLabel("letex:objectExportDensityFactor", objectExportOptionsDensityDropdown.selection.text);
+      doc.insertLabel("letex:overrideExportFilenames", String(overrideExportFilenamesCheckbox.value));
+      doc.insertLabel("letex:renameExportFilenames", String(renameExportFilenamesCheckbox.value));
+      doc.insertLabel("letex:exportFilenameSchema", String(exportFilenameSchemaInput.text));
+      doc.insertLabel("letex:exportFilenameGroupSuffix", String(exportFilenameGroupSuffixInput.text));
+      doc.insertLabel("letex:pngTransparency", String(pngTransparencyGroupCheckbox.value));
+      doc.insertLabel("letex:cropImageToPage", String(cropImageToPageCheckbox.value));
+      doc.insertLabel("letex:exportFromHiddenLayers", String(exportFromHiddenLayersCheckbox.value));
+      doc.insertLabel("letex:exportFromMasterPages", String(exportFromMasterPagesCheckbox.value));
+      doc.insertLabel("letex:exportFromPasteboard", String(exportFromPasteboardCheckbox.value));
+      doc.insertLabel("letex:relinkToExportPaths", String(relinkToExportPathsCheckbox.value));
+      doc.insertLabel("letex:exportGroupsAsSingleImage", String(exportGroupsAsSingleImageCheckbox.value));
+      doc.insertLabel("letex:removeRectangleStroke", String(removeRectangleStrokeCheckbox.value));
+      doc.insertLabel("letex:insertAltTextsfromXMP", String(insertAltTextsfromXMPCheckbox.value));
+    }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, panel.buttonSaveSettings);
     afterSelectChanged.remove();
     myWindow.close();
   }
   return myWindow.show();
 }
-function selectedRadiobutton (rbuttons){
-  for(var i = 0; i < rbuttons.children.length; i++) {
-    if(rbuttons.children[i].value == true) {
+function selectedRadiobutton(rbuttons) {
+  for (var i = 0; i < rbuttons.children.length; i++) {
+    if (rbuttons.children[i].value == true) {
       return i;
     }
   }
 }
 function getFilelinks(doc) {
+  var progressBar = getProgressBar("image export");
+  var setupProgress = 0;
+  var setupSteps = 4;
+  var linkCount = doc.links.length;
+  var clearOldLabels = image.overrideExportFilenames == true || image.exportGroupsAsSingleImage == true;
+  var labelCleanupCount = clearOldLabels ? doc.allPageItems.length : 0;
+  progressBar.reset((linkCount * 2) + labelCleanupCount + setupSteps);
   doc.insertLabel('letex:image-export-script-version', version);
+  progressBar.hit("prepare document", setupProgress++);
   var rulerOrigin = doc.viewPreferences.rulerOrigin;
   var measurementUnit = app.scriptPreferences.measurementUnit;
-  var docLinks = linksToSortedArray(doc.links);
+  var docLinks = linksToSortedArray(doc.links, progressBar, setupProgress);
+  setupProgress += docLinks.length;
+  progressBar.hit("sort links", setupProgress++);
   var uniqueBasenames = [];
   var exportLinks = [];
   var missingLinks = [];
@@ -498,62 +541,66 @@ function getFilelinks(doc) {
   var imageGroupIterator = 0;
   app.scriptPreferences.measurementUnit = MeasurementUnits.PIXELS;
   doc.viewPreferences.rulerOrigin = RulerOrigin.SPREAD_ORIGIN;
+  progressBar.hit("set document preferences", setupProgress++);
   // delete filename labels, if option is set
-  if(image.overrideExportFilenames == true || image.exportGroupsAsSingleImage == true){
-    deleteLabel(doc, image.overrideExportFilenames, image.exportGroupsAsSingleImage);
+  if (clearOldLabels) {
+    setupProgress = deleteLabel(doc, image.overrideExportFilenames, image.exportGroupsAsSingleImage, progressBar, setupProgress);
   }
   // clear log
   clearLog(image.exportDir, image.logFilename);
   var currentDate = new Date();
   var dateTime = currentDate.getDate() + '/'
-      + (currentDate.getMonth()+1)  + '/' 
-      + currentDate.getFullYear() + ' '  
-      + currentDate.getHours() + ':'
-      + currentDate.getMinutes() + ':' 
-      + currentDate.getSeconds();
+    + (currentDate.getMonth() + 1) + '/'
+    + currentDate.getFullYear() + ' '
+    + currentDate.getHours() + ':'
+    + currentDate.getMinutes() + ':'
+    + currentDate.getSeconds();
   writeLog("le-tex image-export " + version + "\nstarted at " + dateTime + "\n", image.exportDir, image.logFilename);
+  progressBar.hit("prepare log", setupProgress++);
   // iterate over file links
   var counter = 0;
   for (var i = 0; i < docLinks.length; i++) {
     var link = docLinks[i];
-    var metadata = (link.linkXmp.isValid && link.linkXmp !== undefined) ? link.linkXmp.properties : null;
+    progressBar.hit("check " + link.name, setupSteps + docLinks.length + labelCleanupCount + i);
+    var metadata = (link.linkXmp !== undefined && link.linkXmp.isValid) ? link.linkXmp.properties : null;
     var extension = link.name.split(".").pop().toLowerCase();
     counter = counter + 1;
     writeLog("(" + i + ") ------------------------------------------------------------------------------------------\n"
-             + link.name
-             + "\n"
-             + link.filePath, image.exportDir, image.logFilename);
-    if(isValidLink(link)){
+      + link.name
+      + "\n"
+      + link.filePath, image.exportDir, image.logFilename);
+    if (isValidLink(link)) {
       var rectangle = link.parent.parent;
       var linkname = link.name;
       var altText = "";
       var altTextFromXMP = "";
       var toBeExported = true;
       // probably ID bug, ID crashes while accessing link.linkXmp.description
-      if(image.insertAltTextsfromXMP
-         && metadata.hasOwnProperty("description")
-         && extension !== "wmf"
-         && rectangle.objectExportOptions.customAltText.length == 0){
-         altTextFromXMP = metadata.description;
-      } 
-      if (rectangle.objectExportOptions.altText().length > 0){
+      if (image.insertAltTextsfromXMP
+        && metadata != null
+        && metadata.hasOwnProperty("description")
+        && extension !== "wmf"
+        && rectangle.objectExportOptions.customAltText.length == 0) {
+        altTextFromXMP = metadata.description;
+      }
+      if (rectangle.objectExportOptions.altText().length > 0) {
         altText = rectangle.objectExportOptions.customAltText;
       }
       // ID sometimes fails to export a EPS correctly and takes only the preview image. We use the highest quality.
-      if (extension = "eps") {
+      if (extension == "eps") {
         rectangle.graphics[0].localDisplaySetting = DisplaySettingOptions.HIGH_QUALITY;
         rectangle.allGraphics[0].localDisplaySetting = DisplaySettingOptions.HIGH_QUALITY;
       }
       // if a group should be exported as single image, replace rectangle with group object
-      if(rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage){
+      if (rectangle.parent.constructor.name == "Group" && image.exportGroupsAsSingleImage) {
         rectangle = getTopmostGroup(rectangle);
         linkname = getLinkNameForGroup(rectangle);
-        if(linkname != link.name) {
+        if (linkname != link.name) {
           counter = counter - 1;
           toBeExported = false;
         }
       }
-      if(toBeExported){
+      if (toBeExported) {
         rectangle = disableLocks(rectangle);
         var parentPage = (rectangle.parentPage != null) ? rectangle.parentPage : "null";
         // restore the frame of anchored objects which overlaps the page
@@ -571,9 +618,9 @@ function getFilelinks(doc) {
         // if an image goes over the page spread, we can't use parentPage because InDesign assumes parentPage is where the larger part of the image is 
         var leftPage;
         // we need to get a left page and rule out documents without double-page spreads
-        if(doc.pages[0].side == PageSideOptions.LEFT_HAND){
+        if (doc.pages[0].side == PageSideOptions.LEFT_HAND) {
           leftPage = doc.pages[0];
-        } else if(doc.pages.length > 1 && doc.pages[1].side == PageSideOptions.LEFT_HAND){
+        } else if (doc.pages.length > 1 && doc.pages[1].side == PageSideOptions.LEFT_HAND) {
           leftPage = doc.pages[1];
         } else {
           leftPage = null;
@@ -583,78 +630,78 @@ function getFilelinks(doc) {
         var height = rectangleBounds[2] - rectangleBounds[0];
         // offsets y1, x1, y2, x2 (top, left, bottom, right)
         var exceedsPage;
-        writeLog(  "page: " + parentPage.name
-                + "\nshear angle: "    + shearAngle
-                + "\nrotation angle: " + rotationAngle
-                + "\ndimensions page / rectangle"
-                + "\n width x height: " + width + " x " + height
-                + "\n  y1: " + rectangleBounds[0]
-                + "\n  x1: " + rectangleBounds[1]
-                + "\n  y2: " + rectangleBounds[2]
-                + "\n  x2: " + rectangleBounds[3]
-                + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
-                + "\nleft page: " + originOnLeftPage
-                + "\ntext wrap mode: " + textWrapMode,
-                image.exportDir, image.logFilename);
-        if(rectangle.hasOwnProperty("frameFittingOptions")){
-          writeLog(  "\ncrop top: " + rectangle.frameFittingOptions.topCrop
-                  + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
-                  + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
-                  + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop, image.exportDir, image.logFilename);
-        }    
-        if(image.exportFromPasteboard == true && rectangle.parentPage == null){
+        writeLog("page: " + parentPage.name
+          + "\nshear angle: " + shearAngle
+          + "\nrotation angle: " + rotationAngle
+          + "\ndimensions page / rectangle"
+          + "\n width x height: " + width + " x " + height
+          + "\n  y1: " + rectangleBounds[0]
+          + "\n  x1: " + rectangleBounds[1]
+          + "\n  y2: " + rectangleBounds[2]
+          + "\n  x2: " + rectangleBounds[3]
+          + "\nanchor offsets: " + "x: " + anchorXoffset + ", y: " + anchorYoffset
+          + "\nleft page: " + originOnLeftPage
+          + "\ntext wrap mode: " + textWrapMode,
+          image.exportDir, image.logFilename);
+        if (rectangle.hasOwnProperty("frameFittingOptions")) {
+          writeLog("\ncrop top: " + rectangle.frameFittingOptions.topCrop
+            + "\ncrop left: " + rectangle.frameFittingOptions.leftCrop
+            + "\ncrop bottom: " + rectangle.frameFittingOptions.bottomCrop
+            + "\ncrop right: " + rectangle.frameFittingOptions.rightCrop, image.exportDir, image.logFilename);
+        }
+        if (image.exportFromPasteboard == true && rectangle.parentPage == null) {
           exceedsPage = false;
         } else {
-          if(originOnLeftPage == true && leftPage != null) {
+          if (originOnLeftPage == true && leftPage != null) {
             exceedsPage = rectangleBounds[0] < 0
-                      || rectangleBounds[1] < 0
-                      || rectangleBounds[2] > parentPage.bounds[2]
-                      || rectangleBounds[3] > (leftPage.bounds[3] * 2);
+              || rectangleBounds[1] < 0
+              || rectangleBounds[2] > parentPage.bounds[2]
+              || rectangleBounds[3] > (leftPage.bounds[3] * 2);
             writeLog("exceeds page:"
-                    + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
-                    + "\n  left:    " + (rectangleBounds[1] < leftPage.bounds[1])
-                    + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
-                    + "\n  right:   " + (rectangleBounds[3] > (leftPage.bounds[3] * 2)),
-                    image.exportDir, image.logFilename);
+              + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+              + "\n  left:    " + (rectangleBounds[1] < leftPage.bounds[1])
+              + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+              + "\n  right:   " + (rectangleBounds[3] > (leftPage.bounds[3] * 2)),
+              image.exportDir, image.logFilename);
           } else {
             exceedsPage = rectangleBounds[0] < 0
-                      || rectangleBounds[1] < parentPage.bounds[1]
-                      || rectangleBounds[2] > parentPage.bounds[2]
-                      || rectangleBounds[3] > parentPage.bounds[3];
-          
+              || rectangleBounds[1] < parentPage.bounds[1]
+              || rectangleBounds[2] > parentPage.bounds[2]
+              || rectangleBounds[3] > parentPage.bounds[3];
+
             writeLog("exceeds page:"
-                    + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
-                    + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
-                    + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
-                    + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3]),                   
-                    image.exportDir, image.logFilename);
+              + "\n  top:     " + (rectangleBounds[0] < parentPage.bounds[0])
+              + "\n  left:    " + (rectangleBounds[1] < parentPage.bounds[1])
+              + "\n  bottom:  " + (rectangleBounds[2] > parentPage.bounds[2])
+              + "\n  right:   " + (rectangleBounds[3] > parentPage.bounds[3]),
+              image.exportDir, image.logFilename);
           }
         }
         writeLog("exportFromHiddenLayers: " + exportFromHiddenLayers, image.exportDir, image.logFilename);
         // ignore images in overset text and rectangles with zero width or height
-        if(exportFromHiddenLayers
+        if (exportFromHiddenLayers
           && originalBounds[0] - originalBounds[2] != 0
           && originalBounds[1] - originalBounds[3] != 0
-          ){
-          if(rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
+        ) {
+          if (rectangle.itemLayer.locked == true) alert(panel.lockedLayerWarning);
           /* since cropping works not well with anchored images, we
           * create a duplicate of the rectangle where the cropping is applied
-          */ 
+          */
           var rectangleCopy = null;
-          if((image.cropImageToPage && exceedsPage)
+          if ((image.cropImageToPage && exceedsPage)
             || (image.removeRectangleStroke && (rectangle.strokeWeight > 0))
-            ){
+          ) {
             // create rectangle duplicate
             rectangleCopy = rectangle.duplicate([originalBounds[1], originalBounds[0]], [0, 0]);
             // disable text wrap temporarily, otherwise duplicate will be suppressed
             rectangle.textWrapPreferences.textWrapMode = 1852796517 // NONE
             // copy rotation angle
             rectangleCopy.rotationAngle = rectangle.rotationAngle;
-            if(image.cropImageToPage && exceedsPage){
+            if (image.cropImageToPage && exceedsPage) {
               rectangleCopy = cropRectangleToPage(rectangleCopy, originOnLeftPage, leftPage, parentPage);
             }
             rectangle.textWrapPreferences.textWrapMode = textWrapMode;
-            if(image.removeRectangleStroke && (rectangle.strokeWeight > 0)){
+            if (image.removeRectangleStroke && (rectangle.strokeWeight > 0)) {
               // setting strokeTint to 0 is more robust. Setting strokeWeight to 0 adds sometimes a stroke
               rectangleCopy.strokeTint = image.removeRectangleStroke ? 0 : rectangle.strokeTint;
             }
@@ -665,8 +712,8 @@ function getFilelinks(doc) {
           var overrideBool = image.objectExportOptions && customImageConversion;
           var localFormat = overrideBool ? objectExportOptions.imageConversionType.toString().replace(/^JPEG/g, "JPG") : image.exportFormat;
           var localDensity = overrideBool ? Number(objectExportOptions.imageExportResolution.toString().replace(/^PPI_/g, "")) * image.objectExportDensityFactor : image.exportDPI;
-          var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution, image.baseDPI);
-          var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW" ].indexOf(objectExportOptions.jpegOptionsQuality.toString());
+          var normalizedDensity = getMaxDensity(localDensity, rectangle, image.maxResolution, image.baseDPI, image.maxExportWidth, image.maxExportHeight);
+          var objectExportQualityInt = ["MAXIMUM", "HIGH", "MEDIUM", "LOW"].indexOf(objectExportOptions.jpegOptionsQuality.toString());
           var localQuality = overrideBool && localFormat != "PNG" ? objectExportQualityInt : image.exportQuality;
           /*
           * set export filename
@@ -675,7 +722,7 @@ function getFilelinks(doc) {
           var basename;
           var toBeExported = true;
           if (image.renameExportFilenames == true) {
-            var imgNumber = pad( counter, image.exportFilenameSchema.split("#").length - 1);
+            var imgNumber = pad(counter, image.exportFilenameSchema.split("#").length - 1);
             basename = image.exportFilenameSchema.replace("#", imgNumber).replace(/#/g, "");
           }
           else if (filenameLabel.length > 0 && image.overrideExportFilenames == false) {
@@ -685,9 +732,9 @@ function getFilelinks(doc) {
           }
           var newFilename;
           var duplicates = hasDuplicates(link, docLinks, i);
-          if( rectangle.constructor.name == "Group" ){
+          if (rectangle.constructor.name == "Group") {
             newFilename = renameFile(basename + image.exportFilenameGroupSuffix, localFormat, false);
-        } else if(inArray(basename, uniqueBasenames) && (!duplicates)){
+          } else if (inArray(basename, uniqueBasenames) && (!duplicates)) {
             newFilename = renameFile(basename, localFormat, true);
           } else {
             newFilename = renameFile(basename, localFormat, false);
@@ -696,25 +743,25 @@ function getFilelinks(doc) {
           /*
           * construct link object
           */
-          linkObject = {
-            link:link,
-            pageItem:rectangle,
-            format:localFormat,
-            quality:localQuality,
-            density:normalizedDensity,
-            newFilename:newFilename,
-            newFilepath:File(image.exportDir + "/" + newFilename),
-            objectExportOptions:objectExportOptions,
-            anchored:anchored,
-            rectangleCopy:rectangleCopy,
-            exceedsPage:exceedsPage,
-            originalBounds:originalBounds,
-            group:rectangle.constructor.name == "Group",
-            id:rectangle.id,
-            altText:altText,
-            altTextFromXMP:altTextFromXMP
+          var linkObject = {
+            link: link,
+            pageItem: rectangle,
+            format: localFormat,
+            quality: localQuality,
+            density: normalizedDensity,
+            newFilename: newFilename,
+            newFilepath: File(image.exportDir + "/" + newFilename),
+            objectExportOptions: objectExportOptions,
+            anchored: anchored,
+            rectangleCopy: rectangleCopy,
+            exceedsPage: exceedsPage,
+            originalBounds: originalBounds,
+            group: rectangle.constructor.name == "Group",
+            id: rectangle.id,
+            altText: altText,
+            altTextFromXMP: altTextFromXMP
           }
-          if(toBeExported){
+          if (toBeExported) {
             exportLinks.push(linkObject);
             writeLog("=> stored to: " + linkObject.newFilepath, image.exportDir, image.logFilename);
           } else {
@@ -727,19 +774,20 @@ function getFilelinks(doc) {
     }
   }
   if (missingLinks.length > 0) {
-    var result = confirm (missingLinks.length + " " + panel.promptMissingImages + "\n\n" + missingLinks.toString());
-    if (!result) return;
+    var result = confirm(missingLinks.length + " " + panel.promptMissingImages + "\n\n" + missingLinks.toString());
+    if (!result) {
+      progressBar.close();
+      return;
+    }
   }
   // create directory
   createDir(image.exportDir);
 
-  if (exportLinks.length  > 0) {
-    //var progressBar = getProgressBar(exportLinks.length);
-    var progressBar = getProgressBar("export " + exportLinks.length + " images");
+  if (exportLinks.length > 0) {
     progressBar.reset(exportLinks.length);
 
     // iterate over files and store to specific location
-    for (i = 0; i  < exportLinks.length; i++) {
+    for (i = 0; i < exportLinks.length; i++) {
       var exportFormat = exportLinks[i].format == "PNG" ? ExportFormat.PNG_FORMAT : ExportFormat.JPG;
       var exportResolution = exportLinks[i].density;
       var exportQuality = exportLinks[i].quality;
@@ -748,7 +796,7 @@ function getFilelinks(doc) {
       app.jpegExportPreferences.embedColorProfile = false;
       app.jpegExportPreferences.exportResolution = exportResolution;
       app.jpegExportPreferences.jpegColorSpace = JpegColorSpaceEnum.RGB;
-      jpegExportQualityValues = [JPEGOptionsQuality.MAXIMUM ,JPEGOptionsQuality.HIGH, JPEGOptionsQuality.MEDIUM, JPEGOptionsQuality.LOW];
+      var jpegExportQualityValues = [JPEGOptionsQuality.MAXIMUM, JPEGOptionsQuality.HIGH, JPEGOptionsQuality.MEDIUM, JPEGOptionsQuality.LOW];
       app.jpegExportPreferences.jpegQuality = jpegExportQualityValues[exportQuality];
       app.jpegExportPreferences.jpegRenderingStyle = JPEGOptionsFormat.BASELINE_ENCODING;
       app.jpegExportPreferences.simulateOverprint = true;
@@ -757,13 +805,13 @@ function getFilelinks(doc) {
       app.pngExportPreferences.antiAlias = false;
       app.pngExportPreferences.exportResolution = exportResolution;
       app.pngExportPreferences.pngColorSpace = PNGColorSpaceEnum.RGB;
-      pngExportQualityValues = [PNGQualityEnum.MAXIMUM, PNGQualityEnum.HIGH, PNGQualityEnum.MEDIUM, PNGQualityEnum.LOW];
+      var pngExportQualityValues = [PNGQualityEnum.MAXIMUM, PNGQualityEnum.HIGH, PNGQualityEnum.MEDIUM, PNGQualityEnum.LOW];
       app.pngExportPreferences.pngQuality = pngExportQualityValues[exportQuality];
       app.pngExportPreferences.transparentBackground = image.pngTransparency;
       app.pngExportPreferences.simulateOverprint = true;
       app.pngExportPreferences.useDocumentBleeds = true;
       progressBar.hit("export " + exportLinks[i].newFilename, i);
-      if(exportLinks[i].rectangleCopy != null){
+      if (exportLinks[i].rectangleCopy != null) {
         exportLinks[i].rectangleCopy.exportFile(exportFormat, exportLinks[i].newFilepath);
         exportLinks[i].rectangleCopy.remove();
       } else {
@@ -771,11 +819,11 @@ function getFilelinks(doc) {
       }
       // insert label with new file link for postprocessing
       exportLinks[i].pageItem.insertLabel(image.pageItemLabel, exportLinks[i].newFilename);
-      if(exportLinks[i].altText.length > 0){
+      if (exportLinks[i].altText.length > 0) {
         exportLinks[i].pageItem.insertLabel(image.pageItemAltText, exportLinks[i].altText);
       }
       // separate label for XMP alt texts
-      if(exportLinks[i].altTextFromXMP.length > 0){
+      if (exportLinks[i].altTextFromXMP.length > 0) {
         exportLinks[i].pageItem.insertLabel(image.XMPAltText, exportLinks[i].altTextFromXMP)
       }
     }
@@ -783,80 +831,82 @@ function getFilelinks(doc) {
     /*
      * danger zone: relink all images to their respective export paths
      */
-    if(image.relinkToExportPaths == true) {
+    if (image.relinkToExportPaths == true) {
       writeLog("\nRelinking images with export paths...\n", image.exportDir, image.logFilename);
       relinkToExportPaths(doc, exportLinks);
     }
-    alert (exportLinks.length  + " " + panel.finishedMessage);
+    alert(exportLinks.length + " " + panel.finishedMessage);
     writeLog("\nFinished! Exported " + exportLinks.length + " of " + docLinks.length + " images.\nPlease check messages above for more details.", image.exportDir, image.logFilename);
     doc.save();
   }
   else {
-    alert (panel.noValidLinks);
+    progressBar.close();
+    alert(panel.noValidLinks);
   }
   app.scriptPreferences.measurementUnit = measurementUnit;
   doc.viewPreferences.rulerOrigin = rulerOrigin;
 }
 // draw simple progress bar
-function getProgressBar (title){
-  var progressBarWindow = new Window("palette", title, {x:0, y:0, width:400, height:50});
-  var pbar = progressBarWindow.add("progressbar", {x:10, y:10, width:380, height:6}, 0, 100);
-  var stext = progressBarWindow.add("statictext", {x:10, y:26, width:380, height:20}, '');
+function getProgressBar(title) {
+  var progressBarWindow = new Window("palette", title, { x: 0, y: 0, width: 400, height: 50 });
+  var pbar = progressBarWindow.add("progressbar", { x: 10, y: 10, width: 380, height: 6 }, 0, 100);
+  var stext = progressBarWindow.add("statictext", { x: 10, y: 26, width: 380, height: 20 }, '');
   progressBarWindow.center();
   progressBarWindow.reset = function (maxValue) {
     stext.text = "export export export export export export export export ";
     pbar.value = 0;
-    pbar.maxvalue = maxValue||0;
+    pbar.maxvalue = maxValue || 0;
     pbar.visible = !!maxValue;
     this.show();
   }
-  progressBarWindow.hit = function(msg, value) {
-    ++pbar.value;
+  progressBarWindow.hit = function (msg, value) {
+    pbar.value = value + 1;
     stext.text = msg;
+    this.update();
   }
   return progressBarWindow;
 }
 // create directory
-function createDir (folder) {
+function createDir(folder) {
   try {
     folder.create();
     return;
   } catch (e) {
-    alert (e);
+    alert(e);
   }
 }
 // check if image is missing or embedded
-function isValidLink (link) {
+function isValidLink(link) {
   var rectangle = link.parent.parent;
   try {
     // script would crash when geometricBounds not available, e.g. image is placed on overset text
     var bounds = rectangle.geometricBounds;
-    if(rectangle.hasOwnProperty("parentPage") && rectangle.parentPage == null && image.exportFromPasteboard == false){
+    if (rectangle.hasOwnProperty("parentPage") && rectangle.parentPage == null && image.exportFromPasteboard == false) {
       writeLog('=> FAILED: image is on pasteboard', image.exportDir, image.logFilename);
       return false;
-    } else if(link.parent.constructor.name == 'Story'){
+    } else if (link.parent.constructor.name == 'Story') {
       writeLog('=> WARNING: text-only link found: ' + link.name, image.exportDir, image.logFilename);
       return false;
-    } else if(image.exportFromMasterPages == false && rectangle.parent.constructor.name == 'MasterSpread') {
+    } else if (image.exportFromMasterPages == false && rectangle.parent.constructor.name == 'MasterSpread') {
       writeLog('=> INFO: image is on master page and not exported.', image.exportDir, image.logFilename);
       return false;
-    } else if(rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
+    } else if (rectangle.parent.constructor.name == "Group" && image.overrideExportFilenames == true) {
       writeLog('=> INFO: part of image group.', image.exportDir, image.logFilename);
       return true;
     } else {
       switch (link.status) {
-      case LinkStatus.LINK_MISSING:
-        writeLog('=> FAILED: image file is missing.', image.exportDir, image.logFilename);
-        return false; break;
-      case LinkStatus.LINK_EMBEDDED:
-        writeLog('=> FAILED: embedded image.', image.exportDir, image.logFilename);
-        return false; break;
-      default:
-        if(link != null) {
-          return true
-        } else {
-          return false
-        }
+        case LinkStatus.LINK_MISSING:
+          writeLog('=> FAILED: image file is missing.', image.exportDir, image.logFilename);
+          return false; break;
+        case LinkStatus.LINK_EMBEDDED:
+          writeLog('=> FAILED: embedded image.', image.exportDir, image.logFilename);
+          return false; break;
+        default:
+          if (link != null) {
+            return true
+          } else {
+            return false
+          }
       }
     }
   } catch (e) {
@@ -867,8 +917,8 @@ function isValidLink (link) {
 // return filename with new extension and conditionally attach random string
 function renameFile(basename, extension, rename) {
   var normalizedBasename = basename.replace(/[%\x00-\x1f\x80-\x9f\s\/\?<>\\:\*\|":]/g, '_');
-  if(rename) {
-    hash = ((1 + Math.random())*0x1000).toString(36).slice(1, 6);
+  if (rename) {
+    var hash = ((1 + Math.random()) * 0x1000).toString(36).slice(1, 6);
     var renameFile = normalizedBasename + '-' + hash + '.' + extension.toLowerCase();
     return renameFile
   } else {
@@ -878,8 +928,8 @@ function renameFile(basename, extension, rename) {
 }
 // get file basename
 function getBasename(filename) {
-  var basename = filename.match( /^(.*?)\.[a-z]{2,4}$/i);
-  if(basename != null){
+  var basename = filename.match(/^(.*?)\.[a-z]{2,4}$/i);
+  if (basename != null) {
     return basename[1];
   } else {
     // no file extension
@@ -889,80 +939,85 @@ function getBasename(filename) {
 // check if string exists in array
 function inArray(string, array) {
   var length = array.length;
-  for(var i = 0; i < length; i++) {
-    if(array[i] == string)
+  for (var i = 0; i < length; i++) {
+    if (array[i] == string)
       return true;
   }
   return false;
 }
 function pad(num, size) {
-    var string = num+"";
-    while (string.length < size) string = "0" + string;
-    return string;
+  var string = num + "";
+  while (string.length < size) string = "0" + string;
+  return string;
 }
-// get density limit according to maximal resolution value
-function getMaxDensity(density, rectangle, maxResolution, baseDensity) {
+// get density limit according to maximal resolution and dimension values
+function getMaxDensity(density, rectangle, maxResolution, baseDensity, maxWidth, maxHeight) {
   var bounds = rectangle.geometricBounds;
   var densityFactor = density / baseDensity;
-  var width =  (bounds[3] - bounds[1]);
+  var width = (bounds[3] - bounds[1]);
   var height = (bounds[2] - bounds[0]);
   var resolution = Math.round(width * height * Math.pow(densityFactor, 2));
-  if(resolution > maxResolution) {
-    var maxDensity =  Math.floor(Math.sqrt(maxResolution * Math.pow(densityFactor, 2) / resolution) * baseDensity);
-    return maxDensity;
-  } else {
-    return density;
+  var maxDensity = density;
+  if (maxResolution > 0 && resolution > maxResolution) {
+    maxDensity = Math.min(maxDensity, Math.floor(Math.sqrt(maxResolution / (width * height)) * baseDensity));
   }
+  if (maxWidth > 0) {
+    maxDensity = Math.min(maxDensity, Math.floor(maxWidth / width * baseDensity));
+  }
+  if (maxHeight > 0) {
+    maxDensity = Math.min(maxDensity, Math.floor(maxHeight / height * baseDensity));
+  }
+  return Math.max(image.minExportDPI, maxDensity);
 }
 // crop a rectangle to page bleeds
-function cropRectangleToPage (rectangle, originOnLeftPage, leftPage, page){
+function cropRectangleToPage(rectangle, originOnLeftPage, leftPage, page) {
   var bounds = rectangle.geometricBounds;   // bounds: [y1, x1, y2, x2], e.g. top left / bottom right
   var pageSide = page.side.toString();
   // release anchors to avoid displaced images. we need to restore the anchor later
-  if(rectangle.parent.constructor.name == "Character"){
+  if (rectangle.parent.constructor.name == "Character") {
     rectangle.anchoredObjectSettings.releaseAnchoredObject();
   }
   // page is null if the object is on the pasteboard
-  if(page != null){
+  if (page != null) {
     // rectangle.geometricBounds = [bounds[0], bounds[1], bounds[2], bounds[3]];
     // iterate over each corner and fit them into page
     var newBounds = [];
-    for(var i = 0; i <= 3; i++) {
+    for (var i = 0; i <= 3; i++) {
       // y1, x1, y2, x2 (top, left, bottom, right)
       // top
-      if(       i == 0 && bounds[i] < page.bounds[i]){
+      if (i == 0 && bounds[i] < page.bounds[i]) {
         newBounds[i] = page.bounds[i];
-      // left, left Page  
-      } else if(originOnLeftPage == true && i == 1 && bounds[i] < leftPage.bounds[i]){
+        // left, left Page  
+      } else if (originOnLeftPage == true && i == 1 && bounds[i] < leftPage.bounds[i]) {
         newBounds[i] = leftPage.bounds[i];
-      // left, single page or right page
-      } else if(originOnLeftPage == false && i == 1 && bounds[i] < page.bounds[i]){
+        // left, single page or right page
+      } else if (originOnLeftPage == false && i == 1 && bounds[i] < page.bounds[i]) {
         newBounds[i] = page.bounds[i];
-      // bottom
-      } else if(i == 2 && bounds[i] > page.bounds[i]){
+        // bottom
+      } else if (i == 2 && bounds[i] > page.bounds[i]) {
         newBounds[i] = page.bounds[i];
-      // right, left page
-      } else if(originOnLeftPage == true && i == 3 && bounds[i] > (leftPage.bounds[i]) * 2){
+        // right, left page
+      } else if (originOnLeftPage == true && i == 3 && bounds[i] > (leftPage.bounds[i]) * 2) {
         newBounds[i] = leftPage.bounds[i] * 2;
-      // right, single page or right page 
-      } else if(originOnLeftPage == false && i == 3 && bounds[i] > page.bounds[i]){
+        // right, single page or right page 
+      } else if (originOnLeftPage == false && i == 3 && bounds[i] > page.bounds[i]) {
         newBounds[i] = page.bounds[i];
       } else {
-        newBounds[i] = bounds[i];        
+        newBounds[i] = bounds[i];
       }
     }
-    writeLog( "cropped bounds:" + newBounds, image.exportDir, image.logFilename);
+    writeLog("cropped bounds:" + newBounds, image.exportDir, image.logFilename);
     // assign new bounds
     rectangle.geometricBounds = newBounds;
   }
   return rectangle;
 }
 // get anchor position, needed for cropRectangleToPage()
-function getAnchoredPosition(rectangle){
+function getAnchoredPosition(rectangle) {
   // 1095716961: AnchorPosition.ABOVE_LINE
   // 1097814113: AnchorPosition.ANCHORED
   // 1095716969: AnchorPosition.INLINE_POSITION
-  anchoredPosIndex = [1095716961, 1097814113, 1095716969].indexOf(rectangle.anchoredObjectSettings.anchoredPosition);
+  var anchoredPosIndex = [1095716961, 1097814113, 1095716969].indexOf(rectangle.anchoredObjectSettings.anchoredPosition);
   return anchoredPosIndex;
 }
 
@@ -973,75 +1028,83 @@ function getDefaultExportPath() {
   return exportPath
 }
 // delete all image file labels 
-function deleteLabel(doc, deleteAllLabels, deleteOnlyGroupLabels){
+function deleteLabel(doc, deleteAllLabels, deleteOnlyGroupLabels, progressBar, progressOffset) {
   var allPageItems = doc.allPageItems;
   var labelNames = [image.pageItemLabel, image.pageItemAltText];
-  for (var i = 0; i < doc.allPageItems.length; i++) {
-    var obj = doc.allPageItems[i];
-    if(deleteOnlyGroupLabels == true && obj.constructor.name == 'Group'){
-      for (var j = 0; j < labelNames.length ; ++j) {
+  progressOffset = progressOffset || 0;
+  for (var i = 0; i < allPageItems.length; i++) {
+    var obj = allPageItems[i];
+    if (progressBar) {
+      progressBar.hit("clear old labels", progressOffset + i);
+    }
+    if (deleteOnlyGroupLabels == true && obj.constructor.name == 'Group') {
+      for (var j = 0; j < labelNames.length; ++j) {
         obj.insertLabel(labelNames[j], '');
       }
     } else if (deleteAllLabels == true && (obj.constructor.name == 'Group' || obj.constructor.name == 'Rectangle')) {
-      for (var j = 0; j < labelNames.length ; ++j) {
+      for (var j = 0; j < labelNames.length; ++j) {
         obj.insertLabel(labelNames[j], '');
       }
     }
-  }  
+  }
+  return progressOffset + allPageItems.length;
 }
 // simple logging
-function writeLog(message, dir, filename){
+function writeLog(message, dir, filename) {
   var path = dir + '/' + filename;
   createDir(dir);
   var write_file = File(path);
   if (!write_file.exists) {
     write_file = new File(path);
   }
-  d = new Date();
+  var d = new Date();
   var timestr = "[" + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + "] "
   write_file.open('a', undefined, undefined);
   write_file.encoding = "UTF-8";
   write_file.lineFeed = "Unix";
-  write_file.writeln(timestr + message);  
+  write_file.writeln(timestr + message);
   write_file.close();
 }
-function clearLog(dir, filename){
+function clearLog(dir, filename) {
   var path = dir + '/' + filename;
-  del_file = File(path);
+  var del_file = File(path);
   if (del_file.exists) {
     del_file.remove();
   }
 }
 // create array from links object
-function linksToSortedArray(links){
-  arr = [];
+function linksToSortedArray(links, progressBar, progressOffset) {
+  var arr = [];
   // put links in an array
   for (var i = 0; i < links.length; i++) {
     arr.push(links[i]);
+    if (progressBar) {
+      progressBar.hit("collect " + links[i].name, progressOffset + i);
+    }
   }
   // sort the array by name
-  arr.sort(function(a, b){
+  arr.sort(function (a, b) {
     var x = a.name.toLowerCase();
     var y = b.name.toLowerCase();
     return x.localeCompare(y);
   });
   return arr;
 }
-function isObjectExportOptionActive(objectExportOptions){
+function isObjectExportOptionActive(objectExportOptions) {
   var active = (parseFloat(app.version) <= 10) ? objectExportOptions.customImageConversion :
-      objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT ||
-      objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
+    objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTENT ||
+    objectExportOptions.preserveAppearanceFromLayout == PreserveAppearanceFromLayoutEnum.PRESERVE_APPEARANCE_RASTERIZE_CONTAINER;
   return active;
 }
-function isFormatOverrideActive(searchFormat){
+function isFormatOverrideActive(searchFormat) {
   var result = false;
   var links = app.documents[0].links;
-  for(var i = 0; i < links.length; i++){
+  for (var i = 0; i < links.length; i++) {
     var rectangle = links[i].parent.parent;
-    if(rectangle.hasOwnProperty("objectExportOptions")
-       && isObjectExportOptionActive(rectangle.objectExportOptions)
-       && rectangle.objectExportOptions.imageConversionType.toString() == searchFormat
-      ){
+    if (rectangle.hasOwnProperty("objectExportOptions")
+      && isObjectExportOptionActive(rectangle.objectExportOptions)
+      && rectangle.objectExportOptions.imageConversionType.toString() == searchFormat
+    ) {
       result = true;
     }
   }
@@ -1054,10 +1117,10 @@ function hasDuplicates(link, docLinks, index) {
   var nextLink;
   var result = [];
   var i = 0;
-  do{
+  do {
     nextLink = docLinks[i];
     // check whether link names match. The index var is used to prevent that an image is compared with itself.
-    if( link.name == nextLink.name && i != index && isValidLink(nextLink)) {
+    if (link.name == nextLink.name && i != index && isValidLink(nextLink)) {
       var nextRectangle = nextLink.parent.parent;
       var nextGraphic = nextRectangle.graphics[0];
       // InDesign calculates widths and heights not precisely, so we have to round them
@@ -1069,7 +1132,7 @@ function hasDuplicates(link, docLinks, index) {
       var offsetX = rectangle.geometricBounds[1] - graphic.geometricBounds[1];
       var nextOffsetY = nextRectangle.geometricBounds[0] - nextGraphic.geometricBounds[0];
       var nextOffsetX = nextRectangle.geometricBounds[1] - nextGraphic.geometricBounds[1];
-      var equalWidth  = rectangleWidth == nextRectangleWidth;
+      var equalWidth = rectangleWidth == nextRectangleWidth;
       var equalHeight = rectangleHeight == nextRectangleHeight;
       var equalOffsetY = offsetY == nextOffsetY;
       var equalOffsetX = offsetX == nextOffsetX;
@@ -1086,43 +1149,43 @@ function hasDuplicates(link, docLinks, index) {
       // note: either objectExportOptions are not active, then we safely ignore them or we
       // check if they are active for the two images
       var objectExportOptionsActive = !image.objectExportOptions || isObjectExportOptionActive(rectangle.objectExportOptions) == isObjectExportOptionActive(nextRectangle.objectExportOptions);
-      result.push(   equalFlip 
-                  && equalRotationAngle 
-                  && equalWidth 
-                  && equalHeight
-                  && equalOffsetY
-                  && equalOffsetX
-                  && equalShearAngle 
-                  && equalHorizontalScale 
-                  && equalVerticalScale 
-                  && inGroup 
-                  && objectExportOptionsActive
-                  && topCropEqual
-                  && leftCropEqual
-                  && bottomCropEqual
-                  && rightCropEqual
-                  );
+      result.push(equalFlip
+        && equalRotationAngle
+        && equalWidth
+        && equalHeight
+        && equalOffsetY
+        && equalOffsetX
+        && equalShearAngle
+        && equalHorizontalScale
+        && equalVerticalScale
+        && inGroup
+        && objectExportOptionsActive
+        && topCropEqual
+        && leftCropEqual
+        && bottomCropEqual
+        && rightCropEqual
+      );
     }
     i++;
   }
-  while(i < docLinks.length);
-  if(inArray(true, result)){
+  while (i < docLinks.length);
+  if (inArray(true, result)) {
     writeLog("Found duplicate: " + link.name, image.exportDir, image.logFilename);
   }
   return inArray(true, result);
 }
-function relinkToExportPaths (doc, exportLinks) {
-  for(var i = 0; i < exportLinks.length; i++) {
+function relinkToExportPaths(doc, exportLinks) {
+  for (var i = 0; i < exportLinks.length; i++) {
     var linkId = exportLinks[i].link.id;
     var exportPath = exportLinks[i].newFilepath;
     var link = doc.links.itemByID(linkId);
     var rectangle = link.parent.parent;
     writeLog('"' + exportLinks[i].link.name + ' (' + rectangle.constructor.name + ') " => "' + exportLinks[i].newFilename + '"', image.exportDir, image.logFilename);
-    if(exportLinks[i].group){
-      var group =  doc.groups.itemByID(exportLinks[i].id);
+    if (exportLinks[i].group) {
+      var group = doc.groups.itemByID(exportLinks[i].id);
       writeLog(' GroupSRT!!! ' + group.constructor.name + '"', image.exportDir, image.logFilename);
       var spread = group.parentPage.parent;
-      if(group.parent.constructor.name == "Character"){
+      if (group.parent.constructor.name == "Character") {
         writeLog(' Group is anchored', image.exportDir, image.logFilename);
         var character = group.parent;
         var newAnchoredRectangle = character.insertionPoints[-1].rectangles.add();
@@ -1133,8 +1196,7 @@ function relinkToExportPaths (doc, exportLinks) {
         writeLog(' Group is not anchored', image.exportDir, image.logFilename);
         var x = exportLinks[i].pageItem.geometricBounds[1];
         var y = exportLinks[i].pageItem.geometricBounds[0];
-        spread.place(new File(exportPath), [x,y], doc.layers[0]);
-        var unAnchoredRectangle = document.rectangles[document.rectangles.length];
+        var unAnchoredRectangle = spread.place(new File(exportPath), [x, y], doc.layers[0])[0];
         unAnchoredRectangle.properties = group.properties;
       }
       rectangle.remove();
@@ -1142,23 +1204,23 @@ function relinkToExportPaths (doc, exportLinks) {
       // relink to export path
       link.relink(exportPath);
       // fit content to frame, necessary because export crops, flips, etc
-      if(rectangle.constructor.name != "Polygon"){
+      if (rectangle.constructor.name != "Polygon") {
         rectangle.fit(FitOptions.CONTENT_TO_FRAME);
       }
     }
   }
 }
-function splitStringToArray (string, index) {
+function splitStringToArray(string, index) {
   var tokens = [];
-  for(var i = 0; i < string.length; i++){
-    tokens.push(string.substring(i,  i + index - 1));
+  for (var i = 0; i < string.length; i++) {
+    tokens.push(string.substring(i, i + index - 1));
     i = i + index - 2;
   }
   return tokens;
 }
-function getTopmostGroup(rectangle){
+function getTopmostGroup(rectangle) {
   var p = rectangle.parent;
-  while(p.parent.constructor.name == "Group"){
+  while (p.parent.constructor.name == "Group") {
     p = p.parent;
   }
   return p;
@@ -1175,18 +1237,18 @@ function getLinkNameForGroup(group) {
 }
 // disable lock since this prevents images to be exported
 // note that just the group itself has a lock state, not their children
-function disableLocks(rectangle){
-  if(rectangle.parent.constructor.name == "Group"
-     && rectangle.parent.hasOwnProperty("locked")
-     && rectangle.parent.locked != false){
+function disableLocks(rectangle) {
+  if (rectangle.parent.constructor.name == "Group"
+    && rectangle.parent.hasOwnProperty("locked")
+    && rectangle.parent.locked != false) {
     rectangle.parent.locked = false;
   }
-  if(rectangle.itemLayer.hasOwnProperty("locked")
-     && rectangle.itemLayer.locked != false){
+  if (rectangle.itemLayer.hasOwnProperty("locked")
+    && rectangle.itemLayer.locked != false) {
     rectangle.itemLayer.locked = false;
   }
-  if(rectangle.hasOwnProperty("locked")
-     && rectangle.locked != false){
+  if (rectangle.hasOwnProperty("locked")
+    && rectangle.locked != false) {
     rectangle.locked = false;
   }
   return rectangle;
