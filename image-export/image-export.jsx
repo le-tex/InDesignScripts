@@ -540,7 +540,7 @@ function getFilelinks(doc) {
         altText = rectangle.objectExportOptions.customAltText;
       }
       // ID sometimes fails to export a EPS correctly and takes only the preview image. We use the highest quality.
-      if (extension = "eps") {
+      if (extension === "eps") {
         rectangle.graphics[0].localDisplaySetting = DisplaySettingOptions.HIGH_QUALITY;
         rectangle.allGraphics[0].localDisplaySetting = DisplaySettingOptions.HIGH_QUALITY;
       }
