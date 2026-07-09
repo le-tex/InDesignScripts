@@ -9,4 +9,5 @@ Unless absolutely necessary:
 - No collapsing or expanding code blocks
 - No 'helpful' refactoring
 - No rewriting comments
+
 Naming conventions: use or respect given form
